@@ -33,15 +33,15 @@
   .exit:hover { background:var(--surface2); }
   .railwrap { flex:1; min-width:0; }
   .railtxt { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:6px; }
-  .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:14px; } .railtxt .now small { color:var(--muted); font-weight:600; }
-  .railtxt .of { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); flex-shrink:0; }
+  .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:15.5px; } .railtxt .now small { color:var(--muted); font-weight:600; }
+  .railtxt .of { font-family:"Spline Sans Mono"; font-size:13.5px; color:var(--muted); flex-shrink:0; }
   .rail { display:flex; gap:8px; }
   .blockseg { display:flex; flex-direction:column; gap:3px; }
   .blockseg .pips { display:flex; gap:3px; flex-wrap:wrap; }
   .blockseg .pip { width:14px; height:5px; border-radius:3px; background:var(--surface3); }
   .blockseg .pip.done { background:var(--accent); }
   .blockseg .pip.cur { background:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
-  .blockseg .bl { font-size:9px; font-family:"Spline Sans Mono"; color:var(--muted); }
+  .blockseg .bl { font-size:11px; font-family:"Spline Sans Mono"; color:var(--muted); }
   .modepill { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); border:1px solid var(--line); border-radius:14px; padding:4px 10px; flex-shrink:0; }
 
   .wrap { max-width:560px; margin:0 auto; padding:22px 16px 40px; }
@@ -52,7 +52,7 @@
   .blockcard .ic svg { width:25px; height:25px; stroke:var(--accent); fill:none; stroke-width:1.8; }
   .blockcard h2 { font-size:21px; font-weight:800; letter-spacing:-.01em; }
   .blockcard .sub { color:var(--muted); font-size:13px; margin:5px auto 4px; max-width:360px; }
-  .blockcard .meta { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); margin:10px 0 18px; }
+  .blockcard .meta { font-family:"Spline Sans Mono"; font-size:14px; color:var(--muted); margin:10px 0 18px; }
 
   .btn { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; padding:13px 16px; border-radius:12px; border:1px solid transparent; cursor:pointer; width:100%; display:block; text-align:center; text-decoration:none; }
   .btn.primary { background:var(--accent); color:#fff; box-shadow:0 10px 22px -10px var(--accent); transition:filter .15s ease; }
@@ -168,9 +168,17 @@
   }
 
   // ---- recompute per-block done from attempts (never regress) ----
+  // P0 fix (hotfix/r1.2): count only puzzles solved DURING this session, not
+  // lifetime solves. Drill sessions are repeatable, so a block built over
+  // previously-solved puzzles must NOT load as already-complete (that bounced
+  // the user straight to the summary). A puzzle counts toward `done` only if
+  // its last solve is at/after the plan's createdAt. isSolved (lifetime) is
+  // kept below for the accuracy stats, which are display-only.
+  var sinceMs = (plan && plan.createdAt) ? (Date.parse(plan.createdAt) || 0) : 0;
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
+  function solvedInSession(id) { var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs); }
   plan.blocks.forEach(function (b) {
-    var solvedInBlock = (b.ids || []).filter(isSolved).length;
+    var solvedInBlock = (b.ids || []).filter(solvedInSession).length;
     b.done = Math.max(b.done || 0, solvedInBlock);
     if (b.done > b.count) b.done = b.count;
   });

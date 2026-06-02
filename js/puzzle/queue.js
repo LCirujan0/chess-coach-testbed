@@ -303,7 +303,11 @@ export function nextPuzzle() {
   if (state.sessionMode) {
     const ids = state.sessionMode.queueIds;
     const target = state.sessionMode.count || (ids ? ids.length : 0);
-    const solved = ids && ids.length ? ids.filter((id) => isSolved(id)).length : 0;
+    // P0 fix (hotfix/r1.2): count only puzzles solved DURING this session
+    // (last solve at/after sessionMode.sinceMs), not lifetime solves — so a
+    // drill over already-solved puzzles does not bounce out on the first Next.
+    const since = state.sessionMode.sinceMs || 0;
+    const solved = ids && ids.length ? ids.filter((id) => { const a = state.attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= since); }).length : 0;
     const queueExhausted = ids && ids.length && state.queueIndex >= ids.length - 1;
     if ((target && solved >= target) || queueExhausted) {
       // One last write-back so session.html reads the final count.
