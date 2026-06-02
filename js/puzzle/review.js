@@ -231,4 +231,18 @@ export function jumpToUserMove(userMoveIdx) {
   annotateForViewIndex();
   updateNavLabel();
   renderBoard();
+  scrollBoardIntoViewOnMobile();
+}
+
+// Bug A (v0.48, iPhone): on mobile the board renders ABOVE the comparison
+// table (side-by-side only at >=880px), so tapping a comparison row updates the
+// board off-screen and reads as "nothing happened". Bring the board back into
+// view after a row jump. No-op on desktop, where the board is already visible
+// beside the table, and a safe no-op anywhere the APIs are missing.
+function scrollBoardIntoViewOnMobile() {
+  try {
+    if (!window.matchMedia || !window.matchMedia('(max-width: 879px)').matches) return;
+    const wrap = document.querySelector('.board-wrap');
+    if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch { /* scrolling is best-effort */ }
 }
