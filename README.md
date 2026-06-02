@@ -68,3 +68,5 @@ vercel
 ## Why this matters
 
 Last time I built the app first and then found CORS/dependency issues at runtime. This time we verify each dependency in isolation, then build only on what's confirmed working. No more "this should work" guesses.
+
+<!-- deploy pipeline test: 2026-06-02T10:09Z -->
