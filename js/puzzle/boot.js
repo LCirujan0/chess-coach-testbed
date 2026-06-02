@@ -80,6 +80,10 @@ state.mode = (loadMode() === 'deep') ? 'deep' : 'drill';
     count: typeof block.count === 'number' ? block.count : queueIds.length,
     title: block.title || blockId,
     mode: (block.mode === 'deep' || block.mode === 'drill') ? block.mode : null,
+    // P0 fix (hotfix/r1.2): session start time. Block completion counts only
+    // puzzles solved at/after this instant, so a drill over previously-solved
+    // puzzles is not "complete" before the user starts.
+    sinceMs: Date.parse(plan.createdAt) || 0,
   };
   if (state.sessionMode.mode) state.mode = state.sessionMode.mode;
 })();

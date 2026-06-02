@@ -168,9 +168,17 @@
   }
 
   // ---- recompute per-block done from attempts (never regress) ----
+  // P0 fix (hotfix/r1.2): count only puzzles solved DURING this session, not
+  // lifetime solves. Drill sessions are repeatable, so a block built over
+  // previously-solved puzzles must NOT load as already-complete (that bounced
+  // the user straight to the summary). A puzzle counts toward `done` only if
+  // its last solve is at/after the plan's createdAt. isSolved (lifetime) is
+  // kept below for the accuracy stats, which are display-only.
+  var sinceMs = (plan && plan.createdAt) ? (Date.parse(plan.createdAt) || 0) : 0;
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
+  function solvedInSession(id) { var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs); }
   plan.blocks.forEach(function (b) {
-    var solvedInBlock = (b.ids || []).filter(isSolved).length;
+    var solvedInBlock = (b.ids || []).filter(solvedInSession).length;
     b.done = Math.max(b.done || 0, solvedInBlock);
     if (b.done > b.count) b.done = b.count;
   });

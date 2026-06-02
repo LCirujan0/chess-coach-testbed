@@ -370,7 +370,10 @@ export function sessionModeWriteBack() {
   if (!block || block.id !== state.sessionMode.blockId) return; // plan changed under us
   const ids = Array.isArray(block.ids) ? block.ids : [];
   if (!ids.length) return; // vision-style block: no per-id progress
-  block.done = ids.filter((id) => isSolved(id)).length;
+  // P0 fix (hotfix/r1.2): count only puzzles solved DURING this session
+  // (last solve at/after the plan's createdAt), not lifetime solves.
+  const since = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
+  block.done = ids.filter((id) => { const a = state.attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= since); }).length;
   try { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(plan)); } catch {}
 }
 
