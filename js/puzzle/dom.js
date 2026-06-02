@@ -182,13 +182,3 @@ export function clearCoachLog() {
   $('coach-log').innerHTML = '<div class="msg system">Type a question below or tap Hint for a nudge.</div>';
   state.coachHistory = [];
 }
-
-// Nav drawer
-$('hamburger-btn').addEventListener('click', () => {
-  $('nav-drawer').classList.add('open');
-  $('nav-backdrop').classList.add('open');
-});
-$('nav-backdrop').addEventListener('click', () => {
-  $('nav-drawer').classList.remove('open');
-  $('nav-backdrop').classList.remove('open');
-});
