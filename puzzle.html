@@ -442,7 +442,10 @@
   /* ============================================================
      Board (spec §5) — warm wood
      ============================================================ */
-  .board-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+  .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+  .material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
+  .mb-piece { width: 18px; height: 18px; display: inline-block; }
+  .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
   .board {
     position: relative;
     display: grid;
@@ -1063,6 +1066,9 @@
     }
 
     .layout-grid > .board-wrap .board { max-width: 560px; }
+    .layout-grid > .board-wrap .material-row { width: 560px; }
+    .mb-piece { width: 22px; height: 22px; }
+    .mb-score { font-size: 13px; }
     /* Spec §6: coach panel height-capped (~235px) and scrolls internally so a long
        review can't balloon the page. The grid cell aligns the panel to the TOP of
        its area; whatever space is left below stays empty. */
@@ -1168,7 +1174,9 @@
   </div>
 
   <div class="board-wrap">
+    <div class="material-row material-top" id="material-top"></div>
     <div class="board" id="board"></div>
+    <div class="material-row material-bottom" id="material-bottom"></div>
   </div>
 
   <div class="controls">

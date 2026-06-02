@@ -153,6 +153,60 @@ export function softUpdateBoard() {
     }
   }
   renderAnnotations();
+  renderMaterialBalance();
+}
+
+// ============================================================================
+// §20 — Material balance indicator (FEN-only; no engine, §12-safe).
+// Two rows flank the board: top = captured WHITE pieces (Black's gains),
+// bottom = captured BLACK pieces (White's gains). Net advantage (+N) shows on
+// the leading side's row, suppressed when level. Rows are ALWAYS flex and only
+// their innerHTML changes — never style.display — so a capture can't reflow the
+// board (the v0.41 #8 blink fix). Celtic SVG imgs match the board piece set.
+// ============================================================================
+const MB_STARTING = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+const MB_VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const MB_ORDER = ['q', 'r', 'b', 'n', 'p']; // high → low value
+
+function mbDisplayFen() {
+  if (state.viewIndex !== null && state.viewHistory[state.viewIndex]) return state.viewHistory[state.viewIndex].fen;
+  return state.chess ? state.chess.fen() : '';
+}
+
+function mbRowHtml(color, captured, netScore) {
+  let html = '';
+  for (const t of MB_ORDER) {
+    const n = captured[t] || 0;
+    for (let i = 0; i < n; i++) html += `<img class="mb-piece" src="${PIECE_IMG(color, t)}" alt="" draggable="false">`;
+  }
+  if (netScore > 0) html += `<span class="mb-score">+${netScore}</span>`;
+  return html;
+}
+
+// Captured pieces + net advantage from the visible FEN only. Exported so the
+// board render path can call it; safe no-op on pages lacking the material DOM.
+export function renderMaterialBalance() {
+  const topEl = $('material-top'); const botEl = $('material-bottom');
+  if (!topEl || !botEl) return;
+  const placement = (mbDisplayFen().split(' ')[0]) || '';
+  const onBoard = { w: {}, b: {} };
+  for (const ch of placement) {
+    const lc = ch.toLowerCase();
+    if (lc === 'k' || !MB_STARTING[lc]) continue; // skip kings, digits, slashes
+    const c = ch === lc ? 'b' : 'w';
+    onBoard[c][lc] = (onBoard[c][lc] || 0) + 1;
+  }
+  const capturedWhite = {}, capturedBlack = {};
+  let whiteCapVal = 0, blackCapVal = 0;
+  for (const t of MB_ORDER) {
+    const cw = MB_STARTING[t] - (onBoard.w[t] || 0);
+    const cb = MB_STARTING[t] - (onBoard.b[t] || 0);
+    if (cw > 0) { capturedWhite[t] = cw; whiteCapVal += cw * MB_VALUE[t]; }
+    if (cb > 0) { capturedBlack[t] = cb; blackCapVal += cb * MB_VALUE[t]; }
+  }
+  const whiteAdv = blackCapVal - whiteCapVal; // + = White ahead
+  topEl.innerHTML = mbRowHtml('w', capturedWhite, whiteAdv < 0 ? -whiteAdv : 0);
+  botEl.innerHTML = mbRowHtml('b', capturedBlack, whiteAdv > 0 ? whiteAdv : 0);
 }
 
 // ============================================================================
