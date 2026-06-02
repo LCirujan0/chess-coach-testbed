@@ -1,0 +1,40 @@
+name: QA (Playwright)
+
+# Runs against the Vercel PREVIEW once it finishes building, so the gate matches the
+# branch -> preview -> merge workflow. Also runnable manually.
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL to test (defaults to the deployment that triggered the run)'
+        required: false
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node qa/scripts/integrity-check.mjs .
+
+  e2e:
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: qa } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci || npm install
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Run QA suite against the preview
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || github.event.deployment_status.target_url }}
+          # Set this secret in the repo to let CI through Vercel's preview login wall.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with: { name: playwright-report, path: qa/playwright-report, retention-days: 14 }
