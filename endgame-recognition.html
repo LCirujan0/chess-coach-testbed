@@ -9,6 +9,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/css/board.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +22,9 @@
     --line:rgba(0,0,0,.10);
     --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
     --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
-    --sq-light:#F0D9B5; --sq-dark:#B58863;
+    --light-sq:#ECE3D2; --dark-sq:#B49A78;
+    --hl-move:rgba(47,158,118,.26); --hl-sel:rgba(47,158,118,.36);
+    --r-board:9px;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   html, body {
@@ -58,30 +61,8 @@
     font-family:"Spline Sans Mono",monospace; white-space:nowrap;
   }
 
-  /* board */
-  .board-wrap { margin:0 auto 16px; max-width:360px; position:relative; }
-  .board {
-    display:grid; grid-template-columns:repeat(8,1fr); width:100%;
-    aspect-ratio:1; border-radius:6px; overflow:hidden;
-    box-shadow:0 12px 30px -16px rgba(20,30,55,.3);
-  }
-  .sq {
-    display:flex; align-items:center; justify-content:center;
-    font-size:clamp(24px,7vw,40px); line-height:1; user-select:none;
-  }
-  .sq.light { background:var(--sq-light); }
-  .sq.dark  { background:var(--sq-dark); }
-  /* white pieces need dark outline on light squares */
-  .sq.light .pw { text-shadow:0 0 2px rgba(0,0,0,.8), 0 0 4px rgba(0,0,0,.4); }
-  .sq.dark  .pw { text-shadow:none; }
-  .sq .pb   { text-shadow:none; }
-  /* rank/file labels */
-  .board-labels-files { display:flex; max-width:360px; margin:0 auto 2px; padding:0; }
-  .board-labels-ranks { position:absolute; left:0; top:0; height:100%; display:flex; flex-direction:column; pointer-events:none; }
-  .file-label, .rank-label {
-    font-size:9px; font-weight:600; color:var(--muted); font-family:"Spline Sans Mono",monospace;
-    opacity:.7; flex:1; display:flex; align-items:center; justify-content:center;
-  }
+  /* board — canonical component (css/board.css + js/board-static.js, §22) */
+  .board-wrap { margin:0 auto 16px; max-width:380px; position:relative; }
   .board-side-label {
     text-align:center; font-size:11px; font-weight:600; color:var(--muted);
     font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px;
@@ -239,7 +220,8 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { renderStaticBoard } from '/js/board-static.js';
 /* ===========================================================================
  * endgame-recognition.html — Spec 08 drill
  * v0.28 · Releases-B · 2026-06-01
@@ -281,101 +263,15 @@
   var whyCache = {};             // fen → explanation string
   var currentRevealed = false;
 
-  // ---- FEN parser ----------------------------------------------------------
-  var PIECE_UNICODE = {
-    K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙',
-    k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟'
-  };
-  function parseFen(fen) {
-    // Returns 64-element array [0..63] = a8..h8, a7..h7, ..., a1..h1
-    var pos = fen.split(' ')[0];
-    var ranks = pos.split('/');
-    var board = [];
-    for (var r = 0; r < 8; r++) {
-      var rank = ranks[r] || '';
-      for (var i = 0; i < rank.length; i++) {
-        var c = rank[i];
-        if (c >= '1' && c <= '8') {
-          for (var n = 0; n < parseInt(c); n++) board.push(null);
-        } else {
-          board.push(c);
-        }
-      }
-    }
-    return board; // index = rank8..rank1, file a..h
-  }
-
+  // ---- board markup stub (rendered by js/board-static.js, §22) -------------
+  // Returns the side-to-move label + an empty canonical .board; the position is
+  // painted by renderStaticBoard() right after this string is in the DOM. The
+  // old bespoke unicode-glyph renderer + .sq markup are deleted (§22-A).
   function renderBoard(pos) {
-    // pos: { fen, side }
-    // side='w' → white at bottom (a1 bottom-left); side='b' → black at bottom (h8 bottom-left flipped)
-    var board = parseFen(pos.fen);
-    var isWhiteBottom = pos.side !== 'b';
     var sideStr = pos.side === 'w' ? 'White' : 'Black';
-    var files = isWhiteBottom ? ['a','b','c','d','e','f','g','h'] : ['h','g','f','e','d','c','b','a'];
-    var fileLabels = files.map(function (f) { return '<div class="file-label">' + f + '</div>'; }).join('');
-
-    // Build 8x8 grid: visual row 0 = top of board
-    var squares = '';
-    for (var vRow = 0; vRow < 8; vRow++) {
-      for (var vCol = 0; vCol < 8; vCol++) {
-        // Map visual position to board array index
-        var boardRank, boardFile;
-        if (isWhiteBottom) {
-          boardRank = 7 - vRow; // vRow=0 → rank 8 (index 0 of FEN), vRow=7 → rank 1
-          boardFile = vCol;     // vCol=0 → file a
-        } else {
-          boardRank = vRow;     // vRow=0 → rank 8, shown from black's side
-          boardFile = 7 - vCol;
-        }
-        var boardIdx = boardRank * 8 + boardFile;
-        // Wait — FEN rank order: ranks[0]=rank8, ranks[7]=rank1
-        // For white bottom: visual row 0 (top) = FEN rank8 = board array index 0..7
-        // boardIdx for white: vRow 0 = FEN row 0 → arr[0..7]; vRow 7 = FEN row 7 → arr[56..63]
-        // boardFile: vCol 0 = file a = FEN file index 0
-        // So: boardIdx = vRow * 8 + vCol (white bottom)
-        // For black bottom: visual row 0 (top) = FEN rank1 = arr[56..63], file h first
-        // boardIdx = (7-vRow) * 8 + (7-vCol)
-
-        var arrIdx;
-        if (isWhiteBottom) {
-          arrIdx = vRow * 8 + vCol;
-        } else {
-          arrIdx = (7 - vRow) * 8 + (7 - vCol);
-        }
-
-        var piece = board[arrIdx] || null;
-        var isLight = (boardRank + boardFile) % 2 !== 0;
-        // Note: isLight depends on actual rank/file, not visual position
-        // For isWhiteBottom: boardRank = 7-vRow, boardFile = vCol
-        // For !isWhiteBottom: boardRank = vRow, boardFile = 7-vCol  (wait this is wrong above)
-        // Let me simplify: light square if (actual_rank + actual_file) is odd
-        // actual_rank (0=rank8, 7=rank1): for isWhiteBottom: 7-vRow; for !: vRow
-        // actual_file (0=a, 7=h): for isWhiteBottom: vCol; for !: 7-vCol
-        // Actually the standard: a1 is dark, a8 is light... wait
-        // Chess: a1 is a1. Rank 1 + File a (0) = 1+0=1 odd → light? No.
-        // Standard: a1 is a DARK square. (rank 1, file a: 1+1=2 even → dark)
-        // Using 1-indexed: rank + file even → dark; odd → light
-        // board array: arrIdx 0 = a8 (rank8, file a), arrIdx 63 = h1 (rank1, file h)
-        // For arrIdx: rank8-based row = Math.floor(arrIdx/8), file = arrIdx%8
-        // 1-indexed rank = 8 - Math.floor(arrIdx/8), 1-indexed file = arrIdx%8 + 1
-        var arr1Rank = 8 - Math.floor(arrIdx / 8);
-        var arr1File = (arrIdx % 8) + 1;
-        var sqLight = (arr1Rank + arr1File) % 2 !== 0;
-
-        var sqClass = 'sq ' + (sqLight ? 'light' : 'dark');
-        var pieceHtml = '';
-        if (piece) {
-          var sym = PIECE_UNICODE[piece];
-          var isWhitePiece = piece === piece.toUpperCase();
-          pieceHtml = '<span class="' + (isWhitePiece ? 'pw' : 'pb') + '">' + sym + '</span>';
-        }
-        squares += '<div class="' + sqClass + '">' + pieceHtml + '</div>';
-      }
-    }
-
     return '<div class="board-side-label">Side to move: <b>' + esc(sideStr) + '</b></div>' +
       '<div class="board-wrap">' +
-        '<div class="board">' + squares + '</div>' +
+        '<div class="board" id="recog-board"></div>' +
       '</div>';
   }
 
@@ -502,6 +398,8 @@
       '</div>' +
       '<div class="reveal" id="reveal-panel"></div>' +
       '<div id="next-area"></div>';
+
+    renderStaticBoard(document.getElementById('recog-board'), pos.fen, { orientation: pos.side });
 
     currentRevealed = false;
 

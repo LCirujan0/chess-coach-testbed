@@ -9,12 +9,13 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/css/board.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE; --ink:#1B1D22; --muted:#6E727B; --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1; --line:rgba(0,0,0,.10); --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F; --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px; }
+  :root { --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE; --ink:#1B1D22; --muted:#6E727B; --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1; --line:rgba(0,0,0,.10); --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F; --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px; --light-sq:#ECE3D2; --dark-sq:#B49A78; --hl-move:rgba(47,158,118,.26); --hl-sel:rgba(47,158,118,.36); --r-board:9px; }
   * { box-sizing:border-box; margin:0; padding:0; }
   html, body { background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%); background-attachment:fixed; min-height:100vh; }
   body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); line-height:1.5; -webkit-font-smoothing:antialiased; }
@@ -66,25 +67,8 @@
   .technique-text { margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; font-size:13px; line-height:1.5; color:var(--ink); }
   .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
 
-  /* Board */
-  .board-wrap { position:relative; width:100%; max-width:420px; margin:0 auto 12px; aspect-ratio:1/1; }
-  .board { display:grid; grid-template-columns:repeat(8, 1fr); grid-template-rows:repeat(8, 1fr); width:100%; height:100%; border-radius:6px; overflow:hidden; box-shadow:0 10px 28px -14px rgba(20,30,60,.35); }
-  .square { position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; -webkit-user-select:none; }
-  .square.light { background:#F0D9B5; }
-  .square.dark { background:#B58863; }
-  .square.selected { background:#F6F669 !important; }
-  .square.last-move { background:rgba(246,246,105,.5) !important; }
-  .square.locked { cursor:default; }
-  .pc-img { width:86%; height:86%; object-fit:contain; pointer-events:none; }
-  /* white pieces need dark outline on light squares for legibility */
-  .square.light .pc-img[src*="/wP."], .square.light .pc-img[src*="/wR."], .square.light .pc-img[src*="/wN."], .square.light .pc-img[src*="/wB."], .square.light .pc-img[src*="/wQ."], .square.light .pc-img[src*="/wK."] { filter: drop-shadow(0 0 1px rgba(0,0,0,.55)); }
-  .coord { position:absolute; font-family:"Spline Sans Mono",ui-monospace,monospace; font-size:9px; font-weight:500; line-height:1; pointer-events:none; color:rgba(0,0,0,.45); }
-  .square.dark .coord { color:rgba(255,255,255,.45); }
-  .coord.file { bottom:2px; right:3px; }
-  .coord.rank { top:2px; left:2px; }
-  .legal-dot { width:28%; height:28%; border-radius:50%; background:rgba(30,30,30,.22); pointer-events:none; }
-  .legal-ring { width:86%; height:86%; border-radius:50%; border:3px solid rgba(30,30,30,.25); background:transparent; pointer-events:none; box-sizing:border-box; }
-  .board-annotations { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  /* Board — canonical component (css/board.css, §22) */
+  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
 
   /* Status + verdict */
   #status-line { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
