@@ -221,13 +221,29 @@ export function renderComparison(opts) {
 // overlay arrows: red = what the user played, green = engine's preferred (if
 // different). Uses the existing nav viewIndex + annotations mechanisms.
 export function jumpToUserMove(userMoveIdx) {
-  const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
-  if (userMoveIdx < 0 || userMoveIdx >= userMoves.length) return;
-  // viewHistory: [start, after-user-1, after-engine-1, after-user-2, ...]
-  // Land the board on "after user move N" so the played position is shown
-  // alongside the arrows describing the move that produced it.
-  const targetIdx = Math.min(2 * userMoveIdx + 1, state.viewHistory.length - 1);
-  state.viewIndex = targetIdx === state.viewHistory.length - 1 ? null : targetIdx;
+  if (!state.viewHistory.length) return;
+  // B1 fix (v0.49): map the comparison-row index (which counts ONLY user moves)
+  // to the real viewHistory entry by walking and counting user-played entries.
+  // The old `2*idx+1` stride assumed a strict start,user,engine,user,... layout
+  // and broke on wrong-move punishment plies (extra non-user entries) and on the
+  // final move. Counting is layout-agnostic.
+  let seen = -1, targetIdx = -1;
+  for (let i = 0; i < state.viewHistory.length; i++) {
+    const e = state.viewHistory[i];
+    if (e && e.mover === 'user') {
+      seen++;
+      if (seen === userMoveIdx) { targetIdx = i; break; }
+    }
+  }
+  if (targetIdx < 0) return;
+  // Land on the REAL historical entry, never collapse to null. The old code set
+  // viewIndex=null (live) whenever the target was the last entry, but the board
+  // is already at the live position after resolution, so the tap did nothing
+  // (the whole bug for single-move puzzles, where the only row mapped to null).
+  // A real index makes renderBoard show that ply and annotateForViewIndex paint
+  // THIS move's arrows; if the ply equals the live position the soft-update path
+  // still repaints the arrows + last-move highlight.
+  state.viewIndex = targetIdx;
   annotateForViewIndex();
   updateNavLabel();
   renderBoard();
