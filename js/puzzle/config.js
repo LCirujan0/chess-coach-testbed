@@ -4,7 +4,7 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.45 · R1.2 daily-loop hotfix · 2026-06-02';
+export const APP_VERSION = 'v0.46 · R1.3 cleanup · 2026-06-02';
 // Inject the stamp lazily once the DOM is parsed.
 queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
 
