@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Coach</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/js/coach-stats.js"></script>
+<style>
+  :root { --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE; --ink:#1B1D22; --muted:#6E727B; --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1; --line:rgba(0,0,0,.10); --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F; --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%); background-attachment: fixed; min-height: 100vh; }
+  body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .container { max-width:640px; margin:0 auto; }
+  h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+    .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position: sticky; top: calc(-1 * max(12px, env(safe-area-inset-top))); z-index: 50; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top: calc(-1 * max(12px, env(safe-area-inset-top))); }
+  .hamburger { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn); padding:8px 12px; cursor:pointer; font-size:16px; line-height:1; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s ease; font-family:inherit; }
+  .hamburger:hover { background:var(--surface2); }
+  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+  .coach-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); overflow: hidden; margin-top: 14px; display: flex; flex-direction: column; box-shadow: 0 16px 36px -22px rgba(30,40,70,.4); }
+  .coach-header { padding: 13px 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); background: #FAFBFC; }
+  .coach-avatar { width: 26px; height: 26px; border-radius: 9px; background: linear-gradient(140deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; box-shadow: 0 3px 9px -3px var(--accent); }
+  .coach-title { font-weight: 700; font-size: 14px; }
+  .coach-status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .coach-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 0 3px rgba(31,157,87,.18); }
+  .coach-log { padding: 14px 15px; display: flex; flex-direction: column; gap: 11px; min-height: 220px; overflow-y: auto; flex: 1; }
+  .msg { font-size: 13px; line-height: 1.5; padding: 10px 13px; border-radius: 14px; max-width: 90%; word-wrap: break-word; }
+  .msg.system { color: var(--muted); font-size: 12px; padding: 4px 0; background: transparent; max-width: 100%; font-style: italic; }
+  .msg.coach { align-self: flex-start; background: var(--surface2); border-bottom-left-radius: 4px; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.error { align-self: flex-start; background: #FBF0ED; color: var(--bad); border: 1px solid #EDD2CB; font-size: 12px; }
+  .msg.review { align-self: flex-start; background: var(--surface2); border-bottom-left-radius: 4px; padding: 13px 15px; max-width: 92%; font-size: 13.5px; line-height: 1.5; }
+  .msg.review .rv-lead { font-family: "Plus Jakarta Sans","Inter",system-ui,sans-serif; font-weight: 800; font-size: 15px; line-height: 1.3; color: var(--ink); margin-bottom: 11px; }
+  .msg.review .rv-points { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .msg.review .rv-point { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: baseline; }
+  .msg.review .rv-label { font-family: "Plus Jakarta Sans","Inter",system-ui,sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); line-height: 1.3; }
+  .msg.review .rv-point.tone-pos .rv-label { color: var(--pos); }
+  .msg.review .rv-point.tone-warn .rv-label { color: var(--warn); }
+  .msg.review .rv-point.tone-bad .rv-label { color: var(--bad); }
+  .msg.review .rv-text { font-size: 13px; line-height: 1.45; color: var(--ink); }
+  .msg.review .rv-turn { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font-size: 12.5px; color: var(--ink); margin-bottom: 10px; }
+  .msg.review .rv-turn .rv-turn-label { font-weight: 700; color: var(--muted); margin-right: 4px; }
+  .msg.review .rv-question { border-top: 1px solid var(--line); padding-top: 10px; font-style: italic; font-size: 13px; color: var(--ink); }
+  .msg.review .rv-cta { display: flex; gap: 9px; margin-top: 11px; }
+  .msg.review .rv-cta button { flex: 1; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+  .msg.review .rv-cta button:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
+  .msg.review .rv-cta button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .msg.review .rv-grounded { margin-top: 10px; font-size: 11px; color: var(--muted); font-style: italic; }
+  .coach-input-row { display: flex; gap: 8px; padding: 11px 12px; border-top: 1px solid var(--line); background: var(--surface); }
+  .coach-input { flex: 1; padding: 9px 12px; font-size: 16px; font-family: inherit; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--ink); outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+  .coach-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,158,118,.16); }
+  .coach-send { padding: 9px 16px; background: var(--accent); color: #fff; border: none; border-radius: 11px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+  .coach-send:hover:not(:disabled) { filter: brightness(1.07); }
+  .coach-send:active { transform: translateY(1px); }
+  .coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
+  .bigpic-slot { margin-bottom: 12px; }
+  .plan-today-beta { display:inline-flex; align-items:center; padding:2px 7px; background:var(--surface2); color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; border-radius:9px; }
+  .prompt-chips { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+  .nav-drawer.open { transform:translateX(0); }
+  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
+  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .nav-brand-name { font-weight:700; font-size:15px; }
+  .nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
+  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+  .nav-drawer-link:hover { background:var(--surface2); }
+  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+  .nav-drawer-link.coming { color:var(--muted); }
+  .nav-drawer-link.coming .nav-soon { margin-left:auto; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:var(--surface2); color:var(--muted); padding:2px 7px; border-radius:9px; }
+  .nav-drawer-link.active .nav-soon { background:rgba(255,255,255,.2); color:#fff; }
+  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
+  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+  .tab-bar a.active { color:var(--accent); }
+  .tab-bar a .tab-icon { width:22px; height:22px; }
+  .tab-bar a.coming { opacity:.55; }
+  @media (min-width: 880px) {
+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+    .hamburger { display:none !important; }
+    .container { max-width:780px; }
+    .tab-bar { display:none; }
+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+    .nav-backdrop { display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">&#9776;</button>
+    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <span class="page-title">Coach</span>
+  </div>
+  <div class="bigpic-slot" id="bigpic-slot"></div>
+  <div id="bigpic-header"></div>
+  <div id="prompt-chips" class="prompt-chips"></div>
+  <div class="coach-card">
+    <div class="coach-header">
+      <span class="coach-avatar">C</span>
+      <span class="coach-title">Coach</span>
+      <span class="coach-status">Online</span>
+    </div>
+    <div class="coach-log" id="coach-log">
+      <div class="msg system">Ask a general chess question, or wait for your daily Coach's pick (ships next release).</div>
+    </div>
+    <form class="coach-input-row" id="coach-form">
+      <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach&#8230;" autocomplete="off">
+      <button type="submit" class="coach-send" id="coach-send">Send</button>
+    </form>
+  </div>
+</div>
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand"><img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true"><span class="nav-brand-name">KnightPath</span></div>
+  <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <div class="nav-group-label">Tools</div>
+  <a href="/completed.html" class="nav-drawer-link"><span class="nav-icon">&#10003;</span>Completed</a>
+  <a href="/index.html" class="nav-drawer-link"><span class="nav-icon">&#9881;</span>Connection tests</a>
+  <div class="version-stamp">v0.29 · Coach big-picture + prompt chips · 2026-06-01</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+<script>
+function _surfaceError(text){var log=document.getElementById('coach-log');if(!log)return;var div=document.createElement('div');div.className='msg error';div.textContent=text;log.appendChild(div);log.scrollTop=log.scrollHeight;}
+window.addEventListener('error',function(e){_surfaceError('JS error: '+e.message+' at '+e.filename+':'+e.lineno+':'+e.colno);});
+window.addEventListener('unhandledrejection',function(e){_surfaceError('Unhandled promise rejection: '+e.reason);});
+document.getElementById('hamburger-btn').addEventListener('click',function(){document.getElementById('nav-drawer').classList.add('open');document.getElementById('nav-backdrop').classList.add('open');});
+document.getElementById('nav-backdrop').addEventListener('click',function(){document.getElementById('nav-drawer').classList.remove('open');document.getElementById('nav-backdrop').classList.remove('open');});
+function sanitiseCoachText(text){if(!text)return text;return String(text).replace(/\*\*(.+?)\*\*/g,'$1').replace(/(^|\s)\*(?!\s)([^*\n]+?)\*(?!\w)/g,'$1$2').replace(/[—–]/g,',').replace(/\s{2,}/g,' ').replace(/\s+,/g,',').trim();}
+function appendCoachMessage(role,text){var log=document.getElementById('coach-log');var ph=log.querySelector('.msg.system');if(ph&&role!=='system')ph.remove();var div=document.createElement('div');div.className='msg '+role;div.textContent=(role==='coach')?sanitiseCoachText(text):text;log.appendChild(div);log.scrollTop=log.scrollHeight;}
+function appendCoachReview(review){var log=document.getElementById('coach-log');var ph=log.querySelector('.msg.system');if(ph)ph.remove();var wrap=document.createElement('div');wrap.className='msg review';var lead=document.createElement('div');lead.className='rv-lead';lead.textContent=sanitiseCoachText(review.lead||'');wrap.appendChild(lead);if(Array.isArray(review.points)&&review.points.length){var pts=document.createElement('div');pts.className='rv-points';for(var i=0;i<Math.min(4,review.points.length);i++){var p=review.points[i];var row=document.createElement('div');row.className='rv-point'+(p.tone?' tone-'+p.tone:'');var lab=document.createElement('div');lab.className='rv-label';lab.textContent=String(p.label||'').slice(0,24);var txt=document.createElement('div');txt.className='rv-text';txt.textContent=sanitiseCoachText(p.text||'');row.appendChild(lab);row.appendChild(txt);pts.appendChild(row);}wrap.appendChild(pts);}if(review.turn&&(review.turn.label||review.turn.text)){var chip=document.createElement('div');chip.className='rv-turn';if(review.turn.label){var lbl=document.createElement('span');lbl.className='rv-turn-label';lbl.textContent=sanitiseCoachText(review.turn.label)+' —';chip.appendChild(lbl);chip.appendChild(document.createTextNode(' '+sanitiseCoachText(review.turn.text||'')));}else{chip.textContent=sanitiseCoachText(review.turn.text);}wrap.appendChild(chip);}if(review.question){var q=document.createElement('div');q.className='rv-question';q.textContent=sanitiseCoachText(review.question);wrap.appendChild(q);}if(Array.isArray(review.cta)&&review.cta.length){var ctaRow=document.createElement('div');ctaRow.className='rv-cta';for(var j=0;j<Math.min(2,review.cta.length);j++){var c=review.cta[j];var b=document.createElement('button');b.type='button';b.className=c.primary?'primary':'';b.textContent=c.label||'';if(typeof c.action==='function')b.addEventListener('click',c.action);ctaRow.appendChild(b);}wrap.appendChild(ctaRow);}if(review.grounded){var g=document.createElement('div');g.className='rv-grounded';g.textContent=sanitiseCoachText(review.grounded);wrap.appendChild(g);}log.appendChild(wrap);log.scrollTop=log.scrollHeight;return wrap;}
+window.__coach={appendCoachMessage:appendCoachMessage,appendCoachReview:appendCoachReview};
+var COACH_GENERAL_SYSTEM=['You are a chess coach answering general chess questions in a chat surface.','There is no specific position, puzzle, or game in context.','','HARD RULES:','- Do NOT invent or imagine a position the student did not describe. If they ask "what is the best move?" without a position, ask them to paste a FEN or describe it first.','- Do NOT make confident claims about the student\'s "weakness" or "strength" here. That diagnosis lives in Insights and the Coach\'s pick. Redirect there if asked.','- Plain language calibrated to a ~950-1500 ELO player. Avoid 2000+ jargon (minority attack, Carlsbad, Maroczy bind).','- Short. 2-4 sentences default.','- No markdown, no em-dashes, no UCI notation.','- If they paste a FEN or describe a position and ask for a move, explain the IDEA and ask them what they see. Do not hand over the move.','','Format your reply as plain prose.'].join('\n');
+var coachSending=false;var coachHistory=[];
+function sendCoachMessage(userText){if(coachSending||!userText.trim())return;coachHistory.push({role:'user',content:userText});appendCoachMessage('user',userText);coachSending=true;document.getElementById('coach-send').disabled=true;fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:280,system:COACH_GENERAL_SYSTEM,messages:coachHistory.map(function(m){return{role:m.role,content:m.content};})})}).then(function(r){return r.json().then(function(data){if(!r.ok)throw new Error('HTTP '+r.status+': '+JSON.stringify(data).slice(0,300));var reply=(data.content&&data.content[0]&&data.content[0].text)||'(empty response)';coachHistory.push({role:'assistant',content:reply});appendCoachMessage('coach',reply);});}).catch(function(err){appendCoachMessage('error','Coach error: '+err.message);}).finally(function(){coachSending=false;document.getElementById('coach-send').disabled=false;document.getElementById('coach-input').focus();});}
+document.getElementById('coach-form').addEventListener('submit',function(e){e.preventDefault();var input=document.getElementById('coach-input');var value=input.value;input.value='';sendCoachMessage(value);});
+// Spec 05 — bigpic-slot: Plan today (Prompt B, structured §17 review)
+(function(){
+  var slot=document.getElementById('bigpic-slot');
+  if(!slot)return;
+  var AN={tactical_patterns:'tactics',endgame_technique:'endgames',opening_principles:'openings',king_safety:'king safety',piece_activity:'piece activity',pawn_structure:'pawn structure',calculation:'calculation'};
+  function hk(k){return AN[k]||k;}
+  function fallbackReview(d){
+    if(!d||!d.focus_ranked||!d.focus_ranked.length)return{headline:'Still building your picture',points:[],question:'Solve a few more puzzles and ingest a game or two.',footnote:'Not enough data yet'};
+    var top=d.focus_ranked[0];var name=hk(top.attribute);var nm=name.charAt(0).toUpperCase()+name.slice(1);
+    var pts=[{label:'Focus',text:nm+' ('+top.tier+', score '+Math.round(top.score)+'/100)',tone:'warn'}];
+    if(d.session)pts.push({label:'Today',text:d.session.title+' — '+d.session.count+' puzzles queued',tone:''});
+    return{headline:'Your focus for today',points:pts,question:'What’s one idea from this area you could apply tonight?',footnote:'Based on your game and puzzle history · updates after each ingest'};
+  }
+  function renderBody(container,review){
+    while(container.firstChild)container.removeChild(container.firstChild);
+    var lead=document.createElement('div');
+    lead.style.cssText='font-family:"Plus Jakarta Sans","Inter",sans-serif;font-weight:800;font-size:15px;line-height:1.3;color:var(--ink);margin-bottom:11px;';
+    lead.textContent=sanitiseCoachText(review.headline||'Your focus for today');
+    container.appendChild(lead);
+    if(Array.isArray(review.points)&&review.points.length){
+      var pts=document.createElement('div');
+      pts.style.cssText='display:flex;flex-direction:column;gap:8px;margin-bottom:10px;';
+      for(var i=0;i<Math.min(3,review.points.length);i++){
+        var p=review.points[i];
+        var row=document.createElement('div');
+        row.style.cssText='display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:baseline;';
+        var lab=document.createElement('div');
+        lab.style.cssText='font-family:"Plus Jakarta Sans","Inter",sans-serif;font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;line-height:1.3;color:'+(p.tone==='pos'?'var(--pos)':p.tone==='warn'?'var(--warn)':p.tone==='bad'?'var(--bad)':'var(--muted)')+';';
+        lab.textContent=String(p.label||'').slice(0,24);
+        var txt=document.createElement('div');
+        txt.style.cssText='font-size:13px;line-height:1.45;color:var(--ink);';
+        txt.textContent=sanitiseCoachText(p.text||'');
+        row.appendChild(lab);row.appendChild(txt);pts.appendChild(row);
+      }
+      container.appendChild(pts);
+    }
+    if(review.question){
+      var q=document.createElement('div');
+      q.style.cssText='border-top:1px solid var(--line);padding-top:10px;font-style:italic;font-size:13px;color:var(--ink);margin-bottom:8px;';
+      q.textContent=sanitiseCoachText(review.question);
+      container.appendChild(q);
+    }
+    if(review.footnote){
+      var fn=document.createElement('div');
+      fn.style.cssText='font-size:11px;color:var(--muted);font-style:italic;';
+      fn.textContent=sanitiseCoachText(review.footnote);
+      container.appendChild(fn);
+    }
+  }
+  function loadJson(key,def){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(def))||def;}catch{return def;}}
+  var mistakes  =loadJson('chess-coach-mistakes-v1',[]);
+  var attempts  =loadJson('chess-coach-attempts-v1',{});
+  var scorecards=loadJson('chess-coach-game-scorecards-v1',{});
+  var rating    =loadJson('chess-coach-user-rating-v1',null);
+  var view,digest;
+  if(typeof CoachStats!=='undefined'){
+    view  =CoachStats.computeCoachView({rating:rating,mistakes:mistakes,attempts:attempts,scorecards:scorecards,nowMs:Date.now()});
+    digest=CoachStats.buildDigest(view);
+  }else{digest=null;}
+  var wrap=document.createElement('div');
+  wrap.style.cssText='background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);padding:14px 16px;margin-bottom:12px;box-shadow:0 8px 22px -14px rgba(30,40,70,.35);';
+  var hdrRow=document.createElement('div');
+  hdrRow.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:12px;';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='font-family:"Plus Jakarta Sans","Inter",sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);';
+  hdr.textContent='Plan today';
+  var beta=document.createElement('span');
+  beta.className='plan-today-beta';
+  beta.textContent='Beta';
+  hdrRow.appendChild(hdr);hdrRow.appendChild(beta);
+  wrap.appendChild(hdrRow);
+  var bodyContainer=document.createElement('div');
+  bodyContainer.style.cssText='margin-bottom:12px;';
+  wrap.appendChild(bodyContainer);
+  var today=new Date().toISOString().slice(0,10);
+  var CACHE_KEY='chess-coach-plan-today-v2'; // v2: structured JSON review (v1 = plain text, retired)
+  var cachedReview=null;
+  try{var c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&c.date===today)cachedReview=c.review;}catch{}
+  renderBody(bodyContainer,cachedReview||fallbackReview(digest));
+  var btn=document.createElement('button');
+  btn.type='button';btn.textContent=cachedReview?'Refresh plan':'Plan today';
+  btn.style.cssText='padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-btn);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;box-shadow:0 4px 12px -6px var(--accent);transition:filter .15s ease;';
+  btn.onclick=async function(){
+    if(!digest||typeof CoachStats==='undefined'){renderBody(bodyContainer,fallbackReview(digest));return;}
+    btn.disabled=true;btn.textContent='Planning…';
+    var r=digest.rating||950;
+    var SYS=[
+      'You are the student's chess coach planning today's practice. They are rated approximately '+r+' on Chess.com rapid, targeting 1500.',
+      '','You are given a DIGEST (JSON) computed from their games and puzzle history. It is the ground truth. Your job is to narrate it, not to analyse chess.',
+      '','HARD RULES:',
+      '- Do NOT re-rank. The first item in focus_ranked IS today's focus.',
+      '- Do NOT invent any chess fact. Use only the numbers/labels in the DIGEST.',
+      '- Do NOT reveal a puzzle answer.',
+      '- Humanise attribute keys: tactical_patterns->tactics, endgame_technique->endgames, opening_principles->openings, king_safety->king safety, piece_activity->piece activity, pawn_structure->pawn structure, calculation->calculation.',
+      '- If focus_ranked is empty: headline="Still building your picture", points=[], question asking for more games/puzzles.',
+      '','Output ONLY valid JSON (no markdown fences) matching this exact shape:',
+      '{"headline":"Your focus for today","points":[{"label":"Leak","text":"...","tone":"bad"},{"label":"Focus","text":"...","tone":"warn"},{"label":"Strength","text":"...","tone":"pos"}],"question":"One reflective question.","footnote":"Based on your last N games - updates after each ingest"}',
+      'tone values: "bad" (worst area), "warn" (priority focus), "pos" (strength), "" (neutral). 2-3 points.',
+      'Plain language calibrated to ~'+r+'-rated player. No markdown, no em-dashes.'
+    ].join('\n');
+    try{
+      var resp=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,system:SYS,messages:[{role:'user',content:'DIGEST:\n'+JSON.stringify(digest,null,2)}]})});
+      var data=await resp.json();
+      if(!resp.ok)throw new Error('HTTP '+resp.status);
+      var raw=(data.content&&data.content[0]&&data.content[0].text)||'';
+      var review=null;
+      try{review=JSON.parse(raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim());}catch{}
+      if(!review||!review.headline)review=fallbackReview(digest);
+      /* Plan Today - Daily tab integration not yet built */
+      renderBody(bodyContainer,review);
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify({date:today,review:review}));}catch{}
+      btn.textContent='Refresh plan';btn.disabled=false;
+    }catch(err){
+      renderBody(bodyContainer,fallbackReview(digest));
+      btn.textContent='Plan today';btn.disabled=false;
+    }
+  };
+  wrap.appendChild(btn);slot.appendChild(wrap);
+  var log=document.getElementById('coach-log');
+  var ph=log&&log.querySelector('.msg.system');
+  if(ph)ph.textContent='Ask a general chess question, or tap “Plan today” above for your daily focus.';
+})();
+// ── Big-picture header + prompt chips ────────────────────────────────────────────
+// §12 note: chips route through COACH_GENERAL_SYSTEM which already blocks
+// spoilers (no position in context, no eval, no puzzle answer). No red-team
+// required for this surface. Logged in v0.29 release note.
+(function(){
+  var hdr=document.getElementById('bigpic-header');
+  var chipsEl=document.getElementById('prompt-chips');
+  if(!hdr||!chipsEl)return;
+  if(typeof CoachStats==='undefined')return;
+  function lj(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))||d;}catch{return d;}}
+  var ALBL={tactical_patterns:'tactics',endgame_technique:'endgames',opening_principles:'openings',king_safety:'king safety',piece_activity:'piece activity',pawn_structure:'pawn structure',calculation:'calculation'};
+  var scorecards=lj('chess-coach-game-scorecards-v1',{});
+  var rating    =lj('chess-coach-user-rating-v1',null);
+  var mistakes  =lj('chess-coach-mistakes-v1',[]);
+  var attempts  =lj('chess-coach-attempts-v1',{});
+  var view=CoachStats.computeCoachView({rating:rating,mistakes:mistakes,attempts:attempts,scorecards:scorecards,nowMs:Date.now()});
+  var phases=CoachStats.phaseScores?CoachStats.phaseScores(scorecards):null;
+  var ri=phases&&CoachStats.perPhaseRatingImpact?CoachStats.perPhaseRatingImpact(phases):null;
+  var hasData=view&&view.rating&&view.focus_ranked&&view.focus_ranked.length>0;
+  // ── header card ──
+  var card=document.createElement('div');
+  card.style.cssText='background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);padding:14px 16px;margin-bottom:12px;box-shadow:0 4px 14px -10px rgba(30,40,70,.3);';
+  if(!hasData){
+    var nm=document.createElement('div');
+    nm.style.cssText='font-size:13px;color:var(--muted);';
+    nm.textContent='Ingest a few games to unlock your profile.';
+    card.appendChild(nm);hdr.appendChild(card);return;
+  }
+  var hdrLbl=document.createElement('div');
+  hdrLbl.style.cssText='font-family:"Plus Jakarta Sans","Inter",sans-serif;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;';
+  hdrLbl.textContent='Your profile';
+  card.appendChild(hdrLbl);
+  function addRow(label,value,clr,last){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;'+(last?'':'border-bottom:1px solid var(--line);');
+    var l=document.createElement('div');
+    l.style.cssText='font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);';
+    l.textContent=label;
+    var v=document.createElement('div');
+    v.style.cssText='font-size:13px;font-weight:600;color:'+(clr||'var(--ink)')+';';
+    v.textContent=value;
+    row.appendChild(l);row.appendChild(v);card.appendChild(row);
+  }
+  addRow('Rating',(view.rating||950)+' · '+(view.overall||'Pawn'),'',false);
+  var leakPhase=null,strongPhase=null,bestElo=-Infinity;
+  if(ri){
+    var phs=['opening','middlegame','endgame'];
+    for(var i=0;i<phs.length;i++){var ph=phs[i];if(ri[ph]&&ri[ph].elo!==null&&ri[ph].elo>bestElo){bestElo=ri[ph].elo;strongPhase=ph;}}
+    var worstGap=0;
+    for(var i=0;i<phs.length;i++){var ph=phs[i];if(!ri[ph]||ri[ph].elo===null||ph===strongPhase)continue;var g=ri[ph].elo-bestElo;if(g<worstGap){worstGap=g;leakPhase=ph;}}
+    if(strongPhase&&bestElo>-Infinity)addRow('Strongest',strongPhase.charAt(0).toUpperCase()+strongPhase.slice(1)+' · ≈'+Math.round(bestElo)+' ELO','var(--pos)',!leakPhase);
+    if(leakPhase&&worstGap<-20)addRow('Biggest leak',leakPhase.charAt(0).toUpperCase()+leakPhase.slice(1)+' (≈'+Math.round(worstGap)+' ELO)','var(--bad)',true);
+  }
+  hdr.appendChild(card);
+  // ── prompt chips ──
+  var chipLeak=leakPhase||(view.focus_ranked.length?ALBL[view.focus_ranked[0].attribute]||view.focus_ranked[0].attribute:'your weakest area');
+  var chipTexts=[
+    'Why is my '+chipLeak+' my biggest leak?',
+    'What should I drill today?',
+    'How do I improve my '+chipLeak+'?',
+    'Explain my rating trajectory',
+  ];
+  for(var c=0;c<chipTexts.length;c++){
+    (function(text){
+      var btn=document.createElement('button');
+      btn.type='button';btn.textContent=text;
+      btn.style.cssText='padding:8px 13px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit;transition:background .12s ease,border-color .12s ease;white-space:nowrap;';
+      btn.addEventListener('mouseenter',function(){this.style.background='var(--surface2)';this.style.borderColor='var(--accent)';});
+      btn.addEventListener('mouseleave',function(){this.style.background='var(--surface)';this.style.borderColor='';});
+      btn.addEventListener('click',function(){sendCoachMessage(text);});
+      chipsEl.appendChild(btn);
+    })(chipTexts[c]);
+  }
+})();
+</script>
+</body>
+</html>

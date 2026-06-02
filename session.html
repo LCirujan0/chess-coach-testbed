@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Session</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F4F6F8; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment: fixed; min-height:100vh;
+  }
+  body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.title,.stat .v { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+
+  /* focus header + segmented progress rail (one segment per block, a pip per item) */
+  .focus-top { display:flex; align-items:center; gap:14px; padding:11px 16px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:5; }
+  .exit { width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-size:15px; flex-shrink:0; }
+  .exit:hover { background:var(--surface2); }
+  .railwrap { flex:1; min-width:0; }
+  .railtxt { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:14px; } .railtxt .now small { color:var(--muted); font-weight:600; }
+  .railtxt .of { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); flex-shrink:0; }
+  .rail { display:flex; gap:8px; }
+  .blockseg { display:flex; flex-direction:column; gap:3px; }
+  .blockseg .pips { display:flex; gap:3px; flex-wrap:wrap; }
+  .blockseg .pip { width:14px; height:5px; border-radius:3px; background:var(--surface3); }
+  .blockseg .pip.done { background:var(--accent); }
+  .blockseg .pip.cur { background:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+  .blockseg .bl { font-size:9px; font-family:"Spline Sans Mono"; color:var(--muted); }
+  .modepill { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); border:1px solid var(--line); border-radius:14px; padding:4px 10px; flex-shrink:0; }
+
+  .wrap { max-width:560px; margin:0 auto; padding:22px 16px 40px; }
+
+  /* block-begin card */
+  .blockcard { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:24px 22px; box-shadow:0 16px 36px -26px rgba(20,30,55,.3); text-align:center; }
+  .blockcard .ic { width:50px; height:50px; border-radius:14px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+  .blockcard .ic svg { width:25px; height:25px; stroke:var(--accent); fill:none; stroke-width:1.8; }
+  .blockcard h2 { font-size:21px; font-weight:800; letter-spacing:-.01em; }
+  .blockcard .sub { color:var(--muted); font-size:13px; margin:5px auto 4px; max-width:360px; }
+  .blockcard .meta { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); margin:10px 0 18px; }
+
+  .btn { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; padding:13px 16px; border-radius:12px; border:1px solid transparent; cursor:pointer; width:100%; display:block; text-align:center; text-decoration:none; }
+  .btn.primary { background:var(--accent); color:#fff; box-shadow:0 10px 22px -10px var(--accent); transition:filter .15s ease; }
+  .btn.primary:hover { filter:brightness(1.06); } .btn.primary:active { transform:translateY(1px); }
+  .btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); }
+  .btn.ghost:hover { background:var(--surface2); }
+  .skip { background:none; border:none; color:var(--muted); font-size:12.5px; text-decoration:underline; cursor:pointer; margin-top:12px; font-family:inherit; }
+
+  /* transition beat */
+  .trans { text-align:center; padding:38px 18px; }
+  .trans .ic { width:46px; height:46px; border-radius:14px; background:#E8F5EE; color:var(--pos); display:flex; align-items:center; justify-content:center; margin:0 auto 13px; }
+  .trans h2 { font-size:18px; font-weight:800; }
+  .trans .nx { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:340px; }
+  .trans .nxt { display:inline-flex; align-items:center; gap:11px; border:1px solid var(--line); border-radius:13px; padding:12px 16px; background:var(--surface); text-align:left; }
+  .trans .nxt .ic2 { width:32px; height:32px; border-radius:9px; background:var(--surface2); display:flex; align-items:center; justify-content:center; } .trans .nxt .ic2 svg { width:17px; height:17px; stroke:var(--accent); fill:none; stroke-width:1.8; }
+  .trans .nxt .n { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:13.5px; } .trans .nxt .s { font-size:11px; color:var(--muted); }
+  .trans .continue { max-width:280px; margin:16px auto 0; }
+
+  /* summary / payoff */
+  .sum { text-align:center; padding:28px 18px; }
+  .sum .crown { font-size:30px; }
+  .sum h1 { font-size:23px; font-weight:800; margin:6px 0 2px; }
+  .sum .ssub { color:var(--muted); font-size:13px; }
+  .sum .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin:18px 0; }
+  .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:13px; }
+  .stat .v { font-size:22px; font-weight:800; } .stat .v small { font-size:12px; color:var(--pos); font-weight:700; }
+  .stat .k { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-top:2px; }
+  .moved { background:var(--accent-soft); border:1px solid #CDE9DC; border-radius:12px; padding:12px 14px; text-align:left; display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+  .ava { width:24px; height:24px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); flex-shrink:0; }
+  .moved .txt { font-size:13px; }
+  .cta { display:flex; gap:10px; max-width:400px; margin:0 auto; } .cta .btn { flex:1; }
+
+  /* error / empty */
+  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:12px; padding:13px 15px; }
+  .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
+  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:#9a4334; margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+  .empty { text-align:center; padding:36px 18px; } .empty h2 { font-size:20px; font-weight:800; } .empty p { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:320px; } .empty .btn { max-width:280px; margin:0 auto; }
+</style>
+</head>
+<body>
+<div id="focus-head"></div>
+<div class="wrap" id="session-root"><!-- rendered by JS --></div>
+
+<script>
+/* ============================================================================
+ * session.html — the in-session WRAPPER (Loop 1, rebuilt v1.0 to Design's
+ * rethink). Spec: redesign-spec §18 + design-explorations/in-session-flow.html
+ * (2026-06-01, "session wrapper, not a launchpad").
+ *
+ * The session CONTAINS the drills: a segmented progress rail (one segment per
+ * LIVE block, a pip per item) + a live "Mistake 3 of 8 · Block 1 of 2" readout.
+ * Each block's solving happens in puzzle.html (Releases-A v0.13 round-trip):
+ * "Begin block" deep-links to /puzzle.html?session=today&block=<id>; puzzle.html
+ * filters to the block's ids, writes back blocks[idx].done, and returns to
+ * /session.html on block completion → transition beat → next block → summary.
+ * Only built block types are ever in plan.blocks, so a block can never dump the
+ * user into the open Puzzles queue.
+ *
+ * Progress is recomputed from chess-coach-attempts-v1 each load, so it stays
+ * correct whether puzzle.html wrote `done` or not.
+ *
+ * NO-SPOILER: never shows a puzzle's answer/motif/eval — only block titles,
+ * counts, and aggregate session stats.
+ * ==========================================================================*/
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var head = $('focus-head');
+  var root = $('session-root');
+
+  var KEY_ATTEMPTS = 'chess-coach-attempts-v1';
+  var KEY_RATING   = 'chess-coach-user-rating-v1';
+  var KEY_SESSION  = 'chess-coach-session-v1';
+  var KEY_COMPLETE = 'chess-coach-session-complete-v1';
+
+  function loadJson(key, fb) {
+    try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; }
+    catch (e) { return fb; }
+  }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function todayKey() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  var ICON = {
+    mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
+    review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>'
+  };
+  // noun per block for the "Mistake 3 of 8" readout + short rail label
+  var NOUN  = { mistakes: 'Mistake', review: 'Card' };
+  var SHORT = { mistakes: 'Mistakes', review: 'Review' };
+
+  // ---- load ----
+  var plan, attempts, ratingCache;
+  try {
+    plan = loadJson(KEY_SESSION, null);
+    attempts = loadJson(KEY_ATTEMPTS, {}) || {};
+    ratingCache = loadJson(KEY_RATING, null);
+  } catch (e) {
+    head.innerHTML = '';
+    root.innerHTML = '<div class="ebanner"><div class="t">Could not load your session.</div><div class="raw">' + esc((e && e.stack) || String(e)) + '</div></div>';
+    return;
+  }
+  var rating = (ratingCache && typeof ratingCache.rating === 'number') ? ratingCache.rating : null;
+
+  function wireExit() { var e = $('exit-btn'); if (e) e.addEventListener('click', function () { window.location.href = '/today.html'; }); }
+
+  // No active plan for today -> not a dead end.
+  if (!plan || !Array.isArray(plan.blocks) || !plan.blocks.length || plan.date !== todayKey()) {
+    head.innerHTML = '<div class="focus-top"><span class="exit" id="exit-btn" title="Exit to Today">✕</span><div class="railwrap"><div class="railtxt"><span class="now">Session</span></div></div></div>';
+    root.innerHTML = '<div class="empty"><h2>No active session</h2><p>Head back to Today and tap Start session — the coach builds one from your recent games.</p><a class="btn primary" href="/today.html">Go to Today</a></div>';
+    wireExit();
+    return;
+  }
+
+  // ---- recompute per-block done from attempts (never regress) ----
+  function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
+  plan.blocks.forEach(function (b) {
+    var solvedInBlock = (b.ids || []).filter(isSolved).length;
+    b.done = Math.max(b.done || 0, solvedInBlock);
+    if (b.done > b.count) b.done = b.count;
+  });
+  function blockComplete(b) { return (b.done || 0) >= (b.count || 0); }
+  var nLive = plan.blocks.length;
+
+  // current block = first incomplete; persist idx so Today's resume is honest
+  var curIdx = plan.blocks.findIndex(function (b) { return !blockComplete(b); });
+  var allDone = curIdx === -1;
+  plan.idx = allDone ? nLive : curIdx;
+  save(KEY_SESSION, plan);
+
+  function getTransition() { try { return sessionStorage.getItem('cc-session-transition'); } catch (e) { return null; } }
+  function setTransition(v) { try { if (v == null) sessionStorage.removeItem('cc-session-transition'); else sessionStorage.setItem('cc-session-transition', v); } catch (e) {} }
+
+  // ---- the segmented rail ----
+  // activeIdx = the block currently in focus; itemCursor = next item index in it.
+  function railHtml(activeIdx) {
+    var segs = plan.blocks.map(function (b, bi) {
+      var pips = '';
+      for (var i = 0; i < (b.count || 0); i++) {
+        var cls = (i < (b.done || 0)) ? 'done' : (bi === activeIdx && i === (b.done || 0) ? 'cur' : '');
+        pips += '<span class="pip ' + cls + '"></span>';
+      }
+      var lbl = (SHORT[b.id] || b.title) + ' · ' + b.count + (blockComplete(b) ? ' ✓' : '');
+      return '<div class="blockseg"><div class="pips">' + pips + '</div><div class="bl">' + esc(lbl) + '</div></div>';
+    }).join('');
+    return '<div class="rail">' + segs + '</div>';
+  }
+  function headHtml(activeIdx, nowText, ofText, mode) {
+    return '<div class="focus-top"><span class="exit" id="exit-btn" title="Exit to Today">✕</span>' +
+      '<div class="railwrap"><div class="railtxt"><span class="now">' + nowText + '</span>' +
+      (ofText ? '<span class="of">' + ofText + '</span>' : '') + '</div>' + railHtml(activeIdx) + '</div>' +
+      (mode ? '<span class="modepill">' + mode + '</span>' : '') + '</div>';
+  }
+
+  // ---- session summary stats ----
+  function sessionStats() {
+    var ids = [];
+    plan.blocks.forEach(function (b) { (b.ids || []).forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); }); });
+    var solved = ids.filter(isSolved);
+    var reps = plan.blocks.reduce(function (s, b) { return s + (b.done || 0); }, 0);
+    var accs = solved.map(function (id) {
+      var a = attempts[id];
+      return (a && typeof a.firstAccuracy === 'number') ? a.firstAccuracy : (a && typeof a.lastAccuracy === 'number') ? a.lastAccuracy : null;
+    }).filter(function (v) { return v != null; });
+    var acc = accs.length ? Math.round(accs.reduce(function (a, b) { return a + b; }, 0) / accs.length) : null;
+    return { reps: reps, accuracy: acc };
+  }
+
+  // =====================================================================
+  // SCREENS
+  // =====================================================================
+  function renderSummary() {
+    head.innerHTML = headHtml(nLive, 'Session complete', '', null);
+    var st = sessionStats();
+    var pctToTarget = (rating != null) ? Math.max(0, Math.min(100, Math.round((rating - 950) / (1500 - 950) * 100))) : null;
+    var thirdStat = (pctToTarget != null)
+      ? '<div class="stat"><div class="v">' + pctToTarget + '<small>%</small></div><div class="k">To 1500</div></div>'
+      : '<div class="stat"><div class="v">🔥</div><div class="k">Streak</div></div>';
+    var read = 'Cleared your recent mistakes and the cards due today. Tomorrow leans the same way until your endgame trainer unlocks.';
+    save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
+    root.innerHTML =
+      '<div class="sum"><div class="crown">🔥</div><h1>Session complete</h1>' +
+      '<div class="ssub">Streak secured · ' + st.reps + ' puzzle' + (st.reps === 1 ? '' : 's') + '</div>' +
+      '<div class="stats">' +
+        '<div class="stat"><div class="v">' + st.reps + '</div><div class="k">Solved</div></div>' +
+        '<div class="stat"><div class="v">' + (st.accuracy != null ? st.accuracy + '<small>%</small>' : '—') + '</div><div class="k">Accuracy</div></div>' +
+        thirdStat +
+      '</div>' +
+      '<div class="moved"><span class="ava"></span><div class="txt">' + read + '</div></div>' +
+      '<div class="cta"><a class="btn ghost" href="/today.html">Done</a><button class="btn primary" id="one-more">One more set</button></div></div>';
+    wireExit();
+    var om = $('one-more');
+    if (om) om.addEventListener('click', function () { try { localStorage.removeItem(KEY_SESSION); } catch (e) {} window.location.href = '/today.html'; });
+  }
+
+  function renderTransition(finishedIdx) {
+    var finished = plan.blocks[finishedIdx];
+    var next = plan.blocks[finishedIdx + 1];
+    head.innerHTML = headHtml(finishedIdx, 'Block ' + (finishedIdx + 1) + ' complete', (next ? 'Block ' + (finishedIdx + 2) + ' of ' + nLive + ' next' : 'Last block done'), null);
+    var nxtCard = next
+      ? '<div class="nxt"><span class="ic2">' + (ICON[next.id] || '') + '</span><div><div class="n">' + esc(next.title) + '</div><div class="s">' + esc(next.sub) + '</div></div></div>'
+      : '';
+    root.innerHTML =
+      '<div class="trans"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>' +
+      '<h2>' + esc(finished.title) + ' done · ' + finished.count + ' of ' + finished.count + '</h2>' +
+      '<div class="nx">' + (next ? 'Next block:' : 'That was the last block.') + '</div>' +
+      nxtCard +
+      '<div class="continue"><button class="btn primary" id="continue-btn">Continue</button></div></div>';
+    wireExit();
+    var c = $('continue-btn');
+    if (c) c.addEventListener('click', function () { setTransition(null); if (next) renderBlock(); else renderSummary(); });
+  }
+
+  function renderBlock() {
+    curIdx = plan.blocks.findIndex(function (b) { return !blockComplete(b); });
+    if (curIdx === -1) { renderSummary(); return; }
+    plan.idx = curIdx; save(KEY_SESSION, plan);
+    var b = plan.blocks[curIdx];
+    var noun = NOUN[b.id] || 'Puzzle';
+    var nowText = esc(b.title) + ' <small>· Block ' + (curIdx + 1) + ' of ' + nLive + '</small>';
+    var ofText = noun + ' ' + Math.min((b.done || 0) + 1, b.count) + ' of ' + b.count;
+    head.innerHTML = headHtml(curIdx, nowText, ofText, b.mode === 'deep' ? 'Deep' : 'Drill');
+    root.innerHTML =
+      '<div class="blockcard"><div class="ic">' + (ICON[b.id] || '') + '</div>' +
+      '<h2>' + esc(b.title) + '</h2>' +
+      '<div class="sub">' + esc(b.sub) + '</div>' +
+      '<div class="meta">' + ofText + (b.mode === 'deep' ? ' · Deep mode' : '') + '</div>' +
+      '<a class="btn primary" href="/puzzle.html?session=today&block=' + b.id + '">' + ((b.done || 0) > 0 ? 'Continue block' : 'Begin block') + ' →</a>' +
+      '<button class="skip" id="skip-btn">Skip this block</button></div>';
+    wireExit();
+    var sk = $('skip-btn');
+    if (sk) sk.addEventListener('click', function () {
+      var finishedIdx = curIdx;
+      b.done = b.count; save(KEY_SESSION, plan);
+      if (plan.blocks[finishedIdx + 1]) renderTransition(finishedIdx); else renderSummary();
+    });
+  }
+
+  // ---- entry routing ----
+  if (allDone) { renderSummary(); return; }
+  // If a block just completed (e.g. returning from puzzle.html), show its beat.
+  var lastCompleted = -1;
+  for (var i = 0; i < plan.blocks.length; i++) { if (blockComplete(plan.blocks[i])) lastCompleted = i; else break; }
+  if (lastCompleted >= 0 && lastCompleted === curIdx - 1 && getTransition() !== String(lastCompleted)) {
+    setTransition(String(lastCompleted));
+    renderTransition(lastCompleted);
+  } else {
+    renderBlock();
+  }
+})();
+</script>
+</body>
+</html>

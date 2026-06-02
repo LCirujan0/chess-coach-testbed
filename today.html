@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Today</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/js/coach-stats.js"></script>
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment: fixed; min-height: 100vh;
+  }
+  body {
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .container { max-width:640px; margin:0 auto; }
+  h1, .page-title, .nav-brand-name, .title, .stat-num { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+
+    .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position: sticky; top: calc(-1 * max(12px, env(safe-area-inset-top))); z-index: 50; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top: calc(-1 * max(12px, env(safe-area-inset-top))); }
+  .hamburger {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn);
+    padding:8px 12px; cursor:pointer; font-size:16px; line-height:1; color:var(--ink);
+    box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s ease; font-family:inherit;
+  }
+  .hamburger:hover { background:var(--surface2); }
+  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+
+  /* top greeting */
+  .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:4px; }
+  .eyebrow { font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700; color:var(--accent); }
+  .title { font-weight:800; font-size:26px; letter-spacing:-.02em; margin:4px 0 2px; line-height:1.1; }
+  .sub { color:var(--muted); font-size:13px; }
+  .chips { display:flex; gap:7px; flex-wrap:wrap; }
+  .chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:5px 11px; border-radius:var(--r-pill); text-decoration:none; }
+  .chip.streak { background:#FBF1E3; color:var(--warn); }
+  .chip.tier { background:#EBF1FB; color:#3F6FB0; }
+
+  /* coach note */
+  .coachnote { display:flex; gap:10px; align-items:flex-start; background:var(--accent-soft); border:1px solid #CDE9DC; border-radius:13px; padding:13px 15px; margin:16px 0; text-decoration:none; color:inherit; }
+  .coachnote:hover { filter:brightness(.99); }
+  .ava { width:26px; height:26px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:"Plus Jakarta Sans"; font-weight:700; font-size:12px; flex-shrink:0; }
+  .coachnote .txt { font-size:13px; } .coachnote .txt b { font-family:"Plus Jakarta Sans"; font-weight:700; }
+
+  /* session card */
+  .session { background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:18px; box-shadow:0 16px 34px -26px rgba(30,40,70,.4); }
+  .session .sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .session .sh .t { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:15px; }
+  .session .sh .m { font-size:12px; color:var(--muted); font-family:"Spline Sans Mono"; }
+  .block { display:flex; align-items:center; gap:12px; padding:11px 8px; border-radius:11px; cursor:pointer; text-decoration:none; color:inherit; border:none; background:none; width:100%; text-align:left; font:inherit; }
+  .block:hover { background:var(--surface2); }
+  .block .ic { width:34px; height:34px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .block .ic svg { width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:1.8; }
+  .block .bd { flex:1; min-width:0; } .block .bd b { font-size:13.5px; font-family:"Plus Jakarta Sans"; font-weight:700; } .block .bd small { display:block; color:var(--muted); font-size:11.5px; }
+  .block .ct { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); }
+  .block .go { color:var(--muted); font-size:15px; margin-left:4px; }
+  /* locked "coming soon" rows — never sequenced, never counted */
+  .coming-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px; }
+  .coming-wrap { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  .block.locked { opacity:.55; cursor:default; }
+  .block.locked .ct { font-family:"Inter",sans-serif; font-weight:700; }
+
+  /* plan-today focus sentence */
+  .plan-focus { font-size:13px; color:var(--ink); margin:0 0 10px; padding:9px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; line-height:1.45; }
+  .plan-focus b { font-family:"Plus Jakarta Sans",sans-serif; }
+  .plan-focus.plan-focus-muted { color:var(--muted); background:var(--surface2); border-left-color:var(--surface3); font-style:italic; }
+  /* unlocked endgame extra block (when not the focus) */
+  .extra-section { margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:14px 18px; box-shadow:0 8px 20px -18px rgba(30,40,70,.3); }
+  .extra-section .sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .extra-section .sh .t { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; }
+  .extra-section .sh .m { font-size:11.5px; color:var(--muted); }
+
+  .btn { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; padding:13px 16px; border-radius:12px; border:1px solid transparent; cursor:pointer; width:100%; }
+  .btn.primary { background:var(--accent); color:#fff; box-shadow:0 10px 22px -10px var(--accent); transition:filter .15s ease; text-decoration:none; display:block; text-align:center; }
+  .btn.primary:hover { filter:brightness(1.06); }
+  .btn.primary:active { transform:translateY(1px); }
+  .btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); text-decoration:none; display:block; text-align:center; }
+  .btn.ghost:hover { background:var(--surface2); }
+
+  /* progress glance */
+  .glance { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:14px 16px; margin-top:14px; cursor:pointer; text-decoration:none; color:inherit; }
+  .glance:hover { background:var(--surface2); }
+  .ring { width:50px; height:50px; flex-shrink:0; }
+  .glance .num { font-family:"Plus Jakarta Sans"; font-size:22px; font-weight:800; } .glance .num small { font-size:12px; color:var(--pos); font-weight:700; }
+  .glance .gl-sub { font-size:11.5px; color:var(--muted); }
+  .glance .go { margin-left:auto; color:var(--accent); font-size:12px; font-weight:700; }
+
+  /* mid / empty states */
+  .mid { text-align:center; padding:26px 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); box-shadow:0 16px 36px -26px rgba(20,30,55,.22); margin-top:14px; }
+  .mid .ic { width:44px; height:44px; border-radius:13px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+  .mid .ic.done { background:#E8F5EE; color:var(--pos); }
+  .mid h2 { font-size:20px; font-weight:800; letter-spacing:-.01em; }
+  .mid p { font-size:13px; color:var(--muted); max-width:340px; margin:6px auto 16px; }
+  .mid .btn { width:auto; display:inline-block; padding:12px 22px; }
+
+  /* error banner (raw error guardrail) */
+  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:12px; padding:13px 15px; margin-top:14px; }
+  .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
+  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:#9a4334; margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+
+  /* nav (spec §7) — matches the shared shell on the other pages */
+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+  .nav-drawer.open { transform:translateX(0); }
+  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
+  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .nav-brand-name { font-weight:700; font-size:15px; }
+  .nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
+  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+  .nav-drawer-link:hover { background:var(--surface2); }
+  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+  .nav-drawer-link.coming { color:var(--muted); }
+  .nav-drawer-link.coming .nav-soon { margin-left:auto; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:var(--surface2); color:var(--muted); padding:2px 7px; border-radius:9px; }
+  .nav-drawer-link.active .nav-soon { background:rgba(255,255,255,.2); color:#fff; }
+  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
+  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+  .tab-bar a.active { color:var(--accent); }
+  .tab-bar a .tab-icon { width:22px; height:22px; }
+  .tab-bar a.coming { opacity:.55; }
+
+  @media (min-width: 880px) {
+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+    .hamburger { display:none !important; }
+    .container { max-width:780px; }
+    .tab-bar { display:none; }
+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+    .nav-backdrop { display:none !important; }
+    .title { font-size:32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <span class="page-title">Today</span>
+  </div>
+  <div id="today-root"><!-- rendered by JS --></div>
+</div>
+
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand">
+    <img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
+    <span class="nav-brand-name">KnightPath</span>
+  </div>
+  <a href="/today.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <div class="nav-group-label">Tools</div>
+  <a href="/roadmap.html" class="nav-drawer-link"><span class="nav-icon">▤</span>Roadmap</a>
+  <a href="/completed.html" class="nav-drawer-link"><span class="nav-icon">✓</span>Completed</a>
+  <a href="/index.html" class="nav-drawer-link"><span class="nav-icon">⚙</span>Connection tests</a>
+  <div class="version-stamp">v0.32 · Focus sentence fallback · 2026-06-01</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+
+<script>
+/* ============================================================================
+ * today.html — the daily launchpad (Loop 1, rebuilt v1.0 to Design's
+ * session-wrapper rethink). Spec: redesign-spec §8/§18 + design-explorations/
+ * today-screen.html (2026-06-01) + engineering spec 05 (deterministic fallback).
+ *
+ * SESSION = BUILT BLOCKS ONLY. Only block types that actually exist are live
+ * and counted: recent mistakes + review due. Endgames + board vision are shown
+ * as LOCKED "coming soon" rows — never sequenced, never counted (so a block can
+ * never dead-end into the open Puzzles tab). The session runs inside the wrapper
+ * (session.html); puzzle.html (Releases-A v0.13) does the per-block round-trip.
+ *
+ * NO-SPOILER: aggregate counts + block titles only. Never a puzzle's brief /
+ * bestMove / motif / eval.
+ *
+ * Plan contract (consumed by session.html + puzzle.html v0.13):
+ *   chess-coach-session-v1 = { date, idx, estMin, framing, coming:[…],
+ *     blocks:[{ id, title, sub, count, mode, done, ids:[puzzleId…] }] }
+ *   blocks = LIVE blocks only; `coming` = locked rows (Today-only, ignored by puzzle.html).
+ * ==========================================================================*/
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var root = $('today-root');
+
+  $('hamburger-btn').addEventListener('click', function () {
+    $('nav-drawer').classList.add('open'); $('nav-backdrop').classList.add('open');
+  });
+  $('nav-backdrop').addEventListener('click', function () {
+    $('nav-drawer').classList.remove('open'); $('nav-backdrop').classList.remove('open');
+  });
+
+  var KEY_MISTAKES   = 'chess-coach-mistakes-v1';
+  var KEY_ATTEMPTS   = 'chess-coach-attempts-v1';
+  var KEY_RATING     = 'chess-coach-user-rating-v1';
+  var KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
+  var KEY_SESSION    = 'chess-coach-session-v1';
+  var KEY_COMPLETE   = 'chess-coach-session-complete-v1';
+
+  function loadJson(key, fb) {
+    try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; }
+    catch (e) { return fb; }
+  }
+  function todayKey() {
+    var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function renderError(msg, raw) {
+    root.innerHTML = '<div class="ebanner"><div class="t">' + esc(msg) + '</div><div class="raw">' + esc(raw) + '</div></div>';
+  }
+
+  var ICON = {
+    mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
+    review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
+    endgame:  '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
+    vision:   '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'
+  };
+
+  // ---- load stores ----
+  var mistakes, attempts, ratingCache, scorecards, completeFlag, savedSession;
+  try {
+    mistakes = loadJson(KEY_MISTAKES, []);
+    attempts = loadJson(KEY_ATTEMPTS, {}) || {};
+    ratingCache = loadJson(KEY_RATING, null);
+    scorecards = loadJson(KEY_SCORECARDS, {}) || {};
+    completeFlag = loadJson(KEY_COMPLETE, null);
+    savedSession = loadJson(KEY_SESSION, null);
+  } catch (e) {
+    renderError('Today could not read your saved data.', (e && e.stack) || String(e));
+    return;
+  }
+  if (!Array.isArray(mistakes)) mistakes = [];
+
+  var rating = (ratingCache && typeof ratingCache.rating === 'number') ? ratingCache.rating : null;
+  var TODAY = todayKey();
+
+  // ---- day streak (active-day, one weekly freeze) ----
+  function computeDayStreak(records) {
+    var days = {};
+    for (var id in records) {
+      var r = records[id]; if (!r) continue;
+      if (r.lastAt) days[r.lastAt.slice(0, 10)] = 1;
+      if (Array.isArray(r.attemptLog)) r.attemptLog.forEach(function (a) { if (a && a.at) days[a.at.slice(0, 10)] = 1; });
+    }
+    if (!Object.keys(days).length) return 0;
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var streak = 0, freezeUsed = false;
+    for (var d = 0; d < 365; d++) {
+      var day = new Date(today); day.setDate(today.getDate() - d);
+      var key = day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0');
+      if (days[key]) { streak++; continue; }
+      if (!freezeUsed && d <= 6) { freezeUsed = true; continue; }
+      break;
+    }
+    return streak;
+  }
+  var streak = computeDayStreak(attempts);
+
+  // ---- overall tier (for the chip) + focus data (for plan sentence + endgame sequencing) ----
+  var overallTier = null;
+  var focusData = null;
+  try {
+    if (typeof CoachStats !== 'undefined') {
+      var view = CoachStats.computeCoachView({ rating: rating, mistakes: mistakes, attempts: attempts, scorecards: scorecards, nowMs: Date.now() });
+      overallTier = (view && view.overall && view.overall.tier) ? view.overall.tier : null;
+      focusData = (view && view.focus && view.focus[0]) ? view.focus[0] : null;
+    }
+  } catch (e) { overallTier = null; focusData = null; }
+
+  // =====================================================================
+  // BLOCK ASSEMBLY — built block types ONLY (recent mistakes + review).
+  // =====================================================================
+  function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
+  function isTried(id) { return !!attempts[id]; }
+
+  var byNewest = mistakes.slice().sort(function (a, b) {
+    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  });
+
+  // Block 1 — Recent mistakes: newest untried, top up with unsolved-tried if thin.
+  var untried = byNewest.filter(function (m) { return m && m.id && !isTried(m.id); });
+  var unsolvedTried = byNewest.filter(function (m) { return m && m.id && isTried(m.id) && !isSolved(m.id); });
+  var b1ids = untried.slice(0, 8).map(function (m) { return m.id; });
+  if (b1ids.length < 4) {
+    unsolvedTried.forEach(function (m) { if (b1ids.length < 8 && b1ids.indexOf(m.id) === -1) b1ids.push(m.id); });
+  }
+  var recentGames = {};
+  byNewest.slice(0, 12).forEach(function (m) { if (m.gameUrl) recentGames[m.gameUrl] = 1; });
+  var nGames = Object.keys(recentGames).length;
+
+  // Block 2 — Review due: earlier misses to retry (no SRS box yet; honest proxy).
+  var b2ids = unsolvedTried.filter(function (m) { return b1ids.indexOf(m.id) === -1; }).slice(0, 5).map(function (m) { return m.id; });
+
+  // LIVE blocks only (built types). Empty ones are dropped (never an empty row).
+  var blocks = [];
+  if (b1ids.length) blocks.push({ id: 'mistakes', title: 'Recent mistakes', sub: 'From your last ' + nGames + ' game' + (nGames === 1 ? '' : 's'), count: b1ids.length, mode: 'drill', done: 0, ids: b1ids });
+  if (b2ids.length) blocks.push({ id: 'review', title: 'Review due', sub: 'Earlier misses to retry', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
+
+  // LOCKED "coming soon" rows — shown on the plan, never sequenced/counted.
+  // Endgame is now live (spec 07 + 08); only Board vision remains locked.
+  var coming = [
+    { id: 'vision', title: 'Board vision', sub: 'Visualisation · calculation' }
+  ];
+
+  // Is endgame technique the top focus attribute? If so, surface it in the session card.
+  var endgameInFocus = !!(focusData && focusData.attribute === 'endgame_technique');
+
+  var totalReps = blocks.reduce(function (s, b) { return s + b.count; }, 0);
+  var estMin = Math.max(8, Math.round(totalReps * 1.1));
+
+  // ---- coach framing line (deterministic) ----
+  function coachFraming() {
+    var parts = [];
+    if (b1ids.length) parts.push('your <b>recent mistakes</b>');
+    if (b2ids.length) parts.push('the cards <b>due for review</b>');
+    var lead = parts.length ? ('Today is ' + (parts.length === 2 ? parts[0] + ' plus ' + parts[1] : parts[0]) + '.') : 'Nothing new to drill today.';
+    var endgameTail = endgameInFocus ? ' <b>Endgame technique</b> is your focus today — drills queued below.' : ' Endgame practice is now available as an optional extra.';
+    return lead + endgameTail;
+  }
+
+  // ---- plan-today focus sentence (deterministic, zero tokens) ----
+  function planTodaySentence() {
+    if (!focusData || !focusData.attribute) {
+      return '<p class="plan-focus plan-focus-muted">Ingest a few games to unlock your daily focus.</p>';
+    }
+    var label = focusData.attribute.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    return '<p class="plan-focus">Today\'s focus: <b>' + esc(label) + '</b> — your biggest leak.</p>';
+  }
+
+  // ---- endgame block rows (for in-session and extra section) ----
+  function endgameBlocksHtml() {
+    return '<a class="block" href="/endgames.html">' +
+      '<div class="ic">' + ICON.endgame + '</div>' +
+      '<div class="bd"><b>Endgame technique</b><small>20 lessons · play it out vs Stockfish</small></div>' +
+      '<span class="go">›</span></a>' +
+      '<a class="block" href="/endgame-recognition.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg></div>' +
+      '<div class="bd"><b>Endgame recognition</b><small>1,001 positions · win or draw?</small></div>' +
+      '<span class="go">›</span></a>';
+  }
+
+  // ---- progress ring ----
+  function ringSvg() {
+    var pct = (rating != null) ? Math.max(0, Math.min(100, Math.round((rating - 950) / (1500 - 950) * 100))) : 0;
+    return '<svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#E9ECF1" stroke-width="4"/>' +
+      '<circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + pct + ' 100" transform="rotate(-90 18 18)"/></svg>';
+  }
+
+  // =====================================================================
+  // STATE RESOLUTION
+  // =====================================================================
+  var ingestedAny = mistakes.length > 0;
+  var doneToday = completeFlag && completeFlag.date === TODAY;
+  var activeToday = savedSession && savedSession.date === TODAY;
+  var partway = activeToday && ((savedSession.blocks || []).some(function (b) { return (b.done || 0) > 0; }));
+
+  function greeting() {
+    var h = new Date().getHours();
+    return h < 12 ? 'Good morning, Jorge' : h < 18 ? 'Good afternoon, Jorge' : 'Good evening, Jorge';
+  }
+  function dateEyebrow() {
+    return new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+  function headerHtml(subText) {
+    var chips = '';
+    if (streak > 0) chips += '<a href="/insights.html" class="chip streak" title="View insights">🔥 ' + streak + '-day streak</a>';
+    if (overallTier) chips += '<a href="/insights.html" class="chip tier" title="View insights">' + esc(overallTier) + '</a>';
+    return '<div class="top"><div><div class="eyebrow">' + esc(dateEyebrow()) + '</div>' +
+      '<div class="title">' + esc(greeting()) + '</div>' +
+      (subText ? '<div class="sub">' + subText + '</div>' : '') +
+      '</div><div class="chips">' + chips + '</div></div>';
+  }
+  function glanceHtml() {
+    if (rating == null) {
+      return '<a href="/insights.html" class="glance"><div><div class="num">—</div><div class="gl-sub">Sync your rating in Puzzles to see your trajectory.</div></div><span class="go">Insights ›</span></a>';
+    }
+    var pct = Math.max(0, Math.min(100, Math.round((rating - 950) / (1500 - 950) * 100)));
+    return '<a href="/insights.html" class="glance">' + ringSvg() +
+      '<div><div class="num">' + rating + '</div><div class="gl-sub">' + pct + '% of the way to 1500</div></div>' +
+      '<span class="go">Insights ›</span></a>';
+  }
+
+  function liveBlockRow(b) {
+    return '<a class="block" href="/puzzle.html?session=today&block=' + b.id + '">' +
+      '<div class="ic">' + ICON[b.id] + '</div>' +
+      '<div class="bd"><b>' + esc(b.title) + '</b><small>' + esc(b.sub) + '</small></div>' +
+      '<span class="ct">' + b.count + '</span><span class="go">›</span></a>';
+  }
+  function lockedRow(c) {
+    return '<div class="block locked"><div class="ic">' + ICON[c.id] + '</div>' +
+      '<div class="bd"><b>' + esc(c.title) + '</b><small>' + esc(c.sub) + '</small></div>' +
+      '<span class="ct">🔒 soon</span></div>';
+  }
+  function comingHtml() {
+    return '<div class="coming-wrap"><div class="coming-label">Coming soon — not in today’s session yet</div>' +
+      coming.map(lockedRow).join('') + '</div>';
+  }
+  function sessionCardHtml() {
+    var rows = blocks.map(liveBlockRow).join(‘’);
+    // If endgame is today’s focus, add endgame drill rows to the session card.
+    var endgameRows = endgameInFocus ? endgameBlocksHtml() : ‘’;
+    return ‘<div class="session"><div class="sh"><span class="t">Today’s session</span>’ +
+      ‘<span class="m">~’ + estMin + ‘ min · ‘ + blocks.length + ‘ block’ + (blocks.length === 1 ? ‘’ : ‘s’) + ‘</span></div>’ +
+      planTodaySentence() +
+      rows +
+      endgameRows +
+      ‘<a class="btn primary" href="/session.html" style="margin-top:14px;">Start session · ‘ + totalReps + ‘ puzzle’ + (totalReps === 1 ? ‘’ : ‘s’) + ‘</a>’ +
+      comingHtml() + ‘</div>’;
+  }
+
+  // ---- optional endgame extra section (shown when endgame is NOT the focus) ----
+  function endgameExtraHtml() {
+    return ‘<div class="extra-section">’ +
+      ‘<div class="sh"><span class="t">Endgame practice</span><span class="m">20 lessons · 1,001 recognition drills</span></div>’ +
+      endgameBlocksHtml() +
+      ‘</div>’;
+  }
+
+  // ---- persist the assembled plan (blocks = live only; coming = locked rows) ----
+  function persistPlan() {
+    var plan = {
+      date: TODAY, createdAt: new Date().toISOString(), idx: 0, estMin: estMin,
+      framing: (typeof CoachStats !== 'undefined' ? null : null),
+      blocks: blocks.map(function (b) { return { id: b.id, title: b.title, sub: b.sub, count: b.count, mode: b.mode, done: 0, ids: (b.ids || []).slice() }; }),
+      coming: coming.slice()
+    };
+    try { localStorage.setItem(KEY_SESSION, JSON.stringify(plan)); } catch (e) { /* non-fatal */ }
+  }
+
+  // =====================================================================
+  // RENDER
+  // =====================================================================
+  if (!ingestedAny) {
+    root.innerHTML = headerHtml('') +
+      '<div class="mid"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>' +
+      '<h2>Let’s pull your games first</h2>' +
+      '<p>Connect your Chess.com account and the coach will build your first session from your real mistakes.</p>' +
+      '<a class="btn primary" href="/games.html">Connect Chess.com</a></div>';
+    return;
+  }
+
+  if (doneToday) {
+    var reps = (typeof completeFlag.reps === 'number') ? completeFlag.reps : null;
+    var acc = (typeof completeFlag.accuracy === 'number') ? completeFlag.accuracy : null;
+    var delta = (typeof completeFlag.ratingDelta === 'number') ? completeFlag.ratingDelta : null;
+    var tomorrow = completeFlag.tomorrow || null;
+    var detail = [];
+    if (reps != null) detail.push(reps + ' rep' + (reps === 1 ? '' : 's'));
+    if (acc != null) detail.push(acc + '% accuracy');
+    if (delta != null) detail.push((delta >= 0 ? '+' + delta : delta) + ' toward 1500');
+    var detailStr = detail.length ? detail.join(' · ') + '.' : '';
+    if (tomorrow) detailStr += ' Tomorrow leans the same way until your endgame trainer unlocks.';
+    persistPlan(); // re-arm for "one more set"
+    root.innerHTML = headerHtml('') +
+      '<div class="mid"><div class="ic done"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>' +
+      '<h2>Session done · streak secured 🔥</h2>' +
+      '<p>' + (detailStr || 'Nice work today.') + '</p>' +
+      '<a class="btn primary" href="/session.html">One more set</a></div>' +
+      glanceHtml();
+    return;
+  }
+
+  if (partway) {
+    var blocksLeft = (savedSession.blocks || []).filter(function (b) { return (b.done || 0) < (b.count || 0); }).length;
+    var totalPlanned = (savedSession.blocks || []).reduce(function (s, b) { return s + (b.count || 0); }, 0);
+    var done = (savedSession.blocks || []).reduce(function (s, b) { return s + (b.done || 0); }, 0);
+    var minsLeft = Math.max(2, Math.round((totalPlanned - done) * 1.0 + blocksLeft * 2));
+    var idxHuman = Math.min((savedSession.blocks || []).filter(function (b) { return (b.done || 0) >= (b.count || 0); }).length + 1, (savedSession.blocks || []).length);
+    root.innerHTML = headerHtml('') +
+      '<a href="/session.html" class="coachnote"><span class="ava">C</span><div class="txt">You’re partway through. <b>' + blocksLeft + ' block' + (blocksLeft === 1 ? '' : 's') + ' left</b>, about ' + minsLeft + ' minutes.</div></a>' +
+      '<a class="btn primary" href="/session.html">Resume session · block ' + idxHuman + ' of ' + (savedSession.blocks || []).length + '</a>' +
+      '<div style="margin-top:10px;"><button class="btn ghost" id="start-fresh">Start fresh instead</button></div>' +
+      glanceHtml();
+    var sf = $('start-fresh');
+    if (sf) sf.addEventListener('click', function () {
+      try { localStorage.removeItem(KEY_SESSION); } catch (e) {}
+      persistPlan();
+      window.location.href = '/session.html';
+    });
+    return;
+  }
+
+  // No live blocks (everything cleared) — caught up, not a dead end.
+  if (!blocks.length) {
+    persistPlan();
+    root.innerHTML = headerHtml('') +
+      '<div class="mid"><div class="ic done"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>' +
+      '<h2>You’re all caught up</h2>' +
+      '<p>No fresh mistakes or review cards right now. Ingest a few more games, or come back tomorrow.</p>' +
+      '<a class="btn primary" href="/games.html">Ingest games</a></div>' +
+      glanceHtml();
+    return;
+  }
+
+  // POPULATED — assemble + persist a fresh plan.
+  persistPlan();
+  root.innerHTML = headerHtml('A pre-built session from your games. One tap to start.') +
+    '<a href="/coach.html" class="coachnote"><span class="ava">C</span><div class="txt">' + coachFraming() + '</div></a>' +
+    sessionCardHtml() +
+    (!endgameInFocus ? endgameExtraHtml() : '') +
+    glanceHtml();
+})();
+</script>
+</body>
+</html>

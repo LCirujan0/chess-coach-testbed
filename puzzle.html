@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Puzzles</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Daylight design tokens (spec §1)
+     ============================================================ */
+  :root {
+    /* accent — Emerald */
+    --accent:      #2F9E76;
+    --accent-2:    #5FB58F;
+    --accent-soft: #E7F4EE;
+
+    /* neutrals */
+    --ink:      #1B1D22;
+    --muted:    #6E727B;
+    --surface:  #FFFFFF;
+    --surface2: #F2F4F7;
+    --surface3: #E9ECF1;
+    --line:     rgba(0,0,0,.10);
+
+    /* state */
+    --pos:  #1F9D57;
+    --warn: #C98A2E;
+    --bad:  #D2553F;
+
+    /* board — Warm wood */
+    --light-sq: #ECE3D2;
+    --dark-sq:  #B49A78;
+    --hl-move: rgba(47,158,118,.26);
+    --hl-sel:  rgba(47,158,118,.36);
+
+    /* (The --pc-* two-tone tokens were retired with the swap to the Celtic
+       SVG set in v0.6; the pieces carry their own colours from the file.) */
+
+    /* radii */
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-board:9px; --r-pill:20px;
+  }
+
+  /* Modern browsers get the color-mix highlights for cleaner transparency. */
+  @supports (background: color-mix(in srgb, red 50%, transparent)) {
+    :root {
+      --hl-move: color-mix(in srgb, var(--accent) 26%, transparent);
+      --hl-sel:  color-mix(in srgb, var(--accent) 36%, transparent);
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 560px; margin: 0 auto; }
+
+  /* ============================================================
+     Typography (spec §2)
+     ============================================================ */
+  h1, .title, .page-title, .nav-drawer-title {
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  }
+  /* Spline Sans Mono is data-only per redesign-spec §2 (eval numbers, FEN,
+     coords, raw counts). NOT for prose / meta / labels. .puzzle-meta moved
+     OUT — its content is "puzzle 1 of 21 · vs IanN_143 · 2026-05-29 · …"
+     which is meta prose, so it inherits Inter from body. */
+  .mono, .coord, .data {
+    font-family: "Spline Sans Mono", ui-monospace, monospace;
+  }
+  .gate-timer { font-family: "Spline Sans Mono", ui-monospace, monospace; }
+
+  h1 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.1; margin-bottom: 4px;
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .meta-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ============================================================
+     Header + page-title
+     ============================================================ */
+  .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .hamburger {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-btn); padding: 8px 12px;
+    cursor: pointer; font-size: 16px; line-height: 1;
+    color: var(--ink); font-family: inherit;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    transition: background .15s ease;
+  }
+  .hamburger:hover { background: var(--surface2); }
+  .page-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .header-mode { margin-left: auto; display: flex; gap: 4px; }
+  .mode-pill {
+    padding: 6px 12px; border: 1px solid var(--line);
+    border-radius: var(--r-pill); background: var(--surface);
+    color: var(--muted); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .mode-pill:hover { background: var(--surface2); }
+  .mode-pill.active {
+    background: var(--ink); color: #fff; border-color: var(--ink);
+  }
+
+  /* ============================================================
+     Sidebar / nav drawer (spec §7)
+     Mobile: slide-in drawer. Desktop: pinned sidebar.
+     ============================================================ */
+  .nav-drawer {
+    position: fixed; top: 0; left: 0;
+    width: 288px; max-width: 84vw; height: 100vh;
+    background: var(--surface); border-right: 1px solid var(--line);
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    z-index: 100; padding: 20px 14px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: 0 20px 40px -22px rgba(20,30,55,.25);
+  }
+  .nav-drawer.open { transform: translateX(0); }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px 14px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-brand-mark {
+    width: 30px; height: 30px; border-radius: 0;
+    background: none; box-shadow: none;
+    object-fit: contain; flex-shrink: 0;
+  }
+  .nav-brand-name {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 700; font-size: 15px;
+  }
+  .nav-group-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    padding: 12px 10px 4px;
+  }
+  .nav-drawer-link {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    color: var(--ink); text-decoration: none;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .nav-drawer-link:hover { background: var(--surface2); }
+  .nav-drawer-link.active {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 6px 14px -8px var(--accent);
+  }
+  .nav-drawer-link .nav-icon {
+    width: 18px; height: 18px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  /* SVG nav icons (spec §7) inherit colour from the link state; the active
+     pill flips text+icon to white via .nav-drawer-link.active. */
+  .nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
+  .nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
+  .tab-bar a svg.tab-icon { stroke: currentColor; fill: none; }
+  .tab-bar a svg.tab-icon .filldot { fill: currentColor; stroke: none; }
+  .nav-drawer-link.coming {
+    color: var(--muted);
+  }
+  .nav-drawer-link.coming .nav-soon {
+    margin-left: auto; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--surface2); color: var(--muted);
+    padding: 2px 7px; border-radius: 9px;
+  }
+  .nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
+  .version-stamp {
+    margin-top: auto;
+    padding: 10px 12px 4px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    border-top: 1px solid var(--line);
+  }
+  .nav-backdrop {
+    position: fixed; inset: 0; background: rgba(15,20,30,.45);
+    z-index: 99; opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .nav-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  /* Mobile tab bar (bottom) — desktop hides via media query */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; align-items: stretch;
+    background: var(--surface); border-top: 1px solid var(--line);
+    z-index: 90;
+    padding: 6px 6px max(env(safe-area-inset-bottom, 6px), 6px);
+    box-shadow: 0 -8px 22px -16px rgba(15,20,40,.16);
+  }
+  .tab-bar a {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+    padding: 7px 4px; border-radius: 10px;
+    font-size: 10px; font-weight: 600;
+    color: var(--muted); text-decoration: none;
+    transition: color .15s ease;
+  }
+  .tab-bar a.active { color: var(--accent); }
+  .tab-bar a .tab-icon { width: 22px; height: 22px; }
+  .tab-bar a.coming { opacity: .55; }
+
+  /* ============================================================
+     Filters (segmented control, spec §6)
+     ============================================================ */
+  .filter-toggle {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 14px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-btn); color: var(--ink);
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .filter-toggle:hover { background: var(--surface2); }
+  .filter-toggle .filter-badge {
+    margin-left: auto;
+    font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+  .filter-toggle .filter-caret { font-size: 10px; color: var(--muted); }
+  .filter-toggle.open .filter-caret { transform: rotate(180deg); display: inline-block; }
+
+  .filter-panel {
+    padding: 14px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--r-panel);
+    margin-bottom: 12px;
+    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+  }
+  .filter-panel.hidden { display: none; }
+  .filter-group { margin-bottom: 12px; }
+  .filter-group:last-child { margin-bottom: 0; }
+  .filter-group-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+  }
+  .filter-tabs, .cat-tabs {
+    display: inline-flex; padding: 3px; gap: 2px;
+    background: var(--surface2); border-radius: 11px;
+    width: 100%;
+  }
+  .filter-tab, .cat-tab, .tried-tab {
+    flex: 1; border: none; background: transparent;
+    cursor: pointer; color: var(--muted);
+    font: inherit; font-size: 11px; font-weight: 600;
+    padding: 7px 10px; border-radius: 8px;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; white-space: nowrap;
+    text-align: center;
+  }
+  .filter-tab.active {
+    background: var(--surface); color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,.13);
+  }
+  .cat-tab.active {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 2px 6px -2px var(--accent);
+  }
+  .tried-tab.active {
+    background: var(--surface); color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,.13);
+  }
+  .filter-tab.empty, .cat-tab.empty, .tried-tab.empty { opacity: 0.45; cursor: not-allowed; }
+  .filter-tab .count, .cat-tab .count, .tried-tab .count {
+    display: inline-block; background: rgba(0,0,0,.1);
+    border-radius: 8px; padding: 1px 6px; margin-left: 4px;
+    font-family: "Spline Sans Mono", monospace; font-size: 10px;
+    font-weight: 500;
+  }
+  .filter-tab.active .count, .tried-tab.active .count { background: var(--surface2); }
+
+  /* Spec 02 — Theme collapsible row + Drill this theme */
+  .theme-toggle {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 12px;
+    background: var(--surface2); border: 1px solid transparent;
+    border-radius: 11px; cursor: pointer; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .theme-toggle:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
+  .theme-toggle .theme-current {
+    margin-left: auto; font-size: 12px; color: var(--ink);
+    font-weight: 600;
+  }
+  .theme-toggle .filter-caret {
+    font-size: 10px; color: var(--muted); transition: transform .15s ease;
+  }
+  .theme-toggle.open .filter-caret { transform: rotate(180deg); }
+  .theme-panel {
+    margin-top: 8px; padding: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+  }
+  .theme-panel.hidden { display: none; }
+  .theme-pills {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    max-height: 170px; overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  .theme-pill {
+    padding: 5px 11px; background: var(--surface2);
+    border: 1px solid transparent; border-radius: var(--r-pill);
+    color: var(--ink); font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .theme-pill:hover { background: color-mix(in srgb, var(--surface2) 75%, var(--accent) 25%); }
+  .theme-pill.active {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 2px 6px -2px var(--accent);
+  }
+  .theme-pill.empty { opacity: .4; cursor: not-allowed; }
+  .theme-pill .count {
+    margin-left: 4px; font-size: 10px; opacity: .8;
+    font-family: "Spline Sans Mono", monospace;
+  }
+  .drill-cta { width: 100%; margin: 0; padding: 9px 12px; font-size: 13px; }
+  .drill-cta:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; }
+
+  .drill-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--r-btn); padding: 8px 12px; margin-bottom: 10px;
+    box-shadow: 0 4px 10px -6px rgba(47,158,118,.35);
+  }
+  .drill-banner.hidden { display: none; }
+  .drill-banner .drill-label {
+    flex: 1; font-size: 13px; font-weight: 700; color: var(--accent);
+  }
+  .drill-banner .drill-end {
+    padding: 5px 10px; font-size: 11px; font-weight: 700;
+    background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .drill-banner .drill-end:hover { background: var(--accent); color: #fff; }
+  .cat-tab.active .count { background: rgba(255,255,255,.22); color: #fff; }
+
+  /* ============================================================
+     Puzzle meta + status
+     ============================================================ */
+  .puzzle-meta {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .puzzle-meta.hidden { display: none; }
+  .repeat-badge {
+    display: inline-block;
+    padding: 4px 10px; background: var(--bad);
+    color: #fff; border-radius: var(--r-pill);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 6px -2px var(--bad);
+  }
+  .repeat-badge.hidden { display: none; }
+  .inline-status {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .inline-status.error { color: var(--bad); }
+  .inline-status.thinking { color: var(--warn); }
+  .inline-status.hidden { display: none; }
+  /* v0.23 — user-correct-sq: subtle green tint on from/to when move was engine best */
+  .square.user-correct-sq { background-color: rgba(60, 180, 100, 0.35) !important; }
+  /* v0.23 — "Show Follow-up" button: accent tint, sits beside Restart */
+  .btn.btn-followup { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+  .btn.btn-followup:hover { background: var(--accent-soft); }
+
+  /* ============================================================
+     Thinking gate (Deep mode) — kept functional, restyled
+     ============================================================ */
+  .gate-card {
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: var(--r-card);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 16px -10px rgba(47,158,118,.3);
+  }
+  @supports not (background: color-mix(in srgb, red 50%, transparent)) {
+    .gate-card { border-color: rgba(47,158,118,.25); }
+  }
+  .gate-card.hidden { display: none; }
+  .gate-timer {
+    font-size: 12px; color: var(--accent);
+    margin-bottom: 10px; font-weight: 600;
+  }
+  .gate-q {
+    font-size: 13px; font-weight: 700; color: var(--ink);
+    margin-bottom: 4px; margin-top: 12px;
+  }
+  .gate-q:first-of-type { margin-top: 0; }
+  .gate-sub { font-size: 11px; color: var(--muted); margin-bottom: 7px; }
+  .gate-text {
+    width: 100%; padding: 9px 11px;
+    font-size: 13px; border: 1px solid var(--line);
+    border-radius: var(--r-btn);
+    background: var(--surface); color: var(--ink);
+    font-family: inherit; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .gate-text:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
+  }
+  .gate-submit {
+    margin-top: 12px; width: 100%; padding: 11px 14px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--r-btn);
+    cursor: pointer; font-size: 14px; font-weight: 700;
+    font-family: inherit;
+    box-shadow: 0 8px 18px -8px var(--accent);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .gate-submit:hover { filter: brightness(1.07); }
+  .gate-submit:active { transform: translateY(1px); }
+  .gate-submit:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+
+  /* ============================================================
+     Board (spec §5) — warm wood
+     ============================================================ */
+  .board-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+  .board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%; max-width: 380px;
+    aspect-ratio: 1;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: var(--r-board);
+    overflow: hidden;
+    box-shadow: 0 18px 40px -16px rgba(30,40,70,.4);
+    user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    container-type: inline-size;
+  }
+  .board-annotations {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 5;
+  }
+  .square {
+    position: relative; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; aspect-ratio: 1;
+  }
+  .square.light { background: var(--light-sq); }
+  .square.dark  { background: var(--dark-sq); }
+  .square.locked { cursor: default; }
+
+  /* Highlights ride below the piece on a ::after layer (spec §5). */
+  .square.last-move::after,
+  .square.selected::after,
+  .square.piece-hint::after {
+    content: ""; position: absolute; inset: 0;
+    z-index: 1;
+  }
+  .square.last-move::after { background: var(--hl-move); }
+  .square.selected::after  { background: var(--hl-sel); }
+  .square.piece-hint::after {
+    background: var(--hl-sel);
+    box-shadow: inset 0 0 0 3px var(--accent);
+  }
+
+  /* Coordinate labels — spec §5 */
+  .coord {
+    position: absolute; font-size: 9px; font-weight: 700;
+    opacity: .55; color: rgba(40,30,15,.85);
+    z-index: 3; font-family: "Spline Sans Mono", monospace;
+    pointer-events: none;
+  }
+  .coord.file { right: 4px; bottom: 1px; }
+  .coord.rank { left: 4px; top: 1px; }
+
+  /* Legal-move markers */
+  @keyframes pop-in {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+  .legal-dot, .legal-ring {
+    position: absolute; pointer-events: none; z-index: 2;
+  }
+  .legal-dot {
+    width: 26%; height: 26%; border-radius: 50%;
+    background: rgba(0,0,0,.16);
+    animation: pop-in 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  .legal-ring {
+    width: 78%; height: 78%; border-radius: 50%;
+    border: 3px solid rgba(0,0,0,.16); background: transparent;
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  /* ============================================================
+     Pieces — Lichess Staunty (img from jsdelivr CDN)
+     ============================================================ */
+  .pc-img {
+    width: 92%; height: 92%;
+    position: relative; z-index: 2;
+    pointer-events: none;
+    user-select: none; -webkit-user-drag: none;
+  }
+
+  /* ============================================================
+     Controls (buttons) — spec §6
+     ============================================================ */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .btn {
+    flex: 1; min-width: 110px;
+    padding: 11px 14px;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-btn);
+    background: var(--surface); color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn.btn-primary {
+    background: var(--accent); color: #fff; border-color: transparent;
+    box-shadow: 0 8px 18px -8px var(--accent);
+  }
+  .btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
+
+  /* ============================================================
+     Post-resolution navigation
+     ============================================================ */
+  .nav-arrows {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-btn); padding: 6px 10px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+  }
+  .nav-arrows.hidden { display: none; }
+  .nav-arrows .nav-step {
+    background: transparent; border: none;
+    cursor: pointer; font-size: 16px;
+    padding: 4px 10px; color: var(--ink);
+    border-radius: 8px;
+    transition: background .15s ease;
+  }
+  .nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
+  .nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-label {
+    flex: 1; text-align: center;
+    font-size: 12px; color: var(--muted);
+  }
+
+  /* ============================================================
+     Result panel = verdict card (spec §6)
+     ============================================================ */
+  @keyframes slide-down-fade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    margin-bottom: 12px;
+    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+    animation: slide-down-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .result.hidden { display: none; animation: none; }
+  .result-headline {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .result-headline::before {
+    content: ""; flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: inline-block;
+    background: var(--muted);
+    background-image: var(--badge-symbol);
+    background-repeat: no-repeat; background-position: center;
+    background-size: 14px 14px;
+  }
+  .result.pass .result-headline { color: var(--pos); }
+  .result.pass .result-headline::before {
+    background-color: var(--pos);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3.5,8.5 6.5,11.5 12.5,5'/></svg>");
+  }
+  .result.warn .result-headline { color: var(--warn); }
+  .result.warn .result-headline::before {
+    background-color: var(--warn);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><rect x='7' y='3' width='2' height='6' rx='1'/><circle cx='8' cy='12' r='1.2'/></svg>");
+  }
+  .result.fail .result-headline { color: var(--bad); }
+  .result.fail .result-headline::before {
+    background-color: var(--bad);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><line x1='4' y1='4' x2='12' y2='12'/><line x1='12' y1='4' x2='4' y2='12'/></svg>");
+  }
+  .result.pass { background: #F1F8F4; border-color: #D4E9DC; }
+  .result.warn { background: #FBF5EA; border-color: #EBDDC2; }
+  .result.fail { background: #FBF0ED; border-color: #EDD2CB; }
+  .result-body { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  /* Motif chip on the post-resolution result panel (v0.7). Hidden until the
+     reveal is earned — same gate as the engine column on the comparison
+     table. Spec-02 motif tag was previously invisible because nothing rendered
+     it outside the Filters → Theme submenu. */
+  .result-motif {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 9px;
+    padding: 4px 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: var(--r-pill);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .result-motif.hidden { display: none; }
+  .result-motif .label { color: var(--muted); font-weight: 500; }
+  /* Post-puzzle component picker (Deep mode only, v0.7). Capture #2 §component:
+     the student taps the training component they think this puzzle was about.
+     Stored on the just-finished attempt log entry via setAttemptComponent().
+     Drill mode hides this row per coaching-style.md "Drill skips reflection". */
+  .result-components {
+    margin-top: 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .result-components.hidden { display: none; }
+  .result-components-label {
+    width: 100%;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .component-pill {
+    padding: 5px 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    color: var(--ink);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    font-family: inherit;
+  }
+  .component-pill:hover { background: var(--surface2); }
+  .component-pill.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .result-repeat {
+    margin-top: 6px; font-size: 11px; color: var(--muted);
+    font-style: italic;
+  }
+  .result-repeat.hidden { display: none; }
+
+  /* ============================================================
+     Move-by-move comparison
+     ============================================================ */
+  .comparison {
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    margin-bottom: 12px;
+    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+  }
+  .comparison.hidden { display: none; }
+  .comparison-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .comparison table { width: 100%; border-collapse: collapse; }
+  .comparison th {
+    font-size: 10px; font-weight: 700; text-align: left;
+    padding: 5px 7px; color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+  .comparison td {
+    padding: 7px 7px; font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  .comparison tr:last-child td { border-bottom: none; }
+  .comparison .col-yours { color: var(--ink); font-weight: 600; }
+  .comparison .col-engine {
+    color: var(--accent);
+    font-family: "Spline Sans Mono", monospace; font-size: 12px;
+  }
+  .comparison tr { cursor: pointer; transition: background .15s ease; }
+  .comparison tr:hover td { background: var(--surface2); }
+  .comparison tr.active td { background: var(--accent-soft); }
+
+  .rank-badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: var(--r-pill);
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.05em; color: #fff;
+    margin-left: 4px; vertical-align: middle;
+    font-family: "Spline Sans Mono", monospace;
+  }
+  .rank-badge.rank-1 { background: var(--pos); }
+  .rank-badge.rank-2,
+  .rank-badge.rank-3 { background: var(--warn); }
+  .rank-badge.rank-4,
+  .rank-badge.rank-5 { background: var(--bad); }
+  .rank-badge.rank-off { background: var(--bad); }
+  .cp-loss-small {
+    display: inline-block; padding: 2px 7px;
+    border-radius: var(--r-pill);
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.05em; color: #fff;
+    margin-left: 4px; vertical-align: middle;
+    font-family: "Spline Sans Mono", monospace;
+    background: var(--warn);
+  }
+  .cp-loss-small.cp-mid { background: var(--bad); }
+  .cp-loss-small.cp-big { background: #8E2A1B; }
+
+  /* Generic utility — any element with .hidden disappears. Page-specific
+     rules (e.g. .result.hidden) already had this, but a generic rule is
+     needed for ad-hoc toggles like buttons. */
+  .hidden { display: none !important; }
+
+  /* Hide engine + game cols during live play (in-progress comparison). */
+  .comparison[data-mode="live"] th.col-game,
+  .comparison[data-mode="live"] th.col-engine,
+  .comparison[data-mode="live"] td.col-game,
+  .comparison[data-mode="live"] td.col-engine { display: none; }
+  .comparison[data-mode="live"] tr { cursor: default; }
+  .comparison[data-mode="live"] tr:hover td { background: transparent; }
+  /* Resolved but engine reveal not yet earned (single failed attempt, sessionFails<3).
+     Hide the engine column. The "Your move + rank badge" column stays so the
+     player can still see how they performed without spoiling the engine line. */
+  .comparison[data-mode="resolved-locked"] th.col-engine,
+  .comparison[data-mode="resolved-locked"] td.col-engine { display: none; }
+
+  /* ============================================================
+     Coach panel (spec §6)
+     ============================================================ */
+  .coach-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    margin-bottom: 12px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 16px 36px -22px rgba(30,40,70,.4);
+  }
+  .coach-header {
+    padding: 13px 15px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--line);
+    background: #FAFBFC;
+  }
+  .coach-avatar {
+    width: 26px; height: 26px; border-radius: 9px;
+    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px;
+    box-shadow: 0 3px 9px -3px var(--accent);
+  }
+  .coach-title { font-weight: 700; font-size: 14px; }
+  .coach-status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+  .coach-status::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--pos);
+    box-shadow: 0 0 0 3px rgba(31,157,87,.18);
+  }
+  .coach-log {
+    padding: 14px 15px;
+    display: flex; flex-direction: column; gap: 11px;
+    max-height: 320px;
+    overflow-y: auto;
+    flex: 1;
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+  .msg {
+    font-size: 13px; line-height: 1.5;
+    padding: 10px 13px; border-radius: 14px;
+    max-width: 90%;
+    word-wrap: break-word;
+  }
+  .msg.system {
+    color: var(--muted); font-size: 12px; padding: 4px 0;
+    background: transparent; max-width: 100%;
+    font-style: italic;
+  }
+  .msg.coach {
+    align-self: flex-start;
+    background: var(--surface2);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--accent); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.error {
+    align-self: flex-start;
+    background: #FBF0ED; color: var(--bad);
+    border: 1px solid #EDD2CB;
+    font-size: 12px;
+  }
+  /* ────────────────────────────────────────────────────────────────────
+     §17 Structured review bubble (the post-puzzle review, per-game "how
+     you played", aggregated coach read all share this shape — never a
+     paragraph). max-width matches .msg, but the inner content uses the
+     fixed-column label layout from the spec.
+     ──────────────────────────────────────────────────────────────────── */
+  .msg.review {
+    align-self: flex-start;
+    background: var(--surface2);
+    border-bottom-left-radius: 4px;
+    padding: 13px 15px;
+    max-width: 92%;
+    font-size: 13.5px; line-height: 1.5;
+  }
+  .msg.review .rv-lead {
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px; line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 11px;
+  }
+  .msg.review .rv-points {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .msg.review .rv-point {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .msg.review .rv-label {
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+  /* Sentiment-tinted labels (§17 — colour = --muted / --pos (good) /
+     --warn (mid) / --bad (bad)). The renderer applies the class. */
+  .msg.review .rv-point.tone-pos .rv-label { color: var(--pos); }
+  .msg.review .rv-point.tone-warn .rv-label { color: var(--warn); }
+  .msg.review .rv-point.tone-bad .rv-label { color: var(--bad); }
+  .msg.review .rv-text {
+    font-size: 13px; line-height: 1.45;
+    color: var(--ink);
+  }
+  .msg.review .rv-turn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .msg.review .rv-turn .rv-turn-label {
+    font-weight: 700;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .msg.review .rv-question {
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .msg.review .rv-cta {
+    display: flex; gap: 9px;
+    margin-top: 11px;
+  }
+  .msg.review .rv-cta button {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .msg.review .rv-cta button:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
+  .msg.review .rv-cta button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .msg.review .rv-grounded {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .coach-input-row {
+    display: flex; gap: 8px;
+    padding: 11px 12px;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .coach-input {
+    flex: 1; padding: 9px 12px;
+    font-size: 13px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 11px;
+    background: var(--surface); color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .coach-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
+  }
+  .coach-send {
+    padding: 9px 16px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 11px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .coach-send:hover:not(:disabled) { filter: brightness(1.07); }
+  .coach-send:active { transform: translateY(1px); }
+  .coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ============================================================
+     Layout — mobile is a single column; desktop @ ≥880px splits.
+     ============================================================ */
+  .layout-grid { display: flex; flex-direction: column; }
+
+  @media (min-width: 880px) {
+    body {
+      padding-left: 248px;     /* room for the fixed sidebar */
+      padding-right: 28px;
+      padding-bottom: 28px;
+      font-size: 15px;
+    }
+    .hamburger { display: none !important; }
+    .container { max-width: 1320px; }
+    .tab-bar { display: none; }
+
+    .nav-drawer {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 224px !important; max-width: 224px !important;
+      height: 100vh;
+      transform: none !important;
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      padding: 22px 14px 18px;
+      z-index: 10;
+    }
+    .nav-backdrop { display: none !important; }
+
+    /* Each child gets its OWN grid-area — no two children share a slot.
+       Empty rows (e.g. repeat-badge while hidden, comparison until resolved)
+       collapse because their grid-template-rows default to auto. */
+    .layout-grid > #comparison { grid-area: comparison; align-self: start; }
+    .layout-grid > #result { grid-area: result; align-self: start; }
+    .layout-grid > .coach-card { grid-area: coach; align-self: stretch; }
+    .layout-grid > #side-to-move-title { grid-area: title; }
+    .layout-grid > #repeat-badge { grid-area: badge; justify-self: start; }
+    .layout-grid > #puzzle-meta { grid-area: meta; }
+    .layout-grid > #inline-status { grid-area: status; }
+    .layout-grid > #gate-card { grid-area: gate; align-self: stretch; }
+    .layout-grid > .board-wrap { grid-area: board; }
+    .layout-grid > .controls { grid-area: controls; }
+    .layout-grid > #nav-arrows { grid-area: navarrows; }
+
+    /* State A — gate visible (Deep, pre-play): gate top-right. */
+    .layout-grid:has(#gate-card:not(.hidden)) {
+      display: grid;
+      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
+      grid-template-areas:
+        "title       gate"
+        "badge       gate"
+        "meta        gate"
+        "status      gate"
+        "board       gate"
+        "controls    coach"
+        "navarrows   coach"
+        "result      coach";
+      gap: 12px 28px;
+      align-items: start;
+    }
+
+    /* State B — gate hidden, verdict visible: right column = verdict → comparison → coach.
+       Spec §6 desktop puzzle right-column order. Board owns the left column. */
+    .layout-grid:has(#gate-card.hidden):has(#result:not(.hidden)) {
+      display: grid;
+      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
+      grid-template-areas:
+        "title       result"
+        "badge       result"
+        "meta        comparison"
+        "status      comparison"
+        "board       coach"
+        "controls    coach"
+        "navarrows   coach";
+      gap: 12px 28px;
+      align-items: start;
+    }
+
+    /* State C — gate hidden, no verdict yet: coach takes the right column.
+       Comparison is hidden in this state (no verdict yet) so it doesn't claim a row. */
+    .layout-grid:has(#gate-card.hidden):has(#result.hidden) {
+      display: grid;
+      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
+      grid-template-areas:
+        "title       coach"
+        "badge       coach"
+        "meta        coach"
+        "status      coach"
+        "board       coach"
+        "controls    coach"
+        "navarrows   coach";
+      gap: 12px 28px;
+      align-items: start;
+    }
+
+    .layout-grid > .board-wrap .board { max-width: 560px; }
+    /* Spec §6: coach panel height-capped (~235px) and scrolls internally so a long
+       review can't balloon the page. The grid cell aligns the panel to the TOP of
+       its area; whatever space is left below stays empty. */
+    .layout-grid > .coach-card { align-self: start; max-height: 235px; min-height: 0; }
+    .layout-grid > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+
+    /* Touch up desktop type */
+    h1 { font-size: 30px; }
+    .puzzle-meta { font-size: 13px; }
+    .msg { font-size: 14px; }
+    .coach-input { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+    <span class="page-title">Puzzles</span>
+    <div class="header-mode">
+      <button class="mode-pill active" id="mode-deep" data-mode="deep">Deep</button>
+      <button class="mode-pill" id="mode-drill" data-mode="drill">Drill</button>
+    </div>
+  </div>
+
+  <button class="filter-toggle" id="filter-toggle" type="button" style="display:none">
+    <span>Filters</span>
+    <span class="filter-badge" id="filter-badge">All</span>
+    <span class="filter-caret">▾</span>
+  </button>
+  <div class="filter-panel hidden" id="filter-panel">
+    <div class="filter-group">
+      <div class="filter-group-label">Severity</div>
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-tab" data-sev="all">All <span class="count" id="count-all">0</span></button>
+        <button class="filter-tab" data-sev="inaccuracy">Inaccuracy <span class="count" id="count-inaccuracy">0</span></button>
+        <button class="filter-tab" data-sev="mistake">Mistake <span class="count" id="count-mistake">0</span></button>
+        <button class="filter-tab" data-sev="blunder">Blunder <span class="count" id="count-blunder">0</span></button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Phase</div>
+      <div class="cat-tabs" id="cat-tabs">
+        <button class="cat-tab" data-cat="all">All <span class="count" id="count-cat-all">0</span></button>
+        <button class="cat-tab" data-cat="opening">Opening <span class="count" id="count-opening">0</span></button>
+        <button class="cat-tab" data-cat="middlegame">Middlegame <span class="count" id="count-middlegame">0</span></button>
+        <button class="cat-tab" data-cat="endgame">Endgame <span class="count" id="count-endgame">0</span></button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Previously tried</div>
+      <div class="filter-tabs" id="tried-tabs">
+        <button class="tried-tab" data-tried="all">All <span class="count" id="count-tried-all">0</span></button>
+        <button class="tried-tab" data-tried="tried">Tried <span class="count" id="count-tried">0</span></button>
+        <button class="tried-tab" data-tried="untried">Not tried <span class="count" id="count-untried">0</span></button>
+      </div>
+    </div>
+    <!-- Spec 02 Theme — collapsed by default so the 17-motif vocabulary doesn't
+         crowd the filter panel; expands to a scrollable pill group. -->
+    <div class="filter-group">
+      <button class="theme-toggle" id="theme-toggle" type="button">
+        <span class="filter-group-label" style="margin:0">Theme</span>
+        <span class="theme-current" id="theme-current">Any theme</span>
+        <span class="filter-caret">▾</span>
+      </button>
+      <div class="theme-panel hidden" id="theme-panel">
+        <div class="theme-pills" id="theme-pills"></div>
+        <button class="btn btn-primary drill-cta" id="drill-cta" type="button" disabled>Drill this theme</button>
+      </div>
+    </div>
+  </div>
+  <!-- Active-drill banner (shown only while a Drill this theme session runs). -->
+  <div class="drill-banner hidden" id="drill-banner">
+    <span class="drill-label" id="drill-label">Drilling: …</span>
+    <button class="btn btn-secondary drill-end" id="drill-end" type="button">End drill</button>
+  </div>
+
+  <div class="layout-grid">
+  <h1 id="side-to-move-title">Loading…</h1>
+  <div class="repeat-badge hidden" id="repeat-badge"></div>
+  <div class="puzzle-meta hidden" id="puzzle-meta"></div>
+  <div class="inline-status" id="inline-status">Loading engine…</div>
+
+  <div class="gate-card hidden" id="gate-card">
+    <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
+
+    <div class="gate-q">1. CCTO for YOUR pieces</div>
+    <div class="gate-sub">Checks · Captures · Threats · Optimisations available to you. What can you do?</div>
+    <textarea class="gate-text" id="gate-q1" placeholder="e.g. No checks available. Can capture the f5 bishop with my knight. Threatening mate on h7 if I can get the queen close. Could optimise by trading off my passive bishop." maxlength="800" rows="4" style="resize: vertical; min-height: 70px;"></textarea>
+
+    <div class="gate-q">2. CCTO for the OPPONENT'S pieces</div>
+    <div class="gate-sub">Same analysis from their side. What can they do to you?</div>
+    <textarea class="gate-text" id="gate-q2" placeholder="e.g. They have no immediate checks. Could capture my d-pawn with the knight. Threatening to double on the e-file. Their rook is well-placed but could improve to e2." maxlength="800" rows="4" style="resize: vertical; min-height: 70px;"></textarea>
+
+    <div class="gate-q">3. How do you put those insights into practice?</div>
+    <div class="gate-sub">Your plan — what are you going to do with what you saw?</div>
+    <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
+
+    <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
+    <button class="btn" id="reset-btn">Restart</button>
+    <button class="btn btn-followup hidden" id="show-followup-btn">Show Follow-up →</button>
+    <button class="btn btn-primary hidden" id="ai-review-btn">AI review</button>
+    <button class="btn" id="next-btn">Next puzzle</button>
+  </div>
+
+  <div class="nav-arrows hidden" id="nav-arrows">
+    <button class="nav-step" id="nav-back" type="button">◀</button>
+    <span class="nav-label" id="nav-label">Current position</span>
+    <button class="nav-step" id="nav-forward" type="button">▶</button>
+  </div>
+
+  <div class="result hidden" id="result">
+    <div class="result-headline" id="result-headline"></div>
+    <div class="result-body" id="result-body"></div>
+    <div class="result-repeat hidden" id="result-repeat"></div>
+    <div class="result-motif hidden" id="result-motif"></div>
+    <div class="result-components hidden" id="result-components">
+      <div class="result-components-label">What did this puzzle test? (tap one)</div>
+    </div>
+  </div>
+
+  <div class="comparison hidden" id="comparison">
+    <div class="comparison-title">Move-by-move comparison</div>
+    <table>
+      <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th></tr></thead>
+      <tbody id="comparison-rows"></tbody>
+    </table>
+  </div>
+
+  <div class="coach-card">
+    <div class="coach-header">
+      <span class="coach-avatar">C</span>
+      <span class="coach-title">Coach</span>
+      <span class="coach-status">Online</span>
+    </div>
+    <div class="coach-log" id="coach-log">
+      <div class="msg system">Type a question below or tap Hint for a nudge.</div>
+    </div>
+    <form class="coach-input-row" id="coach-form">
+      <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
+      <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
+    </form>
+  </div>
+  </div>
+</div>
+
+<!-- Daylight nav (spec §7). Five primary surfaces; secondary tools in a small
+     group at the bottom. Today / Insights / Coach are "coming" placeholders
+     until those features land. -->
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand">
+    <img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
+    <span class="nav-brand-name">KnightPath</span>
+  </div>
+  <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <div class="nav-group-label">Tools</div>
+  <a href="/roadmap.html" class="nav-drawer-link"><span class="nav-icon">▤</span>Roadmap</a>
+  <a href="/completed.html" class="nav-drawer-link"><span class="nav-icon">✓</span>Completed</a>
+  <a href="/index.html" class="nav-drawer-link"><span class="nav-icon">⚙</span>Connection tests</a>
+  <div class="version-stamp" id="version-stamp"></div>
+  <div class="version-stamp" style="border-top:none; padding-top:2px; font-size:9px;">Celtic pieces · Maurizio Monge · MIT</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<!-- Mobile-only bottom tab bar (spec §7). Desktop hides via media query. -->
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+
+<script type="module" src="/js/puzzle/boot.js"></script>
+</body>
+</html>

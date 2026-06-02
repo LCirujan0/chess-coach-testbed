@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Endgame Recognition</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+    --sq-light:#F0D9B5; --sq-dark:#B58863;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  body {
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--ink);
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  h1, .title, .stat-num { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+  .container { max-width:480px; margin:0 auto; }
+
+  /* header */
+  .header-bar {
+    display:flex; align-items:center; gap:10px; margin-bottom:16px;
+    position:sticky; top: calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
+    background:rgba(255,255,255,.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    padding: max(12px, env(safe-area-inset-top)) 0 12px; margin-top: calc(-1 * max(12px, env(safe-area-inset-top)));
+  }
+  .back-btn {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn);
+    padding:7px 13px; cursor:pointer; font-size:14px; font-weight:600; color:var(--ink);
+    text-decoration:none; font-family:inherit; line-height:1; display:inline-flex; align-items:center; gap:5px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s;
+  }
+  .back-btn:hover { background:var(--surface2); }
+  .page-title { font-size:17px; font-weight:700; letter-spacing:-.01em; font-family:"Plus Jakarta Sans",sans-serif; }
+  .score-pill {
+    margin-left:auto; background:var(--surface2); border-radius:var(--r-pill);
+    padding:4px 12px; font-size:12px; font-weight:700; color:var(--ink);
+    font-family:"Spline Sans Mono",monospace; white-space:nowrap;
+  }
+
+  /* board */
+  .board-wrap { margin:0 auto 16px; max-width:360px; position:relative; }
+  .board {
+    display:grid; grid-template-columns:repeat(8,1fr); width:100%;
+    aspect-ratio:1; border-radius:6px; overflow:hidden;
+    box-shadow:0 12px 30px -16px rgba(20,30,55,.3);
+  }
+  .sq {
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(24px,7vw,40px); line-height:1; user-select:none;
+  }
+  .sq.light { background:var(--sq-light); }
+  .sq.dark  { background:var(--sq-dark); }
+  /* white pieces need dark outline on light squares */
+  .sq.light .pw { text-shadow:0 0 2px rgba(0,0,0,.8), 0 0 4px rgba(0,0,0,.4); }
+  .sq.dark  .pw { text-shadow:none; }
+  .sq .pb   { text-shadow:none; }
+  /* rank/file labels */
+  .board-labels-files { display:flex; max-width:360px; margin:0 auto 2px; padding:0; }
+  .board-labels-ranks { position:absolute; left:0; top:0; height:100%; display:flex; flex-direction:column; pointer-events:none; }
+  .file-label, .rank-label {
+    font-size:9px; font-weight:600; color:var(--muted); font-family:"Spline Sans Mono",monospace;
+    opacity:.7; flex:1; display:flex; align-items:center; justify-content:center;
+  }
+  .board-side-label {
+    text-align:center; font-size:11px; font-weight:600; color:var(--muted);
+    font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px;
+  }
+
+  /* prompt + verdict */
+  .prompt {
+    text-align:center; font-size:15px; font-weight:600; color:var(--ink);
+    margin-bottom:14px; font-family:"Plus Jakarta Sans",sans-serif;
+  }
+  .verdict-btns {
+    display:flex; gap:10px; margin-bottom:14px;
+  }
+  .vbtn {
+    flex:1; padding:13px 8px; border-radius:var(--r-btn); border:2px solid var(--line);
+    font-size:14px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif;
+    background:var(--surface); color:var(--ink); cursor:pointer;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .vbtn:hover { background:var(--surface2); border-color:var(--accent); }
+  .vbtn:active { transform:translateY(1px); }
+  .vbtn.win  { border-color:#C9E8D8; background:#F0FAF4; }
+  .vbtn.draw { border-color:#D8D8D8; background:#F8F8F8; }
+  .vbtn.lose { border-color:#F5D4CE; background:#FDF3F1; }
+  .vbtn:disabled { opacity:.45; cursor:default; transform:none; }
+
+  /* result reveal */
+  .reveal {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card);
+    padding:16px 18px; margin-bottom:14px; display:none;
+    box-shadow:0 8px 20px -12px rgba(20,30,55,.2);
+  }
+  .reveal.show { display:block; }
+  .verdict-badge {
+    display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:800;
+    font-family:"Plus Jakarta Sans",sans-serif; padding:6px 14px;
+    border-radius:var(--r-pill); margin-bottom:10px;
+  }
+  .verdict-badge.correct { background:#E8F5EE; color:var(--pos); }
+  .verdict-badge.wrong   { background:#FBF0ED; color:var(--bad); }
+  .keyfactor {
+    font-size:13px; color:var(--ink); margin-bottom:8px; line-height:1.5;
+  }
+  .keyfactor strong { font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; }
+  .dtz-hint {
+    font-size:11.5px; color:var(--muted); font-family:"Spline Sans Mono",monospace;
+    margin-bottom:10px;
+  }
+  .why-area { margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
+  .why-text { font-size:13px; color:var(--ink); line-height:1.6; margin-top:8px; }
+  .why-error { font-size:12px; color:var(--bad); margin-top:6px; }
+
+  /* buttons */
+  .btn {
+    font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; font-size:14px;
+    padding:12px 16px; border-radius:var(--r-btn); border:1px solid transparent;
+    cursor:pointer; width:100%; transition:filter .15s, transform .1s;
+  }
+  .btn.primary {
+    background:var(--accent); color:#fff;
+    box-shadow:0 8px 18px -10px var(--accent);
+  }
+  .btn.primary:hover { filter:brightness(1.06); }
+  .btn.primary:active { transform:translateY(1px); }
+  .btn.ghost {
+    background:var(--surface); border:1px solid var(--line); color:var(--ink);
+  }
+  .btn.ghost:hover { background:var(--surface2); }
+  .btn.ghost:disabled { opacity:.45; cursor:default; }
+  .btn-row { display:flex; gap:10px; }
+  .btn-row .btn { flex:1; }
+
+  /* session end */
+  .session-end {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card);
+    padding:24px 20px; text-align:center;
+    box-shadow:0 16px 34px -26px rgba(30,40,70,.4); display:none;
+  }
+  .session-end.show { display:block; }
+  .session-end .big { font-size:40px; font-weight:800; font-family:"Plus Jakarta Sans",sans-serif; margin:8px 0 4px; }
+  .session-end .sub { font-size:14px; color:var(--muted); margin-bottom:16px; }
+  .weak-card {
+    background:var(--accent-soft); border-radius:10px; padding:12px 15px;
+    text-align:left; margin-bottom:16px; display:none;
+  }
+  .weak-card.show { display:block; }
+  .weak-card .wt { font-size:12px; font-weight:700; color:var(--accent); margin-bottom:3px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .weak-card .ws { font-size:13px; color:var(--ink); }
+
+  /* type breakdown */
+  .type-breakdown { margin-bottom:16px; text-align:left; }
+  .type-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--line); }
+  .type-row:last-child { border-bottom:none; }
+  .type-name { font-size:12px; font-family:"Spline Sans Mono",monospace; flex:1; }
+  .type-pct { font-size:12px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif; min-width:40px; text-align:right; }
+  .type-bar-wrap { flex:1; height:4px; background:var(--surface3); border-radius:2px; overflow:hidden; }
+  .type-bar { height:100%; background:var(--accent); border-radius:2px; transition:width .4s ease; }
+
+  /* loading */
+  .loading-state {
+    text-align:center; padding:48px 20px; color:var(--muted); font-size:14px;
+  }
+  .error-state {
+    background:#FBF0ED; border:1px solid #EDD2CB; border-radius:12px;
+    padding:16px; color:var(--bad); font-size:13px;
+  }
+
+  /* progress bar */
+  .progress-wrap { height:3px; background:var(--surface3); border-radius:2px; margin-bottom:14px; overflow:hidden; }
+  .progress-bar { height:100%; background:var(--accent); border-radius:2px; transition:width .3s ease; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <a href="/today.html" class="back-btn">← Today</a>
+    <span class="page-title">Endgame recognition</span>
+    <div class="score-pill" id="score-pill">0 / 0</div>
+  </div>
+
+  <div id="drill-root">
+    <div class="loading-state">Loading positions…</div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================================
+ * endgame-recognition.html — Spec 08 drill
+ * v0.28 · Releases-B · 2026-06-01
+ *
+ * Static board (FEN only) — no engine, no Stockfish.
+ * User picks Winning / Drawn / Losing.
+ * Reveals verdict + keyFactor + dtz cue.
+ * Optional "Why?" button fires one LLM call (never automatic).
+ * Stores per-type accuracy in chess-coach-recognition-v1.
+ * =========================================================================*/
+(function () {
+  'use strict';
+
+  var KEY_RECOG = 'chess-coach-recognition-v1';
+  var SESSION_SIZE = 20; // 10 wins + 10 draws, balanced
+  var root = document.getElementById('drill-root');
+  var scorePill = document.getElementById('score-pill');
+
+  // ---- localStorage helpers -----------------------------------------------
+  function loadJson(key, fb) {
+    try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; } catch (e) { return fb; }
+  }
+  function saveJson(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+    });
+  }
+
+  // ---- session state -------------------------------------------------------
+  var allPositions = null;       // loaded from JSON {positions:[...]}
+  var sessionPositions = [];     // balanced sample for this session
+  var sessionIdx = 0;            // index into sessionPositions
+  var sessionCorrect = 0;
+  var sessionTotal = 0;
+  var byTypeSession = {};        // { type: { correct, total } }
+  var whyCache = {};             // fen → explanation string
+  var currentRevealed = false;
+
+  // ---- FEN parser ----------------------------------------------------------
+  var PIECE_UNICODE = {
+    K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙',
+    k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟'
+  };
+  function parseFen(fen) {
+    // Returns 64-element array [0..63] = a8..h8, a7..h7, ..., a1..h1
+    var pos = fen.split(' ')[0];
+    var ranks = pos.split('/');
+    var board = [];
+    for (var r = 0; r < 8; r++) {
+      var rank = ranks[r] || '';
+      for (var i = 0; i < rank.length; i++) {
+        var c = rank[i];
+        if (c >= '1' && c <= '8') {
+          for (var n = 0; n < parseInt(c); n++) board.push(null);
+        } else {
+          board.push(c);
+        }
+      }
+    }
+    return board; // index = rank8..rank1, file a..h
+  }
+
+  function renderBoard(pos) {
+    // pos: { fen, side }
+    // side='w' → white at bottom (a1 bottom-left); side='b' → black at bottom (h8 bottom-left flipped)
+    var board = parseFen(pos.fen);
+    var isWhiteBottom = pos.side !== 'b';
+    var sideStr = pos.side === 'w' ? 'White' : 'Black';
+    var files = isWhiteBottom ? ['a','b','c','d','e','f','g','h'] : ['h','g','f','e','d','c','b','a'];
+    var fileLabels = files.map(function (f) { return '<div class="file-label">' + f + '</div>'; }).join('');
+
+    // Build 8x8 grid: visual row 0 = top of board
+    var squares = '';
+    for (var vRow = 0; vRow < 8; vRow++) {
+      for (var vCol = 0; vCol < 8; vCol++) {
+        // Map visual position to board array index
+        var boardRank, boardFile;
+        if (isWhiteBottom) {
+          boardRank = 7 - vRow; // vRow=0 → rank 8 (index 0 of FEN), vRow=7 → rank 1
+          boardFile = vCol;     // vCol=0 → file a
+        } else {
+          boardRank = vRow;     // vRow=0 → rank 8, shown from black's side
+          boardFile = 7 - vCol;
+        }
+        var boardIdx = boardRank * 8 + boardFile;
+        // Wait — FEN rank order: ranks[0]=rank8, ranks[7]=rank1
+        // For white bottom: visual row 0 (top) = FEN rank8 = board array index 0..7
+        // boardIdx for white: vRow 0 = FEN row 0 → arr[0..7]; vRow 7 = FEN row 7 → arr[56..63]
+        // boardFile: vCol 0 = file a = FEN file index 0
+        // So: boardIdx = vRow * 8 + vCol (white bottom)
+        // For black bottom: visual row 0 (top) = FEN rank1 = arr[56..63], file h first
+        // boardIdx = (7-vRow) * 8 + (7-vCol)
+
+        var arrIdx;
+        if (isWhiteBottom) {
+          arrIdx = vRow * 8 + vCol;
+        } else {
+          arrIdx = (7 - vRow) * 8 + (7 - vCol);
+        }
+
+        var piece = board[arrIdx] || null;
+        var isLight = (boardRank + boardFile) % 2 !== 0;
+        // Note: isLight depends on actual rank/file, not visual position
+        // For isWhiteBottom: boardRank = 7-vRow, boardFile = vCol
+        // For !isWhiteBottom: boardRank = vRow, boardFile = 7-vCol  (wait this is wrong above)
+        // Let me simplify: light square if (actual_rank + actual_file) is odd
+        // actual_rank (0=rank8, 7=rank1): for isWhiteBottom: 7-vRow; for !: vRow
+        // actual_file (0=a, 7=h): for isWhiteBottom: vCol; for !: 7-vCol
+        // Actually the standard: a1 is dark, a8 is light... wait
+        // Chess: a1 is a1. Rank 1 + File a (0) = 1+0=1 odd → light? No.
+        // Standard: a1 is a DARK square. (rank 1, file a: 1+1=2 even → dark)
+        // Using 1-indexed: rank + file even → dark; odd → light
+        // board array: arrIdx 0 = a8 (rank8, file a), arrIdx 63 = h1 (rank1, file h)
+        // For arrIdx: rank8-based row = Math.floor(arrIdx/8), file = arrIdx%8
+        // 1-indexed rank = 8 - Math.floor(arrIdx/8), 1-indexed file = arrIdx%8 + 1
+        var arr1Rank = 8 - Math.floor(arrIdx / 8);
+        var arr1File = (arrIdx % 8) + 1;
+        var sqLight = (arr1Rank + arr1File) % 2 !== 0;
+
+        var sqClass = 'sq ' + (sqLight ? 'light' : 'dark');
+        var pieceHtml = '';
+        if (piece) {
+          var sym = PIECE_UNICODE[piece];
+          var isWhitePiece = piece === piece.toUpperCase();
+          pieceHtml = '<span class="' + (isWhitePiece ? 'pw' : 'pb') + '">' + sym + '</span>';
+        }
+        squares += '<div class="' + sqClass + '">' + pieceHtml + '</div>';
+      }
+    }
+
+    return '<div class="board-side-label">Side to move: <b>' + esc(sideStr) + '</b></div>' +
+      '<div class="board-wrap">' +
+        '<div class="board">' + squares + '</div>' +
+      '</div>';
+  }
+
+  // ---- Balanced session sampler -------------------------------------------
+  function buildSession(positions) {
+    // Split by result
+    var wins = positions.filter(function (p) { return p.result === 'win'; });
+    var draws = positions.filter(function (p) { return p.result === 'draw'; });
+    // Shuffle each
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+      }
+      return a;
+    }
+    var half = Math.floor(SESSION_SIZE / 2);
+    var winSample = shuffle(wins).slice(0, half);
+    var drawSample = shuffle(draws).slice(0, half);
+    // Avoid previously seen FENs this session (use recent from localStorage)
+    var storage = loadJson(KEY_RECOG, {});
+    var seenFens = (storage.seenFens || []).slice(-200);
+    function notSeen(p) { return seenFens.indexOf(p.fen) === -1; }
+    winSample = winSample.filter(notSeen);
+    drawSample = drawSample.filter(notSeen);
+    // Top up if needed
+    if (winSample.length < half) winSample = shuffle(wins).slice(0, half);
+    if (drawSample.length < half) drawSample = shuffle(draws).slice(0, half);
+    return shuffle(winSample.concat(drawSample));
+  }
+
+  // ---- Score helpers -------------------------------------------------------
+  function updateScorePill() {
+    if (scorePill) scorePill.textContent = sessionCorrect + ' / ' + sessionTotal;
+  }
+
+  function recordResult(pos, correct) {
+    sessionTotal++;
+    if (correct) sessionCorrect++;
+    // Update session by-type
+    if (!byTypeSession[pos.type]) byTypeSession[pos.type] = { correct: 0, total: 0 };
+    byTypeSession[pos.type].total++;
+    if (correct) byTypeSession[pos.type].correct++;
+    // Persist to localStorage
+    var storage = loadJson(KEY_RECOG, { byType: {}, recent: [], seenFens: [] });
+    if (!storage.byType) storage.byType = {};
+    if (!storage.recent) storage.recent = [];
+    if (!storage.seenFens) storage.seenFens = [];
+    if (!storage.byType[pos.type]) storage.byType[pos.type] = { seen: 0, correct: 0 };
+    storage.byType[pos.type].seen++;
+    if (correct) storage.byType[pos.type].correct++;
+    storage.recent.push({ id: pos.fen, guess: correct, at: new Date().toISOString() });
+    if (storage.recent.length > 50) storage.recent = storage.recent.slice(-50);
+    storage.seenFens.push(pos.fen);
+    if (storage.seenFens.length > 500) storage.seenFens = storage.seenFens.slice(-500);
+    saveJson(KEY_RECOG, storage);
+    updateScorePill();
+  }
+
+  // ---- DTZ hint ------------------------------------------------------------
+  function dtzHint(pos) {
+    var dtz = pos.dtz;
+    if (dtz == null) return '';
+    if (pos.result === 'draw') {
+      if (dtz === 0) return 'Exact theoretical draw — neither side can make progress.';
+      return '';
+    }
+    // win
+    if (dtz <= 3) return 'Fastest mate: just ' + dtz + ' move' + (dtz === 1 ? '' : 's') + ' to conversion.';
+    if (dtz <= 10) return 'Clean win — converted in ' + dtz + ' moves with best play.';
+    if (dtz <= 30) return 'Winning, but technique required (' + dtz + ' moves to conversion).';
+    return 'Won, though the win requires accurate technique (' + dtz + ' moves to conversion).';
+  }
+
+  // ---- Why? LLM call -------------------------------------------------------
+  function fetchWhy(pos, callback) {
+    if (whyCache[pos.fen]) { callback(null, whyCache[pos.fen]); return; }
+    var sideStr = pos.side === 'w' ? 'White' : 'Black';
+    var verdictStr = pos.result === 'win' ? 'winning for ' + sideStr : 'a theoretical draw';
+    var systemPrompt =
+      'You are a chess endgame coach. This position is ' + verdictStr +
+      ' — this is verified tablebase truth. Explain concisely in 2–3 sentences WHY it is ' +
+      verdictStr + ' for the side to move. The key factor is: "' + pos.keyFactor +
+      '". Ground your explanation in the specific position — king placement, pawn structure,' +
+      ' piece activity. Do not introduce any uncertainty about the verdict; it is established.';
+    var userMsg = 'FEN: ' + pos.fen + '\nSide to move: ' + sideStr +
+      '\nVerdict: ' + verdictStr + '\nKey factor: ' + pos.keyFactor + '\n\nExplain why.';
+    fetch('/api/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 220,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var text = data && data.content && data.content[0] && data.content[0].text;
+      if (text) {
+        whyCache[pos.fen] = text;
+        callback(null, text);
+      } else {
+        callback('No explanation returned.', null);
+      }
+    })
+    .catch(function (err) { callback(String(err), null); });
+  }
+
+  // ---- Render: position view -----------------------------------------------
+  function renderPosition(pos) {
+    var sideStr = pos.side === 'w' ? 'White' : 'Black';
+    var progressPct = Math.round((sessionTotal / SESSION_SIZE) * 100);
+    root.innerHTML =
+      '<div class="progress-wrap"><div class="progress-bar" style="width:' + progressPct + '%"></div></div>' +
+      renderBoard(pos) +
+      '<p class="prompt">Is this <b>winning or drawn</b> for ' + esc(sideStr) + ' to move?</p>' +
+      '<div class="verdict-btns">' +
+        '<button class="vbtn win" id="btn-winning">Winning</button>' +
+        '<button class="vbtn draw" id="btn-drawn">Drawn</button>' +
+        '<button class="vbtn lose" id="btn-losing">Losing</button>' +
+      '</div>' +
+      '<div class="reveal" id="reveal-panel"></div>' +
+      '<div id="next-area"></div>';
+
+    currentRevealed = false;
+
+    var bWin  = document.getElementById('btn-winning');
+    var bDraw = document.getElementById('btn-drawn');
+    var bLose = document.getElementById('btn-losing');
+
+    function onPick(userVerdict) {
+      if (currentRevealed) return;
+      currentRevealed = true;
+      bWin.disabled = true; bDraw.disabled = true; bLose.disabled = true;
+      // Highlight chosen button
+      var chosen;
+      if (userVerdict === 'win') { chosen = bWin; bWin.style.borderColor = '#2F9E76'; }
+      else if (userVerdict === 'draw') { chosen = bDraw; bDraw.style.borderColor = '#888'; }
+      else { chosen = bLose; bLose.style.borderColor = '#D2553F'; }
+      var correct = (userVerdict === pos.result);
+      recordResult(pos, correct);
+      showReveal(pos, correct, userVerdict);
+    }
+
+    bWin.addEventListener('click', function () { onPick('win'); });
+    bDraw.addEventListener('click', function () { onPick('draw'); });
+    bLose.addEventListener('click', function () { onPick('lose'); });
+  }
+
+  function showReveal(pos, correct, userVerdict) {
+    var panel = document.getElementById('reveal-panel');
+    var nextArea = document.getElementById('next-area');
+    var verdictLabel = pos.result === 'win' ? 'Winning' : 'Drawn';
+    var dtz = dtzHint(pos);
+    var badgeClass = correct ? 'correct' : 'wrong';
+    var badgeText = correct ? '✓ Correct — ' + verdictLabel : '✗ Wrong — it\'s ' + verdictLabel;
+
+    panel.innerHTML =
+      '<div class="verdict-badge ' + badgeClass + '">' + badgeText + '</div>' +
+      '<div class="keyfactor"><strong>' + esc(pos.type) + ':</strong> ' + esc(pos.keyFactor) + '</div>' +
+      (dtz ? '<div class="dtz-hint">' + esc(dtz) + '</div>' : '') +
+      '<div class="why-area">' +
+        '<button class="btn ghost" id="why-btn" style="width:auto;padding:7px 16px;font-size:13px;">Why this position?</button>' +
+        '<div id="why-out"></div>' +
+      '</div>';
+    panel.classList.add('show');
+
+    var whyBtn = document.getElementById('why-btn');
+    var whyOut = document.getElementById('why-out');
+    whyBtn.addEventListener('click', function () {
+      if (whyBtn.disabled) return;
+      whyBtn.disabled = true;
+      whyBtn.textContent = 'Asking coach…';
+      fetchWhy(pos, function (err, text) {
+        whyBtn.style.display = 'none';
+        if (err || !text) {
+          whyOut.innerHTML = '<div class="why-error">Coach unavailable — check your connection.</div>';
+        } else {
+          whyOut.innerHTML = '<div class="why-text">' + esc(text) + '</div>';
+        }
+      });
+    });
+
+    // Render next/end button
+    var isLast = sessionIdx >= sessionPositions.length - 1;
+    if (isLast) {
+      nextArea.innerHTML = '<button class="btn primary" id="next-btn" style="margin-top:8px;">See results</button>';
+    } else {
+      nextArea.innerHTML = '<button class="btn primary" id="next-btn" style="margin-top:8px;">Next position →</button>';
+    }
+    document.getElementById('next-btn').addEventListener('click', function () {
+      if (isLast) {
+        showSessionEnd();
+      } else {
+        sessionIdx++;
+        renderPosition(sessionPositions[sessionIdx]);
+      }
+    });
+  }
+
+  // ---- Session end ---------------------------------------------------------
+  function showSessionEnd() {
+    var pct = sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 0;
+    // Find weakest type this session
+    var weakestType = null, weakestPct = 101;
+    for (var t in byTypeSession) {
+      var s = byTypeSession[t];
+      if (s.total >= 2) {
+        var tp = s.correct / s.total;
+        if (tp < weakestPct) { weakestPct = tp; weakestType = t; }
+      }
+    }
+    // Also check lifetime localStorage for weakest type
+    var storage = loadJson(KEY_RECOG, { byType: {} });
+    var lifeWeakType = null, lifeWeakPct = 101;
+    for (var lt in (storage.byType || {})) {
+      var ls = storage.byType[lt];
+      if (ls.seen >= 5) {
+        var lp = ls.correct / ls.seen;
+        if (lp < lifeWeakPct) { lifeWeakPct = lp; lifeWeakType = lt; }
+      }
+    }
+
+    // Type breakdown for this session
+    var typeRows = Object.keys(byTypeSession).sort(function (a, b) {
+      var pa = byTypeSession[a].correct / byTypeSession[a].total;
+      var pb = byTypeSession[b].correct / byTypeSession[b].total;
+      return pa - pb;
+    }).map(function (t) {
+      var s = byTypeSession[t];
+      var tp = Math.round((s.correct / s.total) * 100);
+      var barW = tp;
+      return '<div class="type-row">' +
+        '<span class="type-name">' + esc(t) + '</span>' +
+        '<div class="type-bar-wrap"><div class="type-bar" style="width:' + barW + '%"></div></div>' +
+        '<span class="type-pct">' + tp + '%</span>' +
+      '</div>';
+    }).join('');
+
+    var weakHtml = '';
+    var showWeakType = weakestType || lifeWeakType;
+    var showWeakPctVal = weakestType ? Math.round(weakestPct * 100) : (lifeWeakType ? Math.round(lifeWeakPct * 100) : 0);
+    if (showWeakType) {
+      weakHtml = '<div class="weak-card show">' +
+        '<div class="wt">Weakest family</div>' +
+        '<div class="ws">' + esc(showWeakType) + ' — ' + showWeakPctVal + '% correct. Drill this type to build the pattern.</div>' +
+      '</div>';
+    }
+
+    root.innerHTML =
+      '<div class="session-end show">' +
+        '<div style="font-size:32px;">🏁</div>' +
+        '<div class="big">' + sessionCorrect + '/' + sessionTotal + '</div>' +
+        '<div class="sub">' + pct + '% correct this session</div>' +
+        weakHtml +
+        (typeRows ? '<div class="type-breakdown">' + typeRows + '</div>' : '') +
+        '<div class="btn-row">' +
+          '<a href="/endgame-recognition.html" class="btn primary" style="text-align:center;text-decoration:none;">New session</a>' +
+          '<a href="/today.html" class="btn ghost" style="text-align:center;text-decoration:none;">Back to today</a>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ---- Boot ----------------------------------------------------------------
+  function boot() {
+    fetch('/data/endgame-recognition.json')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        allPositions = data.positions || data;
+        if (!Array.isArray(allPositions) || allPositions.length === 0) {
+          throw new Error('No positions found in dataset.');
+        }
+        sessionPositions = buildSession(allPositions);
+        updateScorePill();
+        renderPosition(sessionPositions[0]);
+      })
+      .catch(function (err) {
+        root.innerHTML = '<div class="error-state"><b>Could not load positions.</b><br>' + esc(String(err)) + '</div>';
+      });
+  }
+
+  boot();
+})();
+</script>
+<!-- v0.28 · Endgame recognition drill · Releases-B · 2026-06-01 -->
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Insights</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/js/coach-stats.js"></script>
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --open:#4F7CC4; --middle:#2F9E76; --endg:#C98A2E;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%); background-attachment: fixed; min-height: 100vh; }
+  body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .container { max-width:780px; margin:0 auto; }
+  h1, .page-title, .nav-brand-name, .panel-title, .aha { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+
+    .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position: sticky; top: calc(-1 * max(12px, env(safe-area-inset-top))); z-index: 50; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top: calc(-1 * max(12px, env(safe-area-inset-top))); }
+  .hamburger { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn); padding:8px 12px; cursor:pointer; font-size:16px; line-height:1; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s ease; font-family:inherit; }
+  .hamburger:hover { background:var(--surface2); }
+  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+  .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:.13em; font-weight:700; color:var(--accent); margin-bottom:6px; margin-top:6px; }
+  h1 { font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.1; margin-bottom:14px; }
+
+  .ratestrip { display:flex; align-items:center; gap:18px; flex-wrap:wrap; border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; background:var(--surface); box-shadow:0 10px 24px -20px rgba(20,30,55,.3); margin-bottom:6px; }
+  .rating-value { font-family:"Plus Jakarta Sans",sans-serif; font-size:34px; font-weight:800; letter-spacing:-.02em; line-height:1; } .rating-value small { font-size:13px; color:var(--pos); font-weight:700; margin-left:6px; }
+  .rating-meta { font-size:11.5px; color:var(--muted); margin-top:3px; }
+  .rating-meta .delta-up { color:var(--pos); font-weight:600; } .rating-meta .delta-down { color:var(--bad); font-weight:600; }
+  .traj-wrap { flex:1; min-width:200px; } .traj-wrap svg { width:100%; height:48px; display:block; }
+  .traj-empty { font-size:11px; color:var(--muted); }
+  @media (max-width:560px) { .ratestrip { flex-direction:column; align-items:stretch; } .traj-wrap { width:100%; } }
+
+  .aha { font-weight:800; font-size:18px; margin:18px 0 4px; line-height:1.25; } .aha .leakw { color:var(--endg); }
+  .ahasub { font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+  .phases { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } @media (max-width:640px) { .phases { grid-template-columns:1fr; } }
+  .phase { border:1px solid var(--line); border-radius:14px; padding:15px; position:relative; overflow:hidden; background:var(--surface); }
+  .phase .topdot { position:absolute; left:0; top:0; bottom:0; width:4px; }
+  .phase .top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .phase .score { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:36px; line-height:1; margin:6px 0 2px; }
+  .phase .bar { height:6px; border-radius:4px; background:var(--surface3); overflow:hidden; margin-top:8px; } .phase .bar i { display:block; height:100%; border-radius:4px; }
+  .phase .sub { font-size:11.5px; color:var(--muted); margin-top:8px; }
+  .phase.leak { border-color:var(--endg); background:linear-gradient(180deg,#FBF3E6,#fff); box-shadow:0 14px 30px -22px rgba(201,138,46,.6); }
+  .phase .flag { position:absolute; top:11px; right:11px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--endg); border-radius:6px; padding:2px 7px; }
+  .phase .impact { font-family:"Spline Sans Mono"; font-size:12px; color:var(--endg); font-weight:600; margin-top:6px; }
+
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:18px 20px; margin-top:16px; box-shadow:0 10px 24px -18px rgba(20,30,55,.22); }
+  .panel-title { font-size:14px; font-weight:800; letter-spacing:-.01em; }
+  .ph2 { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .ph2 .ov { font-size:11px; color:var(--muted); } .ph2 .ov b { color:var(--ink); font-family:"Plus Jakarta Sans"; }
+  .cgrp { margin-bottom:12px; } .cgrp:last-child { margin-bottom:0; }
+  .cgrp .gh { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; display:flex; align-items:center; gap:6px; } .cgrp .gh i { width:8px; height:8px; border-radius:50%; }
+  .comp { display:flex; align-items:center; gap:10px; font-size:12.5px; padding:5px 0; border-bottom:1px solid var(--surface2); } .comp:last-child { border:none; }
+  .comp .nm { flex:1; } .comp .ti { font-family:"Spline Sans Mono"; font-size:11px; color:var(--muted); } .comp .ti.calib { color:var(--warn); } .comp .ti.nodata { color:var(--muted); font-style:italic; }
+
+  @keyframes heat-grow {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .calib-ring { width: 32px; height: 32px; border: 4px solid var(--surface2); border-top-color: var(--warn); border-radius: 50%; animation: spin 1s linear infinite; margin: 6px 0; }
+
+  .heat-h { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px; } .heat-h .t { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:14px; } .heat-h .u { font-size:10.5px; color:var(--muted); }
+  .bands { display:flex; gap:6px; align-items:flex-end; height:180px; margin-top:8px; }
+  .band { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; height:100%; }
+  .band .bar { width:100%; border-radius:5px 5px 0 0; min-height:3px; transform-origin: bottom; animation: heat-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .band .bar.nodata { background:repeating-linear-gradient(45deg, var(--surface3), var(--surface3) 4px, #eef1f4 4px, #eef1f4 8px); }
+  .band .pct { font-family:"Spline Sans Mono",monospace; font-size:9.5px; color:var(--ink); } .band .pct.none { color:var(--muted); }
+  .band .lab { font-family:"Spline Sans Mono",monospace; font-size:8.5px; color:var(--muted); }
+  .phaselegend { display:flex; gap:14px; margin-top:12px; font-size:11px; color:var(--muted); } .phaselegend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .heatnote { font-size:12px; color:var(--muted); margin-top:10px; } .heatnote b { color:var(--ink); font-family:"Plus Jakarta Sans"; }
+
+  .review1 { background:var(--accent-soft); border:1px solid #CDE9DC; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-top:16px; text-decoration:none; color:inherit; }
+  .review1 .ava { width:24px; height:24px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); flex-shrink:0; } .review1 .tx { flex:1; font-size:13px; } .review1 .tx b { font-family:"Plus Jakarta Sans"; } .review1 .go { font-size:12px; color:var(--accent); font-weight:700; }
+
+  .empty-state { padding:24px; text-align:center; color:var(--muted); font-size:13px; line-height:1.5; }
+  .empty-state .btn { display:inline-block; margin-top:12px; padding:10px 18px; background:var(--accent); color:#fff; border-radius:var(--r-btn); text-decoration:none; font-weight:700; font-family:"Plus Jakarta Sans"; }
+  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:10px; padding:11px 13px; margin-top:8px; } .ebanner .t { font-weight:700; font-size:12.5px; color:var(--bad); } .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:#9a4334; margin-top:5px; }
+
+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+  .nav-drawer.open { transform:translateX(0); }
+  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
+  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .nav-brand-name { font-weight:700; font-size:15px; }
+  .nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
+  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+  .nav-drawer-link:hover { background:var(--surface2); }
+  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; } .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; } .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+  .nav-drawer-link.coming { color:var(--muted); }
+  .nav-drawer-link.coming .nav-soon { margin-left:auto; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:var(--surface2); color:var(--muted); padding:2px 7px; border-radius:9px; }
+  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); letter-spacing:.02em; border-top:1px solid var(--line); }
+  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+  .tab-bar a.active { color:var(--accent); } .tab-bar a .tab-icon { width:22px; height:22px; } .tab-bar a.coming { opacity:.55; }
+
+  @media (min-width: 880px) {
+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+    .hamburger { display:none !important; } .container { max-width:880px; } .tab-bar { display:none; }
+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+    .nav-backdrop { display:none !important; } h1 { font-size:32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <span class="page-title">Insights</span>
+  </div>
+  <div class="eyebrow">Insights</div>
+  <h1>Where you're losing rating</h1>
+  <div id="insights-root"><!-- rendered by JS --></div>
+</div>
+
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand"><img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true"><span class="nav-brand-name">KnightPath</span></div>
+  <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <div class="nav-group-label">Tools</div>
+  <a href="/roadmap.html" class="nav-drawer-link"><span class="nav-icon">▤</span>Roadmap</a>
+  <a href="/completed.html" class="nav-drawer-link"><span class="nav-icon">✓</span>Completed</a>
+  <a href="/index.html" class="nav-drawer-link"><span class="nav-icon">⚙</span>Connection tests</a>
+  <div class="version-stamp">v0.20 · KnightPath brand · 2026-06-01</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+
+<script>
+/* insights.html — phase-score rethink (Loop 1, v1.0). Spec: redesign-spec §8 +
+ * design-explorations/insights.html (2026-06-01) + engineering spec 04 "Phase
+ * scores". Leads with opening/middlegame/endgame scores; weakest flagged as the
+ * biggest leak with an estimated rating cost. Seven component tiers demoted to a
+ * secondary detail grouped by phase. Severity split dropped. Accepted
+ * exposure-corrected heatmap kept. NO-SPOILER: aggregate history only. */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var root = $('insights-root');
+  $('hamburger-btn').addEventListener('click', function () { $('nav-drawer').classList.add('open'); $('nav-backdrop').classList.add('open'); });
+  $('nav-backdrop').addEventListener('click', function () { $('nav-drawer').classList.remove('open'); $('nav-backdrop').classList.remove('open'); });
+
+  var KEY_MISTAKES = 'chess-coach-mistakes-v1';
+  var KEY_ATTEMPTS = 'chess-coach-attempts-v1';
+  var KEY_RATING = 'chess-coach-user-rating-v1';
+  var KEY_RATING_HISTORY = 'chess-coach-rating-history-v1';
+  var KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
+  function loadJson(key, fb) { try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; } catch (e) { return fb; } }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+  var mistakes, attempts, ratingCache, ratingHistory, scorecards;
+  try {
+    mistakes = loadJson(KEY_MISTAKES, []) || [];
+    attempts = loadJson(KEY_ATTEMPTS, {}) || {};
+    ratingCache = loadJson(KEY_RATING, null);
+    ratingHistory = loadJson(KEY_RATING_HISTORY, []) || [];
+    scorecards = loadJson(KEY_SCORECARDS, {}) || {};
+  } catch (e) {
+    root.innerHTML = '<div class="ebanner"><div class="t">Insights could not read your saved data.</div><div class="raw">' + esc((e && e.stack) || String(e)) + '</div></div>';
+    return;
+  }
+  var currentRating = (ratingCache && typeof ratingCache.rating === 'number') ? ratingCache.rating : null;
+  var TARGET = 1500;
+
+  function computeDayStreak(records) {
+    var days = {};
+    for (var id in records) { var r = records[id]; if (!r) continue; if (r.lastAt) days[r.lastAt.slice(0, 10)] = 1; if (Array.isArray(r.attemptLog)) r.attemptLog.forEach(function (a) { if (a && a.at) days[a.at.slice(0, 10)] = 1; }); }
+    if (!Object.keys(days).length) return 0;
+    var today = new Date(); today.setHours(0, 0, 0, 0); var streak = 0, freeze = false;
+    for (var d = 0; d < 365; d++) { var day = new Date(today); day.setDate(today.getDate() - d); var k = day.toISOString().slice(0, 10); if (days[k]) { streak++; continue; } if (!freeze && d <= 6) { freeze = true; continue; } break; }
+    return streak;
+  }
+  var streak = computeDayStreak(attempts);
+
+  var phases = null, view = null;
+  try {
+    if (typeof CoachStats !== 'undefined') {
+      phases = CoachStats.phaseScores(scorecards);
+      view = CoachStats.computeCoachView({ rating: currentRating, mistakes: mistakes, attempts: attempts, scorecards: scorecards, nowMs: Date.now() });
+    }
+  } catch (e) { phases = null; }
+
+  var PHASE_META = { opening: { label: 'Opening', col: 'var(--open)' }, middlegame: { label: 'Middlegame', col: 'var(--middle)' }, endgame: { label: 'Endgame', col: 'var(--endg)' } };
+  var PHASE_NAME = { opening: 'opening', middlegame: 'middlegame', endgame: 'endgame' };
+
+  function ratingStripHtml() {
+    var val = (currentRating != null) ? currentRating : '—';
+    var meta = 'Chess.com rapid';
+    if (currentRating != null) { var gap = TARGET - currentRating; meta += gap > 0 ? ' · ' + gap + ' to 1500' : gap === 0 ? ' · at 1500' : ' · ' + (-gap) + ' above 1500'; }
+    else { meta = 'Sync your rating in Puzzles.'; }
+    if (streak > 0) meta += ' · 🔥 ' + streak;
+    return '<div class="ratestrip"><div><div class="rating-value">' + val + '</div><div class="rating-meta" id="rating-meta">' + esc(meta) + '</div></div><div class="traj-wrap" id="traj-wrap"></div></div>';
+  }
+  function renderTrajectory() {
+    var wrap = $('traj-wrap'); if (!wrap) return;
+    var points = ratingHistory.slice();
+    if (currentRating != null) { var last = points[points.length - 1]; if (!last || last.rating !== currentRating) points.push({ rating: currentRating, at: new Date().toISOString() }); }
+    if (points.length < 2) { wrap.innerHTML = '<div class="traj-empty">Trajectory builds as your rating moves — two snapshots minimum.</div>'; return; }
+    var ratings = points.map(function (p) { return p.rating; });
+    var yMin = Math.min.apply(null, ratings.concat([TARGET])) - 25, yMax = Math.max.apply(null, ratings.concat([TARGET])) + 25;
+    var W = 320, H = 46, PADT = 5, PADB = 5, innerH = H - PADT - PADB;
+    var xOf = function (i) { return (i / (points.length - 1)) * W; };
+    var yOf = function (r) { return PADT + (1 - (r - yMin) / (yMax - yMin)) * innerH; };
+    var d = points.map(function (p, i) { return (i === 0 ? 'M' : 'L') + xOf(i).toFixed(1) + ',' + yOf(p.rating).toFixed(1); }).join(' ');
+    var tY = yOf(TARGET);
+    wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-label="Rating trajectory">' +
+      '<line x1="0" y1="' + tY.toFixed(1) + '" x2="' + W + '" y2="' + tY.toFixed(1) + '" stroke="#1F9D57" stroke-width="1" stroke-dasharray="3,4" opacity=".5"/>' +
+      '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      points.map(function (p, i) { return '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(p.rating).toFixed(1) + '" r="2.2" fill="var(--accent)"/>'; }).join('') + '</svg>';
+  }
+
+  function leakOf() {
+    if (!phases) return null;
+    var ok = ['opening', 'middlegame', 'endgame'].filter(function (p) { return phases[p] && phases[p].status === 'ok'; });
+    if (!ok.length) return null;
+    ok.sort(function (a, b) { return phases[a].score - phases[b].score; });
+    var leak = ok[0], best = ok[ok.length - 1];
+    var impact = null;
+    if (ok.length >= 2) { var gap = phases[best].score - phases[leak].score; if (gap >= 8) impact = Math.round(gap * 3); }
+    return { phase: leak, best: best, impact: impact };
+  }
+  function ahaHtml(leak) {
+    if (!leak) return '<div class="aha">Still calibrating your phase scores.</div><div class="ahasub">Ingest a few more games and your opening / middlegame / endgame scores sharpen up.</div>';
+    var leakName = PHASE_NAME[leak.phase];
+    var bestStrong = phases[leak.best] && phases[leak.best].score >= 70 && leak.best !== leak.phase;
+    var lead = bestStrong
+      ? "You're solid in the " + PHASE_NAME[leak.best] + ' — the rating is leaking in the <span class="leakw">' + leakName + '</span>.'
+      : 'Your rating is leaking most in the <span class="leakw">' + leakName + '</span>.';
+    var n = (scorecards && typeof scorecards === 'object') ? Object.keys(scorecards).length : 0;
+    return '<div class="aha">' + lead + '</div><div class="ahasub">Three phase scores from your last ' + n + ' game' + (n === 1 ? '' : 's') + '.</div>';
+  }
+  function phaseCardsHtml(leak) {
+    var ri = (typeof CoachStats !== 'undefined' && phases) ? CoachStats.perPhaseRatingImpact(phases) : null;
+    var order = ['opening', 'middlegame', 'endgame'];
+    return '<div class="phases">' + order.map(function (p) {
+      var m = PHASE_META[p], d = phases ? phases[p] : null;
+      var isLeak = leak && leak.phase === p;
+      if (!d || d.status === 'no data') {
+        return '<div class="phase"><span class="topdot" style="background:' + m.col + '"></span><div class="top">' + m.label + '</div><div class="score" style="color:var(--muted)">—</div><div class="sub">No games reaching this phase yet.</div></div>';
+      }
+      if (d.status === 'calibrating') {
+        return '<div class="phase"><span class="topdot" style="background:' + m.col + '"></span><div class="top">' + m.label + '</div><div class="calib-ring"></div><div class="sub">Calibrating — needs a few more games before this score is trustworthy.</div></div>';
+      }
+      var flag = isLeak ? '<span class="flag">Biggest leak</span>' : '';
+      var riPhase = ri ? ri[p] : null;
+      var impact = '';
+      if (riPhase) {
+        if (riPhase.isBest) {
+          impact = '<div class="impact">your ' + p + ' plays like a ≈' + riPhase.eloEquivalent + ' player</div>';
+        } else if (riPhase.ratingImpact > 0) {
+          impact = '<div class="impact">≈ −' + riPhase.ratingImpact + ' rating points behind your best</div>';
+        }
+      }
+      var sub = d.tier + ' · avg ' + d.acpl + ' cp · ' + d.moves + ' moves';
+      return '<div class="phase' + (isLeak ? ' leak' : '') + '">' + flag + '<span class="topdot" style="background:' + m.col + '"></span>' +
+        '<div class="top">' + m.label + '</div><div class="score anim-score" data-score="' + Math.round(d.score) + '" style="color:' + m.col + '">0</div>' +
+        '<div class="bar"><i style="width:' + Math.round(d.score) + '%;background:' + m.col + '"></i></div>' +
+        '<div class="sub">' + sub + '</div>' + impact + '</div>';
+    }).join('') + '</div>';
+  }
+
+  var ATTR_LABELS = { tactical_patterns: 'Tactical patterns', king_safety: 'King safety', endgame_technique: 'Endgame technique', opening_principles: 'Opening principles', calculation: 'Calculation', piece_activity: 'Piece activity', pawn_structure: 'Pawn structure' };
+  var PHASE_GROUPS = [
+    { phase: 'opening', attrs: ['opening_principles'] },
+    { phase: 'middlegame', attrs: ['tactical_patterns', 'calculation', 'piece_activity', 'pawn_structure', 'king_safety'] },
+    { phase: 'endgame', attrs: ['endgame_technique'] }
+  ];
+  function compRow(attr) {
+    var a = (view && view.attributes && view.attributes[attr]) || { status: 'no data' };
+    var label = ATTR_LABELS[attr] || attr;
+    var ti;
+    if (a.status === 'ok') ti = '<span class="ti">' + (a.tier || '—') + ' · ' + Math.round(a.score) + '%</span>';
+    else if (a.status === 'calibrating') ti = '<span class="ti calib">calibrating</span>';
+    else ti = '<span class="ti nodata">no data yet</span>';
+    return '<div class="comp"><span class="nm">' + esc(label) + '</span>' + ti + '</div>';
+  }
+  function detailHtml() {
+    var overall = (view && view.overall && view.overall.tier) ? ('Overall: <b>' + view.overall.tier + '</b> · median of the seven') : 'Overall: calibrating';
+    var groups = PHASE_GROUPS.map(function (g) {
+      var m = PHASE_META[g.phase];
+      return '<div class="cgrp"><div class="gh" style="color:' + m.col + '"><i style="background:' + m.col + '"></i>' + m.label + '</div>' + g.attrs.map(compRow).join('') + '</div>';
+    }).join('');
+    return '<div class="panel"><div class="ph2"><span class="panel-title">The detail</span><span class="ov">' + overall + '</span></div>' + groups + '</div>';
+  }
+
+  var CPLOSS_MISTAKE = 30;
+  var HEAT_BANDS = [[1,5],[6,10],[11,15],[16,20],[21,25],[26,30],[31,999]];
+  var PHASE_VAR = { opening: 'var(--open)', middlegame: 'var(--middle)', endgame: 'var(--endg)' };
+  function bandLabel(lo, hi) { return hi >= 999 ? (lo + '+') : (lo + '-' + hi); }
+  function legendHtml() { return '<div class="phaselegend"><span><i style="background:var(--open)"></i>Opening</span><span><i style="background:var(--middle)"></i>Middlegame</span><span><i style="background:var(--endg)"></i>Endgame</span></div>'; }
+  function heatmapHtml() {
+    var cards = (scorecards && typeof scorecards === 'object') ? Object.keys(scorecards).map(function (k) { return scorecards[k]; }) : [];
+    if (!cards.length) return '<div class="empty-state" style="padding:8px 0; text-align:left;">No per-game data yet. Ingest a few games — this reads from the per-move scorecards built during analysis.</div>';
+    var bands = HEAT_BANDS.map(function (r) { return { lo: r[0], hi: r[1], exposure: 0, mistakes: 0, phase: { opening: 0, middlegame: 0, endgame: 0 } }; });
+    var hasCp = false;
+    cards.forEach(function (sc) {
+      var traj = (sc && Array.isArray(sc.evalTrajectory)) ? sc.evalTrajectory : [];
+      traj.forEach(function (t) {
+        var mv = typeof t.fullmove === 'number' ? t.fullmove : null; if (mv == null || mv < 1) return;
+        var b = null; for (var i = 0; i < bands.length; i++) { if (mv >= bands[i].lo && mv <= bands[i].hi) { b = bands[i]; break; } } if (!b) return;
+        b.exposure++; if (t.phase && b.phase[t.phase] != null) b.phase[t.phase]++;
+        if (typeof t.cpLoss === 'number') { hasCp = true; if (t.cpLoss >= CPLOSS_MISTAKE) b.mistakes++; }
+      });
+    });
+    var reached = bands.filter(function (b) { return b.exposure > 0; });
+    if (!reached.length) return '<div class="empty-state" style="padding:8px 0; text-align:left;">No analysed moves recorded yet. Re-ingest your recent games.</div>';
+    var first = bands.indexOf(reached[0]), last = bands.indexOf(reached[reached.length - 1]);
+    var shown = bands.slice(first, last + 1);
+    if (!hasCp) {
+      var maxExp = Math.max.apply(null, shown.map(function (b) { return b.exposure; }).concat([1]));
+      var bd = shown.map(function (b, i) {
+        if (!b.exposure) return '<div class="band"><span class="pct none">-</span><div class="bar nodata" style="height:8%; animation-delay:' + (i * 0.05) + 's"></div><span class="lab">' + bandLabel(b.lo, b.hi) + '</span></div>';
+        var h = Math.max(8, Math.round(b.exposure / maxExp * 100));
+        return '<div class="band"><span class="pct none">·</span><div class="bar nodata" style="height:' + h + '%; animation-delay:' + (i * 0.05) + 's"></div><span class="lab">' + bandLabel(b.lo, b.hi) + '</span></div>';
+      }).join('');
+      return '<div class="bands">' + bd + '</div>' + legendHtml() + '<div class="heatnote">Your games were analysed before per-move loss tracking. <b>Re-ingest in the Games tab</b> to see your actual mistake rate by move.</div>';
+    }
+    var rateOf = function (b) { return b.exposure ? b.mistakes / b.exposure : null; };
+    var maxRate = Math.max.apply(null, shown.map(function (b) { return rateOf(b) || 0; }).concat([0.0001]));
+    function phaseOf(b) { var e = Object.keys(b.phase).map(function (k) { return [k, b.phase[k]]; }).sort(function (a, c) { return c[1] - a[1]; }); var top = (e[0] && e[0][1] > 0) ? e[0][0] : 'middlegame'; return (top === 'opening' && b.lo >= 11) ? 'middlegame' : top; }
+    var bars = shown.map(function (b, i) {
+      var lab = bandLabel(b.lo, b.hi);
+      if (!b.exposure) return '<div class="band"><span class="pct none">-</span><div class="bar nodata" style="height:6%; animation-delay:' + (i * 0.05) + 's"></div><span class="lab">' + lab + '</span></div>';
+      var rate = rateOf(b), pct = Math.round(rate * 100), h = Math.max(4, Math.round(rate / maxRate * 100)), col = PHASE_VAR[phaseOf(b)];
+      return '<div class="band"><span class="pct">' + pct + '%</span><div class="bar" style="height:' + h + '%; background:' + col + '; animation-delay:' + (i * 0.05) + 's" title="Moves ' + lab + ': ' + b.mistakes + ' of ' + b.exposure + ' (' + pct + '%)"></div><span class="lab">' + lab + '</span></div>';
+    }).join('');
+    var pool = shown.filter(function (b) { return b.exposure >= 3; }); if (!pool.length) pool = shown.filter(function (b) { return b.exposure > 0; });
+    var note = '';
+    if (pool.length) { var worst = pool.slice().sort(function (a, b) { return rateOf(b) - rateOf(a); })[0]; var pn = { opening: 'the opening', middlegame: 'the middlegame', endgame: 'the endgame' }[phaseOf(worst)]; note = '<div class="heatnote"><b>Heaviest at moves ' + bandLabel(worst.lo, worst.hi) + '</b>, in ' + pn + '.</div>'; }
+    return '<div class="bands">' + bars + '</div>' + legendHtml() + note;
+  }
+
+  // RENDER
+  if (!phases) {
+    root.innerHTML = ratingStripHtml() + '<div class="panel"><div class="empty-state">Stats module failed to load. Reload the page; if it persists, check the browser console.</div></div>';
+    renderTrajectory();
+    return;
+  }
+  var anyPhase = ['opening', 'middlegame', 'endgame'].some(function (p) { return phases[p] && phases[p].status !== 'no data'; });
+  if (!anyPhase) {
+    root.innerHTML = ratingStripHtml() +
+      '<div class="panel"><div class="empty-state">Not enough games yet. Phase scores need a few analysed games — ingest from the Games tab and they appear here.<br><a class="btn" href="/games.html">Ingest games</a></div></div>';
+    renderTrajectory();
+    return;
+  }
+
+  var leak = leakOf();
+  root.innerHTML =
+    ratingStripHtml() +
+    ahaHtml(leak) +
+    phaseCardsHtml(leak) +
+    detailHtml() +
+    '<div class="panel"><div class="heat-h"><span class="t">Where you go wrong</span><span class="u">mistake rate per 5-move band · phase-coloured</span></div>' + heatmapHtml() + '</div>' +
+    '<a href="/coach.html" class="review1"><span class="ava"></span><div class="tx"><b>Your leak, in detail.</b> The full strengths &amp; weaknesses read is in Coach.</div><span class="go">Open →</span></a>';
+  renderTrajectory();
+
+  // Odometer animation
+  var animScores = root.querySelectorAll('.anim-score');
+  animScores.forEach(function(el) {
+    var target = parseInt(el.getAttribute('data-score'), 10);
+    if (isNaN(target)) return;
+    var startTimestamp = null;
+    var duration = 1200; // 1.2s
+    var step = function(timestamp) {
+      if (!startTimestamp) startTimestamp = timestamp;
+      var progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // easeOutExpo
+      var ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      el.textContent = Math.floor(ease * target);
+      if (progress < 1) window.requestAnimationFrame(step);
+    };
+    window.requestAnimationFrame(step);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Games</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/js/coach-stats.js"></script>
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  body {
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--ink);
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .container { max-width: 640px; margin: 0 auto; }
+
+  h1, .title, .page-title, .nav-brand-name {
+    font-family:"Plus Jakarta Sans","Inter",sans-serif;
+  }
+  .mono, .progress, .stat .num, .sub.mono {
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+  }
+
+  /* Header */
+    .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position: sticky; top: calc(-1 * max(12px, env(safe-area-inset-top))); z-index: 50; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top: calc(-1 * max(12px, env(safe-area-inset-top))); }
+  .hamburger {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r-btn); padding:8px 12px; cursor:pointer;
+    font-size:16px; line-height:1; color:var(--ink);
+    box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s ease;
+    font-family:inherit;
+  }
+  .hamburger:hover { background:var(--surface2); }
+  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+
+  /* Headings */
+  .eyebrow {
+    font-size:11px; text-transform:uppercase; letter-spacing:.13em;
+    font-weight:700; color:var(--accent); margin-bottom:6px;
+  }
+  h1 {
+    font-size:28px; font-weight:700; letter-spacing:-.02em;
+    line-height:1.1; margin-bottom:6px;
+  }
+  .lede { color:var(--muted); font-size:14px; margin-bottom:18px; }
+
+  /* Panels = cards */
+  .panel {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r-card); padding:18px;
+    margin-bottom:14px;
+    box-shadow:0 16px 36px -24px rgba(30,40,70,.35);
+  }
+  .panel h2 {
+    font-family:"Plus Jakarta Sans","Inter",sans-serif;
+    font-size:15px; font-weight:700; margin-bottom:10px;
+    letter-spacing:-.01em;
+  }
+  .panel .sub {
+    font-size:12px; color:var(--muted); margin-bottom:12px;
+  }
+  label {
+    display:block; font-size:11px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
+  }
+  .form-row { margin-bottom:12px; }
+  .form-row.grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  input, select {
+    width:100%; padding:11px 13px; font-size:15px;
+    border:1px solid var(--line); border-radius:var(--r-btn);
+    background:var(--surface); color:var(--ink);
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus, select:focus {
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(47,158,118,.16);
+  }
+
+  /* Buttons */
+  .btn {
+    width:100%; padding:12px 16px;
+    background:var(--accent); color:#fff; border:none;
+    border-radius:var(--r-btn); cursor:pointer;
+    font-size:14px; font-weight:700; font-family:inherit;
+    letter-spacing:-.01em;
+    box-shadow:0 8px 18px -8px var(--accent);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .btn:hover { filter:brightness(1.07); }
+  .btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; filter:none; }
+  .btn.btn-secondary {
+    background:var(--surface); color:var(--ink);
+    border:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.03);
+  }
+  .btn.btn-secondary:hover { background:var(--surface2); filter:none; }
+  .btn.btn-danger {
+    background:var(--surface); color:var(--bad);
+    border:1px solid var(--bad); box-shadow:0 2px 4px rgba(0,0,0,.03);
+  }
+  .btn.btn-danger:hover { background:#FBF0ED; filter:none; }
+
+  /* Progress */
+  .progress {
+    margin-top:12px; font-size:12px; color:var(--muted);
+    line-height:1.6;
+  }
+  .progress .bar {
+    height:6px; background:var(--surface3);
+    border-radius:3px; overflow:hidden; margin-top:6px;
+  }
+  .progress .bar-fill {
+    height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    width:0%; transition:width 200ms ease;
+  }
+  .progress.error { color:var(--bad); }
+  .progress.ok    { color:var(--pos); }
+
+  /* Stats grid */
+  .stats {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:10px; margin-top:12px;
+  }
+  .stat {
+    padding:14px 12px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r-panel); text-align:center;
+    box-shadow:0 6px 14px -10px rgba(20,30,55,.22);
+  }
+  .stat .num {
+    font-size:24px; font-weight:700; color:var(--ink);
+    letter-spacing:-.02em;
+    font-family:"Plus Jakarta Sans","Inter",sans-serif;
+  }
+  .stat .label {
+    font-size:10px; color:var(--muted);
+    letter-spacing:.07em; text-transform:uppercase;
+    margin-top:4px; font-weight:600;
+  }
+
+  /* Mistake list */
+  .mistakes-list {
+    margin-top:10px; max-height:320px; overflow-y:auto;
+    border:1px solid var(--line); border-radius:var(--r-panel);
+    background:var(--surface);
+  }
+  .mistake-item {
+    padding:10px 12px; border-bottom:1px solid var(--line);
+    font-size:13px; line-height:1.4;
+  }
+  .mistake-item:last-child { border-bottom:none; }
+  .mistake-item .top {
+    display:flex; justify-content:space-between;
+    align-items:baseline; gap:8px; margin-bottom:3px;
+  }
+  .mistake-item .src {
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-size:11px; color:var(--muted);
+  }
+  .mistake-item .sev {
+    font-size:9px; font-weight:800;
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 8px; border-radius:var(--r-pill);
+  }
+  .sev.inaccuracy { background:#FBF5EA; color:var(--warn); }
+  .sev.mistake    { background:#FBF0ED; color:var(--bad); }
+  .sev.blunder    { background:var(--bad); color:#fff; }
+  .mistake-item .moves {
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-size:11px; color:var(--ink);
+  }
+  .mistake-item .cat {
+    font-size:10px; color:var(--muted);
+    letter-spacing:.05em; text-transform:uppercase;
+  }
+
+  .row { display:flex; gap:8px; margin-top:12px; }
+  .row > .btn { flex:1; }
+
+  /* ============ Nav (spec §7) ============ */
+  .nav-drawer {
+    position:fixed; top:0; left:0;
+    width:288px; max-width:84vw; height:100vh;
+    background:var(--surface); border-right:1px solid var(--line);
+    transform:translateX(-100%);
+    transition:transform 200ms ease;
+    z-index:100; padding:20px 14px;
+    overflow-y:auto;
+    display:flex; flex-direction:column; gap:4px;
+    box-shadow:0 20px 40px -22px rgba(20,30,55,.25);
+  }
+  .nav-drawer.open { transform:translateX(0); }
+  .nav-brand {
+    display:flex; align-items:center; gap:10px;
+    padding:6px 8px 14px; margin-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  .nav-brand-mark {
+    width:30px; height:30px; border-radius:0;
+    background:none; box-shadow:none;
+    object-fit:contain; flex-shrink:0;
+  }
+  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .nav-brand-name { font-weight:700; font-size:15px; }
+  .nav-group-label {
+    font-size:10px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted);
+    padding:12px 10px 4px;
+  }
+  .nav-drawer-link {
+    display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border-radius:10px;
+    font-size:14px; font-weight:600;
+    color:var(--ink); text-decoration:none;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .nav-drawer-link:hover { background:var(--surface2); }
+  .nav-drawer-link.active {
+    background:var(--accent); color:#fff;
+    box-shadow:0 6px 14px -8px var(--accent);
+  }
+  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+  .nav-drawer-link.coming { color:var(--muted); }
+  .nav-drawer-link.coming .nav-soon {
+    margin-left:auto; font-size:9px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase;
+    background:var(--surface2); color:var(--muted);
+    padding:2px 7px; border-radius:9px;
+  }
+  .version-stamp {
+    margin-top:auto;
+    padding:10px 12px 4px;
+    font-size:10px; color:var(--muted);
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    letter-spacing:.02em;
+    border-top:1px solid var(--line);
+  }
+  .nav-backdrop {
+    position:fixed; inset:0; background:rgba(15,20,30,.45);
+    z-index:99; opacity:0; pointer-events:none;
+    transition:opacity 200ms ease;
+  }
+  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+
+  /* Mobile tab bar */
+  .tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; background:var(--surface);
+    border-top:1px solid var(--line);
+    z-index:90;
+    padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px);
+    box-shadow:0 -8px 22px -16px rgba(15,20,40,.16);
+  }
+  .tab-bar a {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:2px;
+    padding:7px 4px; border-radius:10px;
+    font-size:10px; font-weight:600;
+    color:var(--muted); text-decoration:none;
+    transition:color .15s ease;
+  }
+  .tab-bar a.active { color:var(--accent); }
+  .tab-bar a .tab-icon { width:22px; height:22px; }
+  .tab-bar a.coming { opacity:.55; }
+
+  .hidden { display:none; }
+
+  /* Desktop: pinned sidebar, tab-bar hides. */
+  @media (min-width: 880px) {
+    body {
+      padding-left:248px; padding-right:28px;
+      padding-bottom:28px; font-size:15px;
+    }
+    .hamburger { display:none !important; }
+    .container { max-width:780px; }
+    .tab-bar { display:none; }
+    .nav-drawer {
+      position:fixed !important;
+      top:0; left:0;
+      width:224px !important; max-width:224px !important;
+      height:100vh;
+      transform:none !important;
+      border-right:1px solid var(--line);
+      background:var(--surface);
+      padding:22px 14px 18px;
+      z-index:10;
+    }
+    .nav-backdrop { display:none !important; }
+    h1 { font-size:30px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <span class="page-title">Games</span>
+  </div>
+
+  <div class="eyebrow">Phase A.4 — game ingestion</div>
+  <h1>Ingest</h1>
+  <p class="lede">Pull your recent rapid games from Chess.com, run Stockfish over every move you made, and save any mistake as a puzzle for the Puzzles page.</p>
+
+  <!-- Current state of stored puzzles -->
+  <div class="panel" id="state-panel">
+    <h2>Saved puzzles</h2>
+    <div class="sub">Stored locally on this device. Wipe and re-ingest at any time.</div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="stat-opening">0</div><div class="label">Opening</div></div>
+      <div class="stat"><div class="num" id="stat-middlegame">0</div><div class="label">Middlegame</div></div>
+      <div class="stat"><div class="num" id="stat-endgame">0</div><div class="label">Endgame</div></div>
+    </div>
+    <div class="stats" style="margin-top:6px;">
+      <div class="stat" style="grid-column: 1 / span 3;"><div class="num" id="stat-ingested">0</div><div class="label">Games already analysed</div></div>
+    </div>
+    <div class="row">
+      <a href="/puzzle.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">Open puzzles</a>
+      <button class="btn btn-secondary" id="backfill-btn" type="button">Backfill motifs</button>
+      <button class="btn btn-danger" id="clear-btn" type="button">Clear all saved</button>
+    </div>
+  </div>
+
+  <!-- Ingestion form -->
+  <div class="panel">
+    <h2>Ingest new games</h2>
+    <div class="sub">Each user move is analysed at depth 12 with MultiPV=5. Roughly 4–5 seconds per game on iPhone after warm-up.</div>
+    <form id="ingest-form">
+      <div class="form-row">
+        <label for="username">Chess.com username</label>
+        <input id="username" type="text" autocomplete="off" value="LCirujano">
+      </div>
+      <div class="form-row grid">
+        <div>
+          <label for="num-games">Games to analyse</label>
+          <select id="num-games">
+            <option value="1">1 game (~5 sec)</option>
+            <option value="3" selected>3 games (~15 sec)</option>
+            <option value="6">6 games (~30 sec)</option>
+            <option value="10">10 games (~45 sec)</option>
+            <option value="20">20 games (~90 sec)</option>
+          </select>
+        </div>
+        <div>
+          <label for="depth">Engine depth</label>
+          <select id="depth">
+            <option value="10">10 (faster)</option>
+            <option value="12" selected>12 (balanced)</option>
+            <option value="14">14 (deeper)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" type="submit" id="ingest-btn" disabled>Loading engine…</button>
+    </form>
+    <div class="progress hidden" id="progress">
+      <div id="progress-text">Idle.</div>
+      <div class="bar"><div class="bar-fill" id="progress-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Mistake list -->
+  <div class="panel hidden" id="list-panel">
+    <h2>Found in this run</h2>
+    <div class="sub" id="list-summary"></div>
+    <div class="mistakes-list" id="mistakes-list"></div>
+    <!-- Spec 05: per-game coach narrative (on-demand, post-ingest) -->
+    <div id="coach-review-panel" style="display:none; margin-top:16px; border-top:1px solid var(--border,#e0e0e0); padding-top:14px;">
+      <button class="btn" id="coach-narrative-btn" type="button">Coach: how did you play?</button>
+      <div id="coach-narrative-out" style="display:none; margin-top:12px; padding:12px 14px; background:var(--surface-2,#f5f5f5); border-radius:8px; font-size:0.95em; line-height:1.6; color:var(--text-primary,#1a1a1a);"></div>
+    </div>
+  </div>
+</div>
+
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand">
+    <img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
+    <span class="nav-brand-name">KnightPath</span>
+  </div>
+  <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <div class="nav-group-label">Tools</div>
+  <a href="/completed.html" class="nav-drawer-link"><span class="nav-icon">✓</span>Completed</a>
+  <a href="/index.html" class="nav-drawer-link"><span class="nav-icon">⚙</span>Connection tests</a>
+  <div class="version-stamp">v0.20 · KnightPath brand · 2026-06-01</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/games.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/puzzle.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" ><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+
+<script>
+// Hamburger nav drawer
+document.getElementById('hamburger-btn').addEventListener('click', () => {
+  document.getElementById('nav-drawer').classList.add('open');
+  document.getElementById('nav-backdrop').classList.add('open');
+});
+document.getElementById('nav-backdrop').addEventListener('click', () => {
+  document.getElementById('nav-drawer').classList.remove('open');
+  document.getElementById('nav-backdrop').classList.remove('open');
+});
+</script>
+
+<script type="module">
+// ============================================================================
+// SECTION 1 — CONFIG
+// ============================================================================
+
+const STORAGE_KEY_MISTAKES = 'chess-coach-mistakes-v1';
+const STORAGE_KEY_INGESTED_GAMES = 'chess-coach-ingested-games-v1';
+const STOCKFISH_MULTIPV = 5;
+
+// Thresholds, aligned roughly with Lichess defaults to keep the volume of
+// puzzles manageable. Anything below MIN_CPLOSS_TO_RECORD is not saved.
+//   inaccuracy: 50 .. 99 cp loss
+//   mistake:   100 .. 199 cp loss
+//   blunder:   200+ cp loss
+const MIN_CPLOSS_TO_RECORD = 50;
+const SEVERITY_THRESHOLDS = { inaccuracy: 100, mistake: 200 };
+
+// Thinning rule: within any window of THINNING_WINDOW user moves, keep at most
+// one non-blunder mistake (the one with the highest cpLoss). Blunders always
+// pass through regardless of clustering. Stops the queue filling up with five
+// near-identical puzzles from the same losing sequence.
+const THINNING_WINDOW = 7;
+
+// ============================================================================
+// SECTION 2 — STATE
+// ============================================================================
+
+import { Chess } from 'https://esm.sh/chess.js@1.4.0';
+
+const state = {
+  engineReady: false,
+  busy: false,
+  thisRunMistakes: [],
+};
+
+// ============================================================================
+// SECTION 3 — DOM HELPERS
+// ============================================================================
+
+const $ = (id) => document.getElementById(id);
+
+function setProgress(text, pct, cls = '') {
+  $('progress').classList.remove('hidden', 'error', 'ok');
+  if (cls) $('progress').classList.add(cls);
+  $('progress-text').textContent = text;
+  $('progress-bar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+
+// ============================================================================
+// SECTION 4 — STORAGE
+// ============================================================================
+
+function loadMistakes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_MISTAKES);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function saveMistakes(arr) {
+  localStorage.setItem(STORAGE_KEY_MISTAKES, JSON.stringify(arr));
+}
+
+function mergeMistakes(existing, fresh) {
+  const byId = new Map();
+  for (const m of existing) byId.set(m.id, m);
+  for (const m of fresh) byId.set(m.id, m); // overwrite by ID
+  return Array.from(byId.values());
+}
+
+function loadIngestedGameUrls() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_INGESTED_GAMES);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch { return new Set(); }
+}
+function saveIngestedGameUrls(set) {
+  localStorage.setItem(STORAGE_KEY_INGESTED_GAMES, JSON.stringify(Array.from(set)));
+}
+
+function renderSavedStats() {
+  const all = loadMistakes();
+  $('stat-opening').textContent = all.filter((m) => m.category === 'opening').length;
+  $('stat-middlegame').textContent = all.filter((m) => m.category === 'middlegame').length;
+  $('stat-endgame').textContent = all.filter((m) => m.category === 'endgame').length;
+  const ingestedCount = loadIngestedGameUrls().size;
+  const ingestedEl = $('stat-ingested');
+  if (ingestedEl) ingestedEl.textContent = ingestedCount;
+}
+
+// ============================================================================
+// SECTION 5 — ENGINE (Stockfish over Web Worker)
+// ----------------------------------------------------------------------------
+// Same primitives as puzzle.html. We hold a single worker for the page,
+// reused across many positions during ingestion.
+// ============================================================================
+
+const SF_URL = '/engine/stockfish-17.1-lite-single-03e3232.js';
+let stockfish = null;
+
+function sfWaitFor(matcher, timeoutMs = 60000) {
+  return new Promise((resolve, reject) => {
+    const messages = [];
+    const t = setTimeout(() => {
+      stockfish.removeEventListener('message', onMsg);
+      reject(new Error(`timeout waiting for "${matcher}"`));
+    }, timeoutMs);
+    function onMsg(e) {
+      const msg = typeof e.data === 'string' ? e.data : '';
+      messages.push(msg);
+      if (msg.includes(matcher)) {
+        clearTimeout(t);
+        stockfish.removeEventListener('message', onMsg);
+        resolve({ matched: msg, all: messages });
+      }
+    }
+    stockfish.addEventListener('message', onMsg);
+  });
+}
+
+function parseMultiPV(allMessages, numLines) {
+  const linesByMpv = new Map();
+  for (const msg of allMessages) {
+    if (!msg.startsWith('info')) continue;
+    const mpvMatch = msg.match(/\bmultipv\s+(\d+)/);
+    if (!mpvMatch) continue;
+    const scoreMatch = msg.match(/\bscore\s+(cp|mate)\s+(-?\d+)/);
+    const pvMatch = msg.match(/\bpv\s+(.+)$/);
+    if (!scoreMatch || !pvMatch) continue;
+    linesByMpv.set(parseInt(mpvMatch[1], 10), {
+      scoreType: scoreMatch[1],
+      scoreVal: parseInt(scoreMatch[2], 10),
+      pvMoves: pvMatch[1].trim().split(/\s+/),
+    });
+  }
+  const out = [];
+  for (let i = 1; i <= numLines; i++) if (linesByMpv.has(i)) out.push(linesByMpv.get(i));
+  return out;
+}
+
+function pvToSan(fen, pvUcis) {
+  const c = new Chess(fen);
+  const sans = [];
+  for (const uci of pvUcis) {
+    try {
+      const m = c.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        promotion: uci.slice(4, 5) || undefined,
+      });
+      if (!m) break;
+      sans.push(m.san);
+    } catch { break; }
+  }
+  return sans;
+}
+
+async function initStockfish() {
+  stockfish = new Worker(SF_URL);
+  stockfish.postMessage('uci');
+  await sfWaitFor('uciok');
+  stockfish.postMessage(`setoption name MultiPV value ${STOCKFISH_MULTIPV}`);
+  stockfish.postMessage('isready');
+  await sfWaitFor('readyok', 10000);
+  state.engineReady = true;
+  $('ingest-btn').disabled = false;
+  $('ingest-btn').textContent = 'Load and analyse';
+}
+
+async function analyzePositionMultiPV(fen, depth) {
+  stockfish.postMessage('ucinewgame');
+  stockfish.postMessage('position fen ' + fen);
+  stockfish.postMessage(`go depth ${depth}`);
+  const { all } = await sfWaitFor('bestmove');
+  const parsed = parseMultiPV(all, STOCKFISH_MULTIPV);
+  return parsed.map((line) => {
+    const evalObj = line.scoreType === 'mate' ? { mate: line.scoreVal } : { cp: line.scoreVal };
+    const pvSan = pvToSan(fen, line.pvMoves);
+    return {
+      uci: line.pvMoves[0] || '',
+      san: pvSan[0] || line.pvMoves[0] || '',
+      eval: evalObj,
+      pvUci: line.pvMoves,
+      pvSan,
+    };
+  });
+}
+
+function normalizeEval(evalObj) {
+  if (!evalObj) return 0;
+  if (evalObj.mate !== undefined) return evalObj.mate > 0 ? 10000 : -10000;
+  return evalObj.cp || 0;
+}
+
+// ============================================================================
+// SECTION 6 — CHESS.COM API
+// ----------------------------------------------------------------------------
+// Pulls the user's archive list, walks backwards through monthly archives
+// until we've collected enough rapid games.
+// ============================================================================
+
+async function fetchRecentRapidGames(username, n, alreadyIngested) {
+  const archResp = await fetch(`https://api.chess.com/pub/player/${username.toLowerCase()}/games/archives`);
+  if (!archResp.ok) throw new Error(`Chess.com archives: HTTP ${archResp.status}`);
+  const arch = await archResp.json();
+  if (!arch.archives || !arch.archives.length) throw new Error('No archives for that username.');
+
+  const out = [];
+  let skipped = 0;
+  for (let i = arch.archives.length - 1; i >= 0 && out.length < n; i--) {
+    const monthResp = await fetch(arch.archives[i]);
+    if (!monthResp.ok) continue;
+    const monthData = await monthResp.json();
+    const rapid = (monthData.games || []).filter((g) => g.time_class === 'rapid' && g.rules === 'chess');
+    for (let j = rapid.length - 1; j >= 0 && out.length < n; j--) {
+      const g = rapid[j];
+      const url = g.url || g.uuid || '';
+      if (url && alreadyIngested.has(url)) { skipped++; continue; }
+      out.push(g);
+    }
+  }
+  return { games: out, skipped };
+}
+
+// ============================================================================
+// SECTION 7 — CATEGORIZATION
+// ----------------------------------------------------------------------------
+// opening:    fullmove <= 15
+// endgame:    no queens on the board OR fullmove >= 35
+// middlegame: everything else
+// ============================================================================
+
+function categorize(fullmove, fen) {
+  if (fullmove <= 15) return 'opening';
+  const placement = fen.split(' ')[0];
+  const hasQueens = placement.includes('Q') || placement.includes('q');
+  if (!hasQueens) return 'endgame';
+  if (fullmove >= 35) return 'endgame';
+  return 'middlegame';
+}
+
+function severityFor(cpLoss) {
+  if (cpLoss < SEVERITY_THRESHOLDS.inaccuracy) return 'inaccuracy';
+  if (cpLoss < SEVERITY_THRESHOLDS.mistake) return 'mistake';
+  return 'blunder';
+}
+
+// Greedy thinning: sort non-blunders by cpLoss desc, keep one at a time if
+// no kept entry is within THINNING_WINDOW user moves. Blunders are kept
+// unconditionally. Output is sorted back into move order.
+function thinMistakesByWindow(mistakes, windowSize) {
+  const blunders = mistakes.filter((m) => m.severity === 'blunder');
+  const others = mistakes
+    .filter((m) => m.severity !== 'blunder')
+    .slice()
+    .sort((a, b) => b.cpLoss - a.cpLoss);
+  const kept = [];
+  for (const m of others) {
+    const tooClose = kept.some((k) => Math.abs(k.fullmove - m.fullmove) < windowSize);
+    if (!tooClose) kept.push(m);
+  }
+  return [...blunders, ...kept].sort((a, b) => a.fullmove - b.fullmove);
+}
+
+// ============================================================================
+// SECTION 7b — MOTIF CLASSIFIER (Spec 02)
+// ----------------------------------------------------------------------------
+// One grounded Claude call per detected mistake at ingest time. Returns one
+// tag from a fixed 17-tag vocabulary; output is stored on the Mistake record
+// and powers the "Drill this theme" filter on Puzzles. The call runs ONLY
+// at ingest (and on backfill); it never runs in front of the player, so
+// there is no no-spoiler conflict with the live coach.
+// ============================================================================
+const MOTIF_VOCAB = [
+  'pin','fork','skewer','discovered-attack','removing-defender','back-rank',
+  'overload','decoy','deflection','zwischenzug','mating-net','pawn-promotion',
+  'simplification','prophylaxis','pawn-structure','king-attack','none-tactical',
+];
+const MOTIF_VOCAB_SET = new Set(MOTIF_VOCAB);
+
+const MOTIF_CLASSIFIER_SYSTEM = [
+  'You are a chess tactics classifier. You will receive a position and Stockfish\'s',
+  'top engine lines for a position where the student made a mistake. Your only job is',
+  'to name the single dominant tactical motif that the best move exploits or that the',
+  'student missed.',
+  '',
+  'Ground your choice ONLY in the supplied engine lines and the FEN of the position;',
+  'do not invent pieces or moves not present in the data. Do not explain. Do not',
+  'output anything except one tag.',
+  '',
+  'Return EXACTLY one of these tags, lowercase, no punctuation, no other text:',
+  MOTIF_VOCAB.join(' · '),
+  '',
+  'If two motifs apply, pick the dominant one. If no clean tactical idea applies',
+  '(the best move is a quiet positional improvement), return none-tactical.',
+].join('\n');
+
+function buildMotifClassifierUserMessage(mistake) {
+  const lines = (mistake.engineLines || []).slice(0, 5).map((l, i) => {
+    const evalStr = l.eval && l.eval.mate != null ? `M${l.eval.mate}` : (l.eval && typeof l.eval.cp === 'number' ? `${l.eval.cp}cp` : '?');
+    const pv = Array.isArray(l.pvSan) ? l.pvSan.slice(0, 6).join(' ') : '';
+    return `  ${i + 1}. ${l.san} (eval ${evalStr}) — ${pv}`;
+  }).join('\n');
+  return [
+    `FEN: ${mistake.fen}`,
+    `Side to move: ${mistake.userColorName}`,
+    `The student played ${mistake.userMoveSan} (${mistake.cpLoss}cp below best).`,
+    `Engine top lines:`,
+    lines,
+    `The engine preferred ${mistake.bestMoveSan}. Name the dominant motif.`,
+  ].join('\n');
+}
+
+async function classifyMotif(mistake) {
+  try {
+    const r = await fetch('/api/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 10,
+        system: MOTIF_CLASSIFIER_SYSTEM,
+        messages: [{ role: 'user', content: buildMotifClassifierUserMessage(mistake) }],
+      }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    const raw = data?.content?.[0]?.text || '';
+    const tag = raw.trim().toLowerCase().replace(/[^a-z\-]/g, '');
+    if (MOTIF_VOCAB_SET.has(tag)) return tag;
+    console.warn('Motif classifier returned off-vocab value:', JSON.stringify(raw), '→ none-tactical');
+    return 'none-tactical';
+  } catch (err) {
+    console.warn('classifyMotif failed:', err.message);
+    return 'none-tactical';
+  }
+}
+
+// Classify a batch of mistakes with bounded concurrency. Keeps the API
+// pressure manageable on a 6-game ingest (~15–25 mistakes).
+async function classifyMotifsBatch(mistakes, onProgress) {
+  const CONCURRENCY = 4;
+  let done = 0;
+  const total = mistakes.length;
+  const queue = mistakes.slice();
+  const workers = Array.from({ length: Math.min(CONCURRENCY, total) }, async () => {
+    while (queue.length) {
+      const m = queue.shift();
+      if (!m) return;
+      m.motif = await classifyMotif(m);
+      m.motifTaggedAt = new Date().toISOString();
+      done++;
+      if (onProgress) onProgress(done, total);
+    }
+  });
+  await Promise.all(workers);
+  return mistakes;
+}
+
+// ============================================================================
+// SECTION 8 — INGESTION PIPELINE
+// ----------------------------------------------------------------------------
+// For each game:
+//   - Identify whether the user was White or Black.
+//   - Replay moves; at each user move, analyse the position BEFORE the move
+//     with MultiPV=5.
+//   - If the user's move matches line 1, skip (no mistake).
+//   - If it matches line 2..5, compute cpLoss vs line 1. Record if >=30cp.
+//   - If it's outside the top 5, record as a mistake with cpLoss estimated as
+//     line-5-eval-to-line-1-eval gap (lower bound for "this move is worse").
+// ============================================================================
+
+async function ingest(username, numGames, depth, onProgress) {
+  const alreadyIngested = loadIngestedGameUrls();
+  const fetched = await fetchRecentRapidGames(username, numGames, alreadyIngested);
+  const games = fetched.games;
+  if (!games.length) {
+    const msg = fetched.skipped > 0
+      ? `No new rapid games found (${fetched.skipped} most recent already ingested). Try a larger batch or play more games.`
+      : 'No rapid games found in the latest archives.';
+    throw new Error(msg);
+  }
+  if (fetched.skipped > 0) {
+    onProgress(0, 1, `Skipped ${fetched.skipped} games already ingested. Walking back further to find ${games.length} new game(s).`);
+  }
+
+  // Count user moves up front for the progress bar.
+  let totalUserMoves = 0;
+  const parsedGames = games.map((g) => {
+    const c = new Chess();
+    c.loadPgn(g.pgn);
+    const headers = c.header();
+    const userIsWhite = (headers.White || '').toLowerCase() === username.toLowerCase();
+    const userIsBlack = (headers.Black || '').toLowerCase() === username.toLowerCase();
+    if (!userIsWhite && !userIsBlack) return null;
+    const history = c.history({ verbose: true });
+    const userMoves = history.filter((m) => (m.color === 'w') === userIsWhite).length;
+    totalUserMoves += userMoves;
+    return { game: g, headers, userIsWhite, history };
+  }).filter(Boolean);
+
+  let analysedMoves = 0;
+  const freshMistakes = [];
+  const perGameSummary = [];
+  // Spec 06 per-game scorecards collected during this ingest; persisted after
+  // the loop. Keyed by gameUrl. Reuses the existing Stockfish pass — 0 extra
+  // engine cost. The shared CoachStats module turns these into attribute
+  // scores at read-time on Insights / Practice.
+  const newScorecards = {};
+  let gameIndex = 0;
+
+  for (const { game, headers, userIsWhite, history } of parsedGames) {
+    gameIndex++;
+    const opponent = userIsWhite ? (headers.Black || 'opponent') : (headers.White || 'opponent');
+    const dateStr = (headers.Date || '').replace(/\./g, '-');
+    const result = headers.Result || '';
+    const userColorName = userIsWhite ? 'White' : 'Black';
+    const userMovesInGame = history.filter((m) => (m.color === 'w') === userIsWhite).length;
+    // Map Chess.com's "1-0" / "0-1" / "1/2-1/2" result to win|loss|draw from
+    // the user's perspective, for the scorecard's eval_swing derivation.
+    let resultForUser = 'draw';
+    if (result === '1-0') resultForUser = userIsWhite ? 'win' : 'loss';
+    else if (result === '0-1') resultForUser = userIsWhite ? 'loss' : 'win';
+    else if (result === '1/2-1/2') resultForUser = 'draw';
+    // Spec 06 — per-game scorecard. The phase-ACPL + endgame conversion
+    // signals feed the attribute scores; opening + ECO support the Vienna
+    // pillar later.
+    const eco = headers.ECO || headers.Eco || null;
+    const openingName = headers.Opening || null;
+    const scorecard = (typeof CoachStats !== 'undefined')
+      ? CoachStats.newScorecard({ opp: opponent, colour: userColorName, eco, openingName })
+      : null;
+    let phaseEndgameRecorded = false;
+    // Collect candidate mistakes for THIS game; thin them after the loop so we
+    // can apply the 5-move-window rule across the whole game.
+    const gameCandidates = [];
+
+    const replay = new Chess();
+    for (let i = 0; i < history.length; i++) {
+      const move = history[i];
+      const userToMove = (move.color === 'w') === userIsWhite;
+      if (userToMove) {
+        const fenBefore = replay.fen();
+        const userUci = move.from + move.to + (move.promotion || '');
+        const userKey = userUci.slice(0, 4);
+
+        const lines = await analyzePositionMultiPV(fenBefore, depth);
+        analysedMoves++;
+        onProgress(analysedMoves, totalUserMoves, `Game ${gameIndex}/${parsedGames.length} vs ${opponent} — analysing your ${userColorName.toLowerCase()} moves`);
+
+        if (!lines.length) {
+          replay.move(move);
+          continue;
+        }
+
+        const idx = lines.findIndex((l) => l.uci.slice(0, 4) === userKey);
+        const bestEval = normalizeEval(lines[0].eval);
+        let cpLoss = 0;
+        let isMistake = false;
+
+        if (idx === 0) {
+          // Best move played — not a mistake.
+        } else if (idx === -1) {
+          // Outside top 5. Treat the gap between best and 5th as a *lower bound*.
+          const fifthEval = normalizeEval(lines[lines.length - 1].eval);
+          cpLoss = Math.max(MIN_CPLOSS_TO_RECORD, bestEval - fifthEval);
+          isMistake = true;
+        } else {
+          const userEval = normalizeEval(lines[idx].eval);
+          cpLoss = Math.max(0, bestEval - userEval);
+          if (cpLoss >= MIN_CPLOSS_TO_RECORD) isMistake = true;
+        }
+
+        const fullmoveAll = parseInt(fenBefore.split(' ')[5], 10) || 1;
+        const phaseAll = categorize(fullmoveAll, fenBefore);
+        // Spec 06 — feed EVERY analysed user move into the scorecard (not just
+        // flagged mistakes) so the phase-ACPL aggregates honestly. The motif
+        // and severity get back-filled below if this move turns out to be a
+        // mistake.
+        if (scorecard) {
+          scorecard.addUserMove({
+            fullmove: fullmoveAll,
+            phase: phaseAll,
+            cpLoss,
+            bestEvalCp: bestEval,
+          });
+          // Phase-entry: record the eval the user is entering the endgame on,
+          // once per game. This drives the eval_swing "winning_then_drawn"
+          // signal that flags conversion failures.
+          if (!phaseEndgameRecorded && phaseAll === 'endgame') {
+            scorecard.markPhaseEntry('endgame', bestEval);
+            phaseEndgameRecorded = true;
+          }
+        }
+        if (isMistake) {
+          // Skip positions that are already decided before the user's move:
+          // forced mate in either direction, or worse than -800cp for the
+          // side to move. Those don't make useful training puzzles.
+          const startEval = lines[0].eval;
+          const isAlreadyMate = startEval && startEval.mate != null;
+          const isHopelessLoss = startEval && typeof startEval.cp === 'number' && startEval.cp < -800;
+          if (isAlreadyMate || isHopelessLoss) {
+            replay.move(move);
+            continue;
+          }
+          const fullmove = fullmoveAll;
+          const category = phaseAll;
+          const severity = severityFor(cpLoss);
+          const rankText = idx === -1 ? 'outside engine top 5' : `engine line #${idx + 1}`;
+          // Capture what the player ACTUALLY played in the original game from
+          // this position forward, for the post-puzzle move-by-move comparison
+          // view. Up to 6 plies (3 user moves + 3 opponent replies).
+          const actualContinuation = [];
+          for (let j = i; j < Math.min(i + 6, history.length); j++) {
+            actualContinuation.push({ san: history[j].san, color: history[j].color, ply: j - i });
+          }
+
+          gameCandidates.push({
+            id: `${game.url || game.uuid || 'game'}|${i}`,
+            fen: fenBefore,
+            category,
+            brief: `From your ${userColorName.toLowerCase()} game vs ${opponent} (${dateStr}, result ${result}). At move ${fullmove}, you played ${move.san} (${rankText}); engine prefers ${lines[0].san}.`,
+            source: `vs ${opponent} — ${dateStr} — move ${fullmove} (${userColorName})`,
+            gameUrl: game.url || '',
+            userColorName,
+            opponent,
+            dateStr,
+            userMoveSan: move.san,
+            userMoveUci: userUci,
+            bestMoveSan: lines[0].san,
+            bestMoveUci: lines[0].uci,
+            cpLoss,
+            severity,
+            fullmove, // used by thinMistakesByWindow()
+            actualContinuation, // up to 6 plies of what was actually played in the game (for move-by-move comparison)
+            engineLines: lines.map((l) => ({
+              san: l.san, eval: l.eval, pvSan: l.pvSan.slice(0, 6),
+            })),
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+      replay.move(move);
+    }
+    // Thin: 5-move window, blunders always kept.
+    const thinned = thinMistakesByWindow(gameCandidates, THINNING_WINDOW);
+    // Spec 02 — motif classifier. One Claude call per surviving mistake,
+    // tags stored on the record + powers Drill this theme on the Puzzles page.
+    if (thinned.length) {
+      setProgress(`Tagging motifs for ${thinned.length} mistake${thinned.length === 1 ? '' : 's'}…`, null, '');
+      await classifyMotifsBatch(thinned, (done, total) => {
+        setProgress(`Tagging motifs… ${done}/${total}`, null, '');
+      });
+    }
+    freshMistakes.push(...thinned);
+    // Spec 06 — finalize this game's scorecard now that we know the result
+    // and have walked all the user's moves. eval_swing derives from the
+    // markPhaseEntry('endgame') reading + the result.
+    if (scorecard) {
+      const finalCard = scorecard.finalize(resultForUser);
+      const gameKey = game.url || game.uuid || `game-${gameIndex}-${Date.now()}`;
+      newScorecards[gameKey] = finalCard;
+    }
+    perGameSummary.push({
+      gameUrl: game.url || game.uuid || '',
+      opponent,
+      dateStr,
+      result,
+      userColorName,
+      userMoves: userMovesInGame,
+      analysed: userMovesInGame, // every user move was analysed
+      candidates: gameCandidates.length,
+      mistakes: thinned.length,
+    });
+  }
+
+  return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards };
+}
+
+// ============================================================================
+// SECTION 9 — UI RENDERING
+// ============================================================================
+
+function renderMistakeList(mistakes, perGameSummary) {
+  const listEl = $('mistakes-list');
+  listEl.innerHTML = '';
+
+  // Per-game summary header (helps spot games with 0 moves analysed etc.)
+  if (perGameSummary && perGameSummary.length) {
+    for (const g of perGameSummary) {
+      const div = document.createElement('div');
+      div.className = 'mistake-item';
+      const thinning = (typeof g.candidates === 'number' && g.candidates > g.mistakes)
+        ? ` · thinned from ${g.candidates}`
+        : '';
+      div.innerHTML = `
+        <div class="top">
+          <span class="src">vs ${escapeHtml(g.opponent)} (${escapeHtml(g.dateStr)}, ${escapeHtml(g.userColorName)}, result ${escapeHtml(g.result)})</span>
+          <span class="cat">${g.analysed} moves · ${g.mistakes} saved${thinning}</span>
+        </div>
+      `;
+      listEl.appendChild(div);
+    }
+    const sep = document.createElement('div');
+    sep.className = 'mistake-item';
+    sep.innerHTML = `<div class="cat">Mistakes saved this run (≤1 non-blunder per ${THINNING_WINDOW}-move window, blunders always kept)</div>`;
+    listEl.appendChild(sep);
+  }
+
+  for (const m of mistakes) {
+    const div = document.createElement('div');
+    div.className = 'mistake-item';
+    div.innerHTML = `
+      <div class="top">
+        <span class="src">${escapeHtml(m.source)}</span>
+        <span class="sev ${m.severity}">${m.severity}</span>
+      </div>
+      <div class="moves">you: ${escapeHtml(m.userMoveSan)} (${m.cpLoss}cp loss)</div>
+      <div class="cat">${m.category}</div>
+    `;
+    listEl.appendChild(div);
+  }
+  $('list-panel').classList.remove('hidden');
+  const counts = {
+    opening: mistakes.filter((m) => m.category === 'opening').length,
+    middlegame: mistakes.filter((m) => m.category === 'middlegame').length,
+    endgame: mistakes.filter((m) => m.category === 'endgame').length,
+  };
+  $('list-summary').textContent =
+    `${mistakes.length} new mistakes found — ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function handleIngestSubmit(e) {
+  e.preventDefault();
+  if (state.busy) return;
+  const username = $('username').value.trim();
+  if (!username) { alert('Enter a username.'); return; }
+  const numGames = parseInt($('num-games').value, 10);
+  const depth = parseInt($('depth').value, 10);
+
+  state.busy = true;
+  $('ingest-btn').disabled = true;
+  $('ingest-btn').textContent = 'Analysing…';
+  setProgress('Fetching games from Chess.com…', 5);
+
+  try {
+    const { mistakes: fresh, perGameSummary, scorecards } = await ingest(username, numGames, depth, (done, total, label) => {
+      const pct = total > 0 ? (done / total) * 100 : 0;
+      const prefix = label || `Analysing positions`;
+      setProgress(`${prefix} — ${done}/${total} positions`, pct);
+    });
+
+    // Persist mistakes (de-duplicated by id).
+    const merged = mergeMistakes(loadMistakes(), fresh);
+    saveMistakes(merged);
+
+    // Spec 06 — persist this run's per-game scorecards under the new key.
+    // Idempotent merge: a re-ingest of the same gameUrl overwrites the older
+    // scorecard with the fresh one.
+    if (scorecards && Object.keys(scorecards).length) {
+      const KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
+      let existingCards = {};
+      try { existingCards = JSON.parse(localStorage.getItem(KEY_SCORECARDS) || '{}') || {}; }
+      catch { existingCards = {}; }
+      for (const k of Object.keys(scorecards)) existingCards[k] = scorecards[k];
+      try { localStorage.setItem(KEY_SCORECARDS, JSON.stringify(existingCards)); }
+      catch (e) { console.warn('saveScorecards failed:', e.message); }
+    }
+
+    // Persist the game URLs so they're skipped on the next run.
+    const ingested = loadIngestedGameUrls();
+    for (const g of perGameSummary) if (g.gameUrl) ingested.add(g.gameUrl);
+    saveIngestedGameUrls(ingested);
+
+    state.thisRunMistakes = fresh;
+    renderMistakeList(fresh, perGameSummary);
+    renderSavedStats();
+    setProgress(`Done. ${fresh.length} new mistakes saved across ${perGameSummary.length} game(s). Open Puzzles to review.`, 100, 'ok');
+    // Spec 05 — reveal the on-demand Coach narrative button for this run.
+    const crp = $('coach-review-panel');
+    if (crp) {
+      crp.style.display = '';
+      $('coach-narrative-out').style.display = 'none';
+      $('coach-narrative-btn').disabled = false;
+      $('coach-narrative-btn').textContent = 'Coach: how did you play?';
+    }
+  } catch (err) {
+    setProgress('Error: ' + err.message, 100, 'error');
+  } finally {
+    state.busy = false;
+    $('ingest-btn').disabled = !state.engineReady;
+    $('ingest-btn').textContent = 'Load and analyse';
+  }
+}
+
+function handleClear() {
+  if (!confirm('Wipe all saved puzzles, ingested-games tracking, AND your puzzle attempts? This cannot be undone.')) return;
+  // Sweep every chess-coach-* key. Previously this only removed three keys,
+  // which left the puzzle and completed pages still showing old data after
+  // a "clear all". Now anything namespaced to the app is gone.
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('chess-coach-')) toRemove.push(k);
+  }
+  for (const k of toRemove) localStorage.removeItem(k);
+  renderSavedStats();
+  $('list-panel').classList.add('hidden');
+  alert('All puzzle data cleared. Reload the Puzzles and Completed tabs to see them empty.');
+}
+
+// ============================================================================
+// SECTION 9b — Spec 05 conductor narration (per-game "how you played")
+// ============================================================================
+
+// Deterministic fallback — zero tokens. Reads focus_ranked[0] and returns a
+// plain-English reason string. Shown immediately when data is thin OR when
+// the LLM call fails.
+function fallbackReason(d) {
+  const ATTR_NAMES = {
+    tactical_patterns: 'tactics', endgame_technique: 'endgames',
+    opening_principles: 'openings', king_safety: 'king safety',
+    piece_activity: 'piece activity', pawn_structure: 'pawn structure',
+    calculation: 'calculation',
+  };
+  if (!d || !d.focus_ranked || !d.focus_ranked.length) {
+    return 'Not enough data yet to call your biggest weakness. Solve a few more puzzles and ingest a game or two, and your focus will sharpen.';
+  }
+  const top = d.focus_ranked[0];
+  const name = ATTR_NAMES[top.attribute] || top.attribute;
+  const sess = d.session ? ` Today: ${d.session.title} (${d.session.count} puzzles).` : '';
+  return `Your weakest area right now is ${name} (${top.tier}, scoring ${Math.round(top.score)}/100).${sess}`;
+}
+
+// Build stores from localStorage (same as Insights), call computeCoachView()
+// + buildDigest(), then fire Prompt A. Falls back to fallbackReason() if the
+// LLM call fails or data is thin. On-demand only — never auto-fires.
+async function handleCoachNarrative() {
+  const btn = $('coach-narrative-btn');
+  const out = $('coach-narrative-out');
+  btn.disabled = true;
+  btn.textContent = 'Asking coach…';
+  out.style.display = 'none';
+
+  if (typeof CoachStats === 'undefined') {
+    out.textContent = 'CoachStats module not loaded — refresh the page and try again.';
+    out.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Coach: how did you play?';
+    return;
+  }
+
+  let mistakes = [], attempts = {}, scorecards = {}, rating = null;
+  try { mistakes   = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1')         || '[]')  || []; } catch {}
+  try { attempts   = JSON.parse(localStorage.getItem('chess-coach-attempts-v1')         || '{}')  || {}; } catch {}
+  try { scorecards = JSON.parse(localStorage.getItem('chess-coach-game-scorecards-v1')  || '{}')  || {}; } catch {}
+  try { rating     = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1')      || 'null');      } catch {}
+
+  const view   = CoachStats.computeCoachView({ rating, mistakes, attempts, scorecards, nowMs: Date.now() });
+  const digest = CoachStats.buildDigest(view);
+
+  // No games in scorecards yet — skip the LLM call.
+  if (!digest.games || digest.games < 1) {
+    out.textContent = fallbackReason(digest);
+    out.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Coach: how did you play?';
+    return;
+  }
+
+  // Prompt A — "how you played": narrate the worst phase/pattern from numbers.
+  const r = digest.rating || 950;
+  const PROMPT_A_SYSTEM = [
+    `You are a chess coach reviewing a student's recent games. They are rated approximately ${r} on Chess.com rapid, targeting 1500.`,
+    '',
+    'You are given a DIGEST (JSON) of structured scorecard data. Ground EVERY claim ONLY in these numbers.',
+    '',
+    'HARD RULES:',
+    '- Do NOT re-rank priorities.',
+    '- Do NOT invent any chess fact, move, opening name, or piece name. Use only what the DIGEST provides.',
+    '- Do NOT reveal a puzzle answer. There is no position here at all.',
+    '- Name the ONE recurring pattern that costs the most: the phase + theme from focus_ranked.',
+    '- Say plainly what it is and why it loses points. 3-5 sentences.',
+    '- If focus_ranked is empty (still calibrating): say there is not enough data yet, suggest ingesting more games.',
+    '',
+    'Humanise attribute keys: tactical_patterns→tactics, endgame_technique→endgames, opening_principles→openings, king_safety→king safety, piece_activity→piece activity, pawn_structure→pawn structure, calculation→calculation.',
+    '',
+    'Output: plain prose only. No markdown, no lists, no em-dashes, no preamble.',
+  ].join('\n');
+
+  try {
+    const resp = await fetch('/api/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        system: PROMPT_A_SYSTEM,
+        messages: [{ role: 'user', content: 'DIGEST:\n' + JSON.stringify(digest, null, 2) }],
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${JSON.stringify(data).slice(0, 200)}`);
+    const raw  = (data.content && data.content[0] && data.content[0].text) || '';
+    const text = raw.replace(/\*\*(.+?)\*\*/g, '$1').replace(/[—–]/g, ',').replace(/\s{2,}/g, ' ').trim();
+    out.textContent = text || fallbackReason(digest);
+    out.style.display = '';
+    btn.textContent = 'Done';
+  } catch (err) {
+    // LLM failed — show deterministic fallback and re-enable the button.
+    out.textContent = fallbackReason(digest);
+    out.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Coach: how did you play?';
+  }
+}
+
+// ============================================================================
+// SECTION 10 — BOOT
+// ============================================================================
+
+window.addEventListener('error', (e) => {
+  setProgress('Window error: ' + (e.message || e.error || String(e)), 100, 'error');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  setProgress('Unhandled rejection: ' + (e.reason?.message || String(e.reason)), 100, 'error');
+});
+
+$('ingest-form').addEventListener('submit', handleIngestSubmit);
+$('clear-btn').addEventListener('click', handleClear);
+$('coach-narrative-btn').addEventListener('click', handleCoachNarrative);
+
+// Spec 02 — backfill motifs for any already-ingested mistakes that don't have
+// a `motif` tag (the existing deck pre-dates the classifier). Idempotent.
+async function handleBackfillMotifs() {
+  const all = loadMistakes();
+  const untagged = all.filter((m) => !m.motif);
+  if (!untagged.length) {
+    alert('All ingested mistakes already have a motif tag — nothing to backfill.');
+    return;
+  }
+  const estCost = (untagged.length * 0.0026).toFixed(2);
+  if (!confirm(`Backfill ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} with motif tags?\n\nEstimated Anthropic cost: ~$${estCost}.\nThis runs one Claude classifier call per mistake.`)) return;
+  $('backfill-btn').disabled = true;
+  setProgress(`Backfilling motifs… 0/${untagged.length}`, 0, '');
+  try {
+    await classifyMotifsBatch(untagged, (done, total) => {
+      setProgress(`Backfilling motifs… ${done}/${total}`, Math.round(100 * done / total), '');
+    });
+    saveMistakes(all);
+    setProgress(`Done. ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} tagged.`, 100, 'ok');
+  } catch (err) {
+    setProgress('Backfill error: ' + err.message, 100, 'error');
+  } finally {
+    $('backfill-btn').disabled = false;
+  }
+}
+
+$('backfill-btn').addEventListener('click', handleBackfillMotifs);
+
+initStockfish().catch((err) => {
+  setProgress('Engine init failed: ' + err.message, 100, 'error');
+});
+renderSavedStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Practice</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  body {
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .container { max-width:640px; margin:0 auto; }
+  h1, .page-title, .nav-brand-name, .title { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+
+  .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50; background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top:calc(-1 * max(12px, env(safe-area-inset-top))); }
+  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+
+  /* eyebrow */
+  .eyebrow { font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700; color:var(--accent); margin-bottom:4px; }
+  .title { font-weight:800; font-size:26px; letter-spacing:-.02em; margin:4px 0 2px; line-height:1.1; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:16px; }
+
+  /* mode cards */
+  .mode-card { background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:14px; box-shadow:0 8px 20px -16px rgba(30,40,70,.3); margin-bottom:10px; }
+  .mode-card .sh { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; margin-bottom:6px; }
+  .block { display:flex; align-items:center; gap:12px; padding:11px 8px; border-radius:11px; cursor:pointer; text-decoration:none; color:inherit; }
+  .block:hover { background:var(--surface2); }
+  .block .ic { width:34px; height:34px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .block .ic svg { width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:1.8; }
+  .block .bd { flex:1; min-width:0; }
+  .block .bd b { font-size:13.5px; font-family:"Plus Jakarta Sans"; font-weight:700; }
+  .block .bd small { display:block; color:var(--muted); font-size:11.5px; }
+  .block .ct { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); }
+  .block .go { color:var(--muted); font-size:15px; margin-left:4px; }
+  .block.locked { opacity:.55; cursor:default; }
+  .block.locked .ct { font-family:"Inter",sans-serif; font-weight:700; }
+
+  /* error */
+  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:12px; padding:13px 15px; margin-top:14px; }
+  .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
+  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:#9a4334; margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+
+  /* footer link */
+  .footer-link { display:block; text-align:center; font-size:12px; color:var(--muted); margin-top:18px; text-decoration:none; }
+  .footer-link:hover { color:var(--ink); }
+
+  /* nav */
+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
+  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .nav-brand-name { font-weight:700; font-size:15px; }
+  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background-color .15s ease, box-shadow .15s ease; }
+  .nav-drawer-link:hover { background:var(--surface2); }
+  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+  .nav-drawer-link.coming { color:var(--muted); }
+  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
+  .nav-drawer-link.secondary:hover { background:var(--surface2); }
+  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
+  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
+  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom,6px),6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+  .tab-bar a.active { color:var(--accent); }
+  .tab-bar a .tab-icon { width:22px; height:22px; }
+
+  @media (min-width: 880px) {
+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+    .container { max-width:780px; }
+    .tab-bar { display:none; }
+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+    .nav-backdrop { display:none !important; }
+    .title { font-size:32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <span class="page-title">Practice</span>
+  </div>
+  <div id="practice-root">
+    <div class="eyebrow">Drill modes</div>
+    <div class="title">Practice</div>
+    <p class="sub">Choose a mode to start drilling.</p>
+  </div>
+</div>
+
+<aside class="nav-drawer" id="nav-drawer">
+  <div class="nav-brand">
+    <img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
+    <span class="nav-brand-name">KnightPath</span>
+  </div>
+  <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/practice.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+  <hr class="nav-separator">
+  <a href="/puzzle.html" class="nav-drawer-link secondary active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+  <a href="/endgames.html" class="nav-drawer-link secondary"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+  <a href="/endgame-recognition.html" class="nav-drawer-link secondary"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
+  <a href="/roadmap.html" class="nav-drawer-link coming"><span class="nav-icon">▤</span>Roadmap</a>
+  <a href="/completed.html" class="nav-drawer-link coming"><span class="nav-icon">✓</span>Completed</a>
+  <div class="version-stamp">v0.42 · Nav fix · 2026-06-01</div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<nav class="tab-bar" aria-label="Primary">
+  <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
+  <a href="/practice.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
+  <a href="/games.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
+</nav>
+
+<script>
+/* =============================================================================
+ * practice.html — Practice hub (Design Option A, P1 #2/#4 fix)
+ * v0.42 · Releases-B · 2026-06-01
+ *
+ * Flat hub: 3 live modes (Puzzles, Endgames, Recognition) + 3 locked coming modes.
+ * Live mistake count from localStorage for the Puzzles row.
+ * No coach, no session logic, no engine.
+ * =============================================================================*/
+(function () {
+  'use strict';
+
+  var root = document.getElementById('practice-root');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+    });
+  }
+
+  // Live mistake count from localStorage
+  var mistakeCount = 0;
+  var mistakeSub = 'Your errors from real games · drill the queue';
+  try {
+    var raw = localStorage.getItem('chess-coach-mistakes-v1');
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (Array.isArray(arr)) mistakeCount = arr.length;
+    }
+  } catch (e) { /* degrade gracefully — count stays 0 */ }
+
+  var countHtml = mistakeCount > 0
+    ? '<span class="ct">' + mistakeCount + '</span>'
+    : '';
+
+  var html =
+    '<div class="mode-card">' +
+    '<div class="sh">Live modes</div>' +
+
+    '<a class="block" href="/puzzle.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg></div>' +
+      '<div class="bd"><b>Your mistakes</b><small>' + esc(mistakeSub) + '</small></div>' +
+      countHtml + '<span class="go">›</span>' +
+    '</a>' +
+
+    '<a class="block" href="/endgames.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg></div>' +
+      '<div class="bd"><b>Endgames</b><small>Convert and recognise · 20 lessons + 1,001 positions</small></div>' +
+      '<span class="go">›</span>' +
+    '</a>' +
+
+    '<a class="block" href="/endgame-recognition.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg></div>' +
+      '<div class="bd"><b>Endgame recognition</b><small>1,001 positions · win or draw?</small></div>' +
+      '<span class="go">›</span>' +
+    '</a>' +
+
+    '<a class="block coming" href="/board-vision.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div>' +
+      '<div class="bd"><b>Board Vision</b><small>Daily warm-up · coordinates, knights, visualisation · ~4 min</small></div>' +
+      '<span class="ct">🔒 soon</span>' +
+    '</a>' +
+
+    '</div>' +
+
+    '<div class="mode-card">' +
+    '<div class="sh">Coming soon</div>' +
+
+    '<div class="block locked">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M20.5 7h-17M20.5 12h-17M20.5 17h-17"/></svg></div>' +
+      '<div class="bd"><b>Themed tactics</b><small>Drill a specific motif — pins, forks, back-rank</small></div>' +
+      '<span class="ct">🔒 soon</span>' +
+    '</div>' +
+
+    '<div class="block locked">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg></div>' +
+      '<div class="bd"><b>Openings</b><small>Repertoire training — coming in a future release</small></div>' +
+      '<span class="ct">🔒 soon</span>' +
+    '</div>' +
+
+    '<div class="block locked">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 20V8M8 20v-4M16 20v-8M4 20v-2M20 20v-6"/></svg></div>' +
+      '<div class="bd"><b>Calculation</b><small>Deep reasoning · multi-move visualisation drills</small></div>' +
+      '<span class="ct">🔒 soon</span>' +
+    '</div>' +
+
+    '</div>' +
+
+    '<a href="/roadmap.html" class="footer-link">App roadmap →</a>';
+
+  root.innerHTML = html;
+})();
+</script>
+</body>
+</html>
