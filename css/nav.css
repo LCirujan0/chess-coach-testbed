@@ -1,0 +1,28 @@
+/* ============================================================================
+ * css/nav.css — §30.5 desktop sidebar nesting (shared across all pages).
+ * Puzzles/Endgames/Recognition render as an indented sub-group under the
+ * Practice parent; Roadmap + Completed sit in a low-prominence "More" group at
+ * the foot. Desktop sidebar only — on mobile the drawer is off-canvas (tab-bar
+ * is the nav), so this is effectively desktop-scoped (§16, rule #8).
+ * ========================================================================== */
+.nav-subgroup {
+  display: flex; flex-direction: column; gap: 2px;
+  margin: 4px 0 4px 13px; padding-left: 11px;
+  border-left: 1.5px solid var(--line);
+}
+.nav-drawer-link.nav-child { font-size: 13px; padding: 7px 10px; color: var(--muted); }
+.nav-drawer-link.nav-child:hover { background: var(--surface2); }
+.nav-drawer-link.nav-child.active { color: var(--accent); font-weight: 700; background: none; box-shadow: none; }
+
+.nav-more { margin-top: 10px; }
+.nav-more-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--muted); opacity: .7; padding: 4px 10px 2px;
+}
+.nav-drawer-link.nav-more-link { font-size: 13px; padding: 7px 10px; color: var(--muted); }
+.nav-drawer-link.nav-more-link:hover { background: var(--surface2); }
+
+/* §30.5 — the Practice sub-group shows only when the Practice section is active
+ * (Practice parent highlighted). On other sections it collapses, so the sidebar
+ * "extends into a sub-level" exactly when you're in Practice. */
+.nav-drawer:not(:has(.nav-drawer-link[href="/practice.html"].active)) .nav-subgroup { display: none; }
