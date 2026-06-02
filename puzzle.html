@@ -9,6 +9,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -605,6 +606,101 @@
   .result-repeat.hidden { display: none; }
 
   /* ============================================================
+     §29/§30 result card — verdict banner, pips, reveal, card actions
+     ============================================================ */
+  .task-prompt { font-size: 13px; color: var(--muted); margin: -2px 0 10px; font-weight: 600; }
+  .task-prompt.hidden { display: none; }
+
+  /* One card border around the whole result block (§30.1) */
+  #result { display: flex; flex-direction: column; gap: 10px; }
+  .result-verdict { display: flex; align-items: center; gap: 11px; }
+  .verdict-icon {
+    width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 21px; font-weight: 800; color: #fff;
+  }
+  .result.pass .verdict-icon, .result.warn .verdict-icon { background: var(--pos); }
+  .result.fail .verdict-icon { background: var(--bad); }
+  .verdict-word {
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+  }
+  .result.pass .verdict-word, .result.warn .verdict-word { color: var(--pos); }
+  .result.fail .verdict-word { color: var(--bad); }
+
+  /* Attempt pips — three dots; spent ones hollow (§29.2) */
+  .result-pips { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+  .result-pips.hidden { display: none; }
+  .result-pips .pip {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--bad); border: 2px solid var(--bad); box-sizing: border-box;
+  }
+  .result-pips .pip.spent { background: transparent; }
+
+  .result-subline { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .result-subline.hidden { display: none; }
+  .result-nudge { font-size: 13px; color: var(--ink); font-weight: 600; }
+  .result-nudge.hidden { display: none; }
+
+  /* One-line contrast: "You Bd6 · Best Nxd5" (§29.3) */
+  .result-contrast {
+    font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 13px;
+    color: var(--ink); background: var(--surface2); border-radius: 8px;
+    padding: 7px 11px;
+  }
+  .result-contrast.hidden { display: none; }
+  .result-contrast .c-best { color: var(--pos); font-weight: 600; }
+  .result-contrast .c-you  { color: var(--bad); font-weight: 600; }
+
+  /* Plain-language answer at the stop point (§30.3) */
+  .result-answer {
+    font-size: 14px; font-weight: 700; color: var(--ink);
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 6px; padding: 9px 12px; line-height: 1.45;
+  }
+  .result-answer.hidden { display: none; }
+
+  /* Card action row — one dominant action per state (§29.4/§30.2) */
+  .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+  .result-actions .btn { flex: 1 1 auto; min-width: 120px; }
+  .result-actions .btn.hidden { display: none; }
+  .btn.btn-review { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+  .btn.btn-review:hover { background: var(--accent-soft); }
+
+  /* Quiet "Show me the answer" escape (from the 2nd miss, §30.6 #3) */
+  .result-escape {
+    align-self: flex-start; background: none; border: none; padding: 2px 0;
+    color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .result-escape:hover { color: var(--ink); }
+  .result-escape.hidden { display: none; }
+
+  .controls.hidden { display: none; }
+
+  /* ============================================================
+     §29.3 / §30.1 — iPhone progressive disclosure (accordions).
+     Comparison + coach collapse to one-tap headers on mobile; desktop
+     (>=880px) ignores .acc-collapsed and keeps them expanded.
+     ============================================================ */
+  .acc-head { display: none; }   /* shown only on mobile (below) */
+  @media (max-width: 879px) {
+    .acc-head {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--ink); user-select: none;
+      list-style: none;
+    }
+    .acc-head .acc-caret { transition: transform .15s ease; color: var(--muted); }
+    .acc-collapsed .acc-caret { transform: rotate(0deg); }
+    .acc-head .acc-preview { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comparison.acc-collapsed table,
+    .comparison.acc-collapsed .comparison-title { display: none; }
+    .coach-card.acc-collapsed .coach-log,
+    .coach-card.acc-collapsed .coach-input-row { display: none; }
+    .coach-card .acc-head { padding: 2px 0; }
+  }
+
+  /* ============================================================
      Move-by-move comparison
      ============================================================ */
   .comparison {
@@ -925,6 +1021,7 @@
     .layout-grid > #puzzle-meta { grid-area: meta; }
     .layout-grid > #inline-status { grid-area: status; }
     .layout-grid > #gate-card { grid-area: gate; align-self: stretch; }
+    .layout-grid > #task-prompt { grid-area: taskprompt; }
     .layout-grid > .board-wrap { grid-area: board; }
     .layout-grid > .controls { grid-area: controls; }
     .layout-grid > #nav-arrows { grid-area: navarrows; }
@@ -938,6 +1035,7 @@
         "badge       gate"
         "meta        gate"
         "status      gate"
+        "taskprompt  gate"
         "board       gate"
         "controls    coach"
         "navarrows   coach"
@@ -956,6 +1054,7 @@
         "badge       result"
         "meta        comparison"
         "status      comparison"
+        "taskprompt  coach"
         "board       coach"
         "controls    coach"
         "navarrows   coach";
@@ -973,6 +1072,7 @@
         "badge       coach"
         "meta        coach"
         "status      coach"
+        "taskprompt  coach"
         "board       coach"
         "controls    coach"
         "navarrows   coach";
@@ -1066,6 +1166,7 @@
 
   <div class="layout-grid">
   <h1 id="side-to-move-title">Loading…</h1>
+  <div class="task-prompt hidden" id="task-prompt">Find the best move.</div>
   <div class="repeat-badge hidden" id="repeat-badge"></div>
   <div class="puzzle-meta hidden" id="puzzle-meta"></div>
   <div class="inline-status" id="inline-status">Loading engine…</div>
@@ -1094,12 +1195,33 @@
     <div class="material-row material-bottom" id="material-bottom"></div>
   </div>
 
-  <div class="controls">
+  <div class="controls" id="controls">
     <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
     <button class="btn" id="reset-btn">Restart</button>
-    <button class="btn btn-followup hidden" id="show-followup-btn">Show Follow-up →</button>
-    <button class="btn btn-primary hidden" id="ai-review-btn">AI review</button>
     <button class="btn" id="next-btn">Next puzzle</button>
+  </div>
+
+  <div class="result hidden" id="result">
+    <div class="result-verdict" id="result-verdict">
+      <span class="verdict-icon" id="verdict-icon" aria-hidden="true"></span>
+      <span class="verdict-word" id="verdict-word"></span>
+      <span class="result-pips hidden" id="result-pips" aria-hidden="true"></span>
+    </div>
+    <div class="result-subline" id="result-subline"></div>
+    <div class="result-nudge hidden" id="result-nudge"></div>
+    <div class="result-contrast hidden" id="result-contrast"></div>
+    <div class="result-answer hidden" id="result-answer"></div>
+    <div class="result-actions" id="result-actions">
+      <button class="btn btn-primary" id="card-primary" type="button">Next puzzle</button>
+      <button class="btn" id="card-secondary" type="button">Try again</button>
+      <button class="btn btn-review hidden" id="ai-review-btn" type="button">AI review</button>
+    </div>
+    <button class="result-escape hidden" id="card-showanswer" type="button">Show me the answer</button>
+    <div class="result-repeat hidden" id="result-repeat"></div>
+    <div class="result-motif hidden" id="result-motif"></div>
+    <div class="result-components hidden" id="result-components">
+      <div class="result-components-label">What did this puzzle test? (tap one)</div>
+    </div>
   </div>
 
   <div class="nav-arrows hidden" id="nav-arrows">
@@ -1108,17 +1230,8 @@
     <button class="nav-step" id="nav-forward" type="button">▶</button>
   </div>
 
-  <div class="result hidden" id="result">
-    <div class="result-headline" id="result-headline"></div>
-    <div class="result-body" id="result-body"></div>
-    <div class="result-repeat hidden" id="result-repeat"></div>
-    <div class="result-motif hidden" id="result-motif"></div>
-    <div class="result-components hidden" id="result-components">
-      <div class="result-components-label">What did this puzzle test? (tap one)</div>
-    </div>
-  </div>
-
-  <div class="comparison hidden" id="comparison">
+  <div class="comparison hidden acc-collapsed" id="comparison">
+    <div class="acc-head" data-acc="comparison"><span class="acc-caret">▸</span>See move by move</div>
     <div class="comparison-title">Move-by-move comparison</div>
     <table>
       <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th></tr></thead>
@@ -1126,7 +1239,8 @@
     </table>
   </div>
 
-  <div class="coach-card">
+  <div class="coach-card acc-collapsed">
+    <div class="acc-head" data-acc="coach"><span class="acc-caret">▸</span>Coach review<span class="acc-preview" id="coach-preview"></span></div>
     <div class="coach-header">
       <span class="coach-avatar">C</span>
       <span class="coach-title">Coach</span>
@@ -1156,12 +1270,16 @@
   <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
   <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
-  <hr class="nav-separator">
-  <a href="/puzzle.html" class="nav-drawer-link secondary active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-  <a href="/endgames.html" class="nav-drawer-link secondary"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
-  <a href="/endgame-recognition.html" class="nav-drawer-link secondary"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
-  <a href="/roadmap.html" class="nav-drawer-link coming"><span class="nav-icon">▤</span>Roadmap</a>
-  <a href="/completed.html" class="nav-drawer-link coming"><span class="nav-icon">✓</span>Completed</a>
+  <div class="nav-subgroup">
+    <a href="/puzzle.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
+  </div>
+  <div class="nav-more">
+    <div class="nav-more-label">More</div>
+    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><span class="nav-icon">▤</span>Roadmap</a>
+    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><span class="nav-icon">✓</span>Completed</a>
+  </div>
   <div class="version-stamp" id="version-stamp"></div>
 </aside>
 <div class="nav-backdrop" id="nav-backdrop"></div>

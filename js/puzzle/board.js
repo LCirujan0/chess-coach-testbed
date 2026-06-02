@@ -12,8 +12,11 @@ import { commitAndEvaluate } from './grade.js';
 export function sideToMoveLabel() { return state.chess.turn() === 'w' ? 'White' : 'Black'; }
 export function renderTitleAndMeta() {
   const puzzle = getCurrentPuzzle();
-  if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); return; }
+  if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden'); return; }
   $('side-to-move-title').textContent = sideToMoveLabel() + ' to move.';
+  // §29.4 — a plain task prompt above the board so a new player knows the goal.
+  const tp = $('task-prompt');
+  if (tp) { tp.textContent = 'Find the best move.'; tp.classList.remove('hidden'); }
 
   // Repeat badge: shown when this puzzle has prior attempts.
   const priorAttempts = attemptsCount(puzzle.id);
@@ -50,6 +53,8 @@ export function renderTitleAndMeta() {
 // (viewHistory[i].from/to, derived from attemptHistory). Returns null when
 // there is no relevant move (e.g. starting position).
 export function lastMoveForDisplay() {
+  // §30.3 reveal auto-play: the transient overlay carries its own last-move.
+  if (state.revealOverlay && state.viewIndex === null) return state.revealOverlay.lastMove || null;
   if (state.viewIndex !== null && state.viewHistory && state.viewHistory[state.viewIndex]) {
     const v = state.viewHistory[state.viewIndex];
     if (v && v.from && v.to) return { from: v.from, to: v.to };
@@ -73,6 +78,9 @@ export function renderBoard() {
   let renderChess = state.chess;
   if (state.viewIndex !== null && state.viewHistory[state.viewIndex]) {
     try { renderChess = new Chess(state.viewHistory[state.viewIndex].fen); } catch {}
+  } else if (state.revealOverlay && state.revealOverlay.fen) {
+    // §30.3 — stop-point answer auto-play paints a transient position.
+    try { renderChess = new Chess(state.revealOverlay.fen); } catch {}
   }
   const fen = renderChess.fen();
   const { files, ranks } = state.orientation;

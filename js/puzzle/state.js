@@ -97,6 +97,18 @@ export const state = {
   // any point during the puzzle, the final accuracy is capped at 50%.
   shownPiece: false,        // true if used on ANY turn during this attempt
   pieceHintSquare: null,    // SAN coord like 'd1' when the highlight is live
+
+  // §30.2/§30.3 (v0.50) — result-card reveal state.
+  // revealForced: the player tapped the quiet "Show me the answer" escape
+  // (from the 2nd miss) — reveal the answer without waiting for the 3rd fail.
+  // In-memory, resets on each puzzle load. No localStorage key (§30.0).
+  revealForced: false,
+  // revealOverlay: a transient board position painted by the stop-point answer
+  // auto-play (§30.3). When set (and viewIndex is null) renderBoard shows this
+  // FEN + lastMove instead of the live position. Cleared on nav / new puzzle.
+  revealOverlay: null,      // { fen, lastMove } | null
+  // Last resolved attempt context, so the escape link can re-render the reveal.
+  lastResolution: null,     // { grade, played, terminal } | null
 };
 
 // CCTO method (Aagaard-style calculation discipline): Checks · Captures ·
