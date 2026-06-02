@@ -421,24 +421,24 @@
       coming.map(lockedRow).join('') + '</div>';
   }
   function sessionCardHtml() {
-    var rows = blocks.map(liveBlockRow).join(‘’);
+    var rows = blocks.map(liveBlockRow).join('');
     // If endgame is today’s focus, add endgame drill rows to the session card.
-    var endgameRows = endgameInFocus ? endgameBlocksHtml() : ‘’;
-    return ‘<div class="session"><div class="sh"><span class="t">Today’s session</span>’ +
-      ‘<span class="m">~’ + estMin + ‘ min · ‘ + blocks.length + ‘ block’ + (blocks.length === 1 ? ‘’ : ‘s’) + ‘</span></div>’ +
+    var endgameRows = endgameInFocus ? endgameBlocksHtml() : '';
+    return '<div class="session"><div class="sh"><span class="t">Today’s session</span>' +
+      '<span class="m">~' + estMin + ' min · ' + blocks.length + ' block' + (blocks.length === 1 ? '' : 's') + '</span></div>' +
       planTodaySentence() +
       rows +
       endgameRows +
-      ‘<a class="btn primary" href="/session.html" style="margin-top:14px;">Start session · ‘ + totalReps + ‘ puzzle’ + (totalReps === 1 ? ‘’ : ‘s’) + ‘</a>’ +
-      comingHtml() + ‘</div>’;
+      '<a class="btn primary" href="/session.html" style="margin-top:14px;">Start session · ' + totalReps + ' puzzle' + (totalReps === 1 ? '' : 's') + '</a>' +
+      comingHtml() + '</div>';
   }
 
   // ---- optional endgame extra section (shown when endgame is NOT the focus) ----
   function endgameExtraHtml() {
-    return ‘<div class="extra-section">’ +
-      ‘<div class="sh"><span class="t">Endgame practice</span><span class="m">20 lessons · 1,001 recognition drills</span></div>’ +
+    return '<div class="extra-section">' +
+      '<div class="sh"><span class="t">Endgame practice</span><span class="m">20 lessons · 1,001 recognition drills</span></div>' +
       endgameBlocksHtml() +
-      ‘</div>’;
+      '</div>';
   }
 
   // ---- persist the assembled plan (blocks = live only; coming = locked rows) ----
