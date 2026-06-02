@@ -62,9 +62,9 @@ export function startThinkingGate() {
 }
 // Re-check the submit button each time the student types into a CCTO textarea.
 ['gate-q1', 'gate-q2', 'gate-q3'].forEach((id) => {
-  document.getElementById(id).addEventListener('input', updateGateSubmit);
+  document.getElementById(id)?.addEventListener('input', updateGateSubmit);
 });
-$('gate-submit').addEventListener('click', async () => {
+$('gate-submit')?.addEventListener('click', async () => {
   syncGateAnswers();
   state.gateUnlocked = true;
   state.phase = 'playing';
