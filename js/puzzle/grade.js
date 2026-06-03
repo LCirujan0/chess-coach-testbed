@@ -2,7 +2,7 @@
 // SECTION 10 — Grading + move flow + wrong-move punishment
 // ============================================================================
 import {
-  MAX_CP_LOSS_FOR_SUCCESS, MAX_USER_MOVES_PER_PUZZLE, PUNISHMENT_PLIES,
+  MAX_CP_LOSS_FOR_SUCCESS, MAX_USER_MOVES_PER_PUZZLE,
   STOCKFISH_DEPTH_FOLLOW, STORAGE_KEY_SESSION,
 } from './config.js';
 import { state } from './state.js';
@@ -13,7 +13,8 @@ import { renderBoard, renderTitleAndMeta } from './board.js';
 import { renderFilterTabs, renderCategoryTabs, isSolved, getCurrentPuzzle } from './queue.js';
 // runtime deps — called inside function bodies only; live bindings handle the cycles
 import { showResult } from './result.js';
-import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex } from './review.js';
+import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex, revealAnswerOnBoard } from './review.js';
+import { renderPending } from './pending.js';
 import { fireCoachExplanation } from './coach.js';
 
 export function gradeMove(userUci) {
@@ -35,20 +36,8 @@ export function gradeMove(userUci) {
   return { rank: idx + 1, tier: 'mistake', cpLoss };
 }
 
-export function snapshotForRewind() {
-  // Snapshot we can restore to retry from before a wrong move.
-  return {
-    fen: state.chess.fen(),
-    attemptHistory: state.attemptHistory.slice(),
-    userMovesMade: state.userMovesMade,
-    lastMove: state.lastMove ? { ...state.lastMove } : null,
-    engineLines: state.engineLines.slice(),
-  };
-}
-
 export async function commitAndEvaluate(move) {
   const fenBefore = state.chess.fen();
-  const preWrongSnapshot = snapshotForRewind();
 
   const played = state.chess.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
   state.lastMove = { from: move.from, to: move.to };
@@ -132,17 +121,16 @@ export async function commitAndEvaluate(move) {
     return;
   }
 
-  // v0.23 — wrong move: show a non-intrusive notification and gate the engine
-  // continuation behind "Show Follow-up →". Board stays at the failed-move
-  // position until the user taps the button (Task 4).
-  state.wrongMoveSnapshot = preWrongSnapshot;
-  state.punishmentPliesPlayed = 0;
-  state.phase = 'punishment';
-  state.pendingWrongMove = { grade, played };
-  setInlineStatus('Not the sharpest move — tap Show Follow-up to see why.', 'thinking');
-  setTimeout(() => { if (state.pendingWrongMove) setInlineStatus(''); }, 3000);
-  const sfBtn = $('show-followup-btn');
-  if (sfBtn) { sfBtn.classList.remove('hidden'); sfBtn.disabled = false; }
+  // §30.0 (v0.50) — THE reveal-counter fix. A wrong move now resolves the
+  // attempt immediately via finishPuzzle(), which calls recordAttempt() and so
+  // increments state.sessionFailures[id] the moment the move resolves wrong —
+  // independent of any consequence playback. The old flow parked at
+  // phase:'punishment' behind "Show Follow-up" and only finalised if the player
+  // tapped it; a player who tapped Try again never finalised, the fail never
+  // counted, and the sessionFails>=3 reveal never fired (they could miss
+  // forever). The punishment continuation is retired (§30.2); the result card
+  // drives reveal + answer (§30.2/§30.3). No new localStorage key.
+  await finishPuzzle({ grade, played, terminal: 'wrong_move' });
 }
 
 export async function playEngineResponseAndRearm() {
@@ -173,104 +161,80 @@ export async function playEngineResponseAndRearm() {
   // active again so the player can ask for a hint on this fresh decision.
   state.pieceHintSquare = null;
   $('show-piece-btn').disabled = false;
-}
-
-export async function runPunishment(initialGrade, initialPlayed) {
-  // Play PUNISHMENT_PLIES plies of engine-vs-engine continuation so the user
-  // sees the consequence of their wrong move. Each ply: re-analyse and play
-  // line 1. The puzzle is locked during this time (phase = punishment).
-  for (let i = 0; i < PUNISHMENT_PLIES; i++) {
-    setInlineStatus(`Engine playing out the line (${i + 1}/${PUNISHMENT_PLIES})…`, 'thinking');
-    try {
-      await analyzePosition(state.chess.fen(), STOCKFISH_DEPTH_FOLLOW);
-    } catch (err) { break; }
-    if (!state.engineLines.length) break;
-    const line = state.engineLines[0];
-    const fenBefore = state.chess.fen();
-    const obj = state.chess.move({ from: line.uci.slice(0,2), to: line.uci.slice(2,4), promotion: line.uci.slice(4,5) || undefined });
-    if (!obj) break;
-    state.lastMove = { from: line.uci.slice(0,2), to: line.uci.slice(2,4) };
-    state.attemptHistory.push({ mover: 'punishment', fenBefore, san: obj.san, uci: line.uci, ply: state.attemptHistory.length });
-    state.punishmentPliesPlayed++;
-    renderBoard();
-    // small pause so the user can see each move
-    await new Promise((r) => setTimeout(r, 700));
-  }
-  setInlineStatus('');
-  // RESTORE the analysis of the original (pre-wrong-move) position so the
-  // coach explanation gets the right ground truth. Without this, state.engineLines
-  // would still be the analysis of the LAST punishment position and Claude
-  // would confabulate moves that have nothing to do with the player's mistake.
-  state.positionSummary = buildPositionSummary(state.wrongMoveSnapshot.fen);
-  state.engineLines = state.wrongMoveSnapshot.engineLines.slice();
-  await finishPuzzle({ grade: initialGrade, played: initialPlayed, terminal: 'wrong_move' });
+  renderPending(); // §31 — refresh the in-progress feedback face for the new turn
 }
 
 export async function finishPuzzle({ grade, played, terminal }) {
   state.phase = 'resolved';
   setInlineStatus('');
-  showResult(grade, played);
+  // §30.0 — count the attempt FIRST so the result card + reveal gate read the
+  // live sessionFailures count for THIS attempt (the whole fix: the fail is
+  // recorded the moment the move resolves, not when a follow-up is viewed).
   recordAttempt(grade);
   renderFilterTabs();
   renderCategoryTabs();
-  // Build navigation history + show arrows. Render move-by-move comparison.
   state.viewHistory = buildViewHistory();
   state.viewIndex = null;
-  $('nav-arrows').classList.remove('hidden');
-  // v0.19: populate state.annotations for the final position so the correct-
-  // move arrows appear immediately on resolution (without requiring the user
-  // to tap ◀ ▶ or a comparison row first). annotateForViewIndex honours the
-  // engineRevealed gate — green engine arrow only shown if earned.
-  annotateForViewIndex();
-  updateNavLabel();
-  renderComparison();
-  // Repaint the board with the fresh annotations. staticSig is unchanged vs
-  // the showResult() render above (same FEN + locked state), so this takes the
-  // soft-update path → softUpdateBoard() → renderAnnotations().
-  renderBoard();
-  // Cache the explanation context on the button so the handler can use it.
+  state.revealOverlay = null;
+  state.lastResolution = { grade, played, terminal: terminal || null };
+  // Cache the explanation context on the AI-review button (on the card now).
   $('ai-review-btn').dataset.pendingReview = JSON.stringify({
     tier: grade && grade.tier, rank: grade && grade.rank, cpLoss: grade && grade.cpLoss,
     terminal: terminal || null,
     playedSan: played ? played.san : null,
   });
+  applyResolutionUI({ grade, played, terminal });
+}
 
-  const acc = puzzleAccuracy();
+// §30.2/§30.3 — render the post-attempt surface: hide the play controls, show
+// the result card in its state (TRYING / STOP-ANSWER / REVIEW), and reveal the
+// answer (arrows + auto-play) only when earned. Shared by finishPuzzle and the
+// quiet "Show me the answer" escape (forceReveal), so both render identically.
+export function applyResolutionUI({ grade, played, terminal }) {
+  $('controls').classList.add('hidden');
+  showResult(grade, played);
+
   const puzzleId = getCurrentPuzzle()?.id;
   const sessionFails = state.sessionFailures[puzzleId] || 0;
-  // AI review eligibility: the engine's intent stays hidden until the player
-  // has earned it. They earn it by (a) solving the puzzle, or (b) failing
-  // it 3+ times in this session. Auto-reveal only fires on case (b).
   const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
   const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
   const solved = grade && grade.tier !== 'outside' && !anyBigCpLoss;
-  const reviewEarned = solved || sessionFails >= 3;
-  if (reviewEarned) {
-    $('ai-review-btn').classList.remove('hidden');
-    $('ai-review-btn').disabled = false;
-  } else {
-    $('ai-review-btn').classList.add('hidden');
-  }
+  // The answer is earned by solving, by the 3rd session fail, or by the quiet
+  // escape link (state.revealForced). Same as the legacy reviewEarned gate plus
+  // the escape (§30.6 #3).
+  const revealed = solved || sessionFails >= 3 || state.revealForced;
 
-  const shouldAutoReveal = !solved && sessionFails >= 3;
-  if (shouldAutoReveal) {
-    appendCoachMessage('system', `Failed ${sessionFails} times this session. Showing the answer now.`);
-    $('ai-review-btn').classList.add('hidden');
-    fireCoachExplanation({ grade, played, terminal }).catch((err) => {
-      appendCoachMessage('error', 'Auto-review error: ' + err.message);
-    });
-    return;
-  }
+  // AI review lives on the card and appears only when the answer is earned.
+  $('ai-review-btn').classList.toggle('hidden', !revealed);
+  $('ai-review-btn').disabled = !revealed;
 
-  // Inline status messages — kept light and friendly, no engine hints.
-  if (!solved) {
-    const remaining = Math.max(0, 3 - sessionFails);
-    appendCoachMessage('system', `That one didn't land. Hit Restart and have another go. ${remaining > 0 ? `${remaining} more tr${remaining === 1 ? 'y' : 'ies'} this session and I'll walk you through it.` : ''}`);
-  } else if (acc != null) {
-    appendCoachMessage('system', `Nice work — ${acc}% accuracy. Tap AI review for a breakdown if you want one.`);
+  if (revealed) {
+    $('nav-arrows').classList.remove('hidden');
+    annotateForViewIndex();
+    updateNavLabel();
+    renderComparison();
+    renderBoard();
+    // STOP/ANSWER (a revealed fail): auto-play the correct move once, arrow up.
+    if (!solved) revealAnswerOnBoard();
   } else {
-    appendCoachMessage('system', 'Nice work. Tap AI review for a breakdown if you want one.');
+    // TRYING — answer hidden: no arrows, no comparison, board stays clean. The
+    // card's "Try again" sends the player back to think (§29.2).
+    state.annotations = [];
+    state.correctSquares = null;
+    $('nav-arrows').classList.add('hidden');
+    $('comparison').classList.add('hidden');
+    renderBoard();
   }
+}
+
+// §30.6 #3 — the quiet "Show me the answer" escape (offered from the 2nd miss).
+// Reveals the answer without waiting for the 3rd fail; re-renders the same
+// resolution surface so the STOP/ANSWER state (arrow + auto-play + AI review)
+// appears exactly as it would on the 3rd miss.
+export function forceReveal() {
+  if (!state.lastResolution) return;
+  state.revealForced = true;
+  applyResolutionUI(state.lastResolution);
 }
 
 // Accuracy 0-100 across the user moves played in this attempt.
@@ -391,18 +355,6 @@ export function setAttemptComponent(componentName) {
   cur.lastComponent = componentName;
   state.attempts[puzzle.id] = cur;
   saveAttempts(state.attempts);
-}
-
-// v0.23 — Task 4: called when the user taps "Show Follow-up →". Clears the
-// pending state, hides the button, and runs the continuation.
-export async function triggerFollowup() {
-  if (!state.pendingWrongMove) return;
-  const { grade, played } = state.pendingWrongMove;
-  state.pendingWrongMove = null;
-  const sfBtn = $('show-followup-btn');
-  if (sfBtn) sfBtn.classList.add('hidden');
-  setInlineStatus('Engine playing out the line…', 'thinking');
-  await runPunishment(grade, played);
 }
 
 // The standalone "Retry from wrong move" handler was removed. The single

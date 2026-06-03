@@ -48,8 +48,9 @@ import {
 } from './queue.js';
 import { resetPuzzleStateAndRender } from './result.js';
 import { navBack, navForward, activatePieceHint } from './review.js';
-import { triggerFollowup } from './grade.js';
+import { forceReveal } from './grade.js';
 import { sendCoachMessage, fireCoachExplanation } from './coach.js';
+import { initVariants } from './variants.js';
 
 // Parse URL for review mode (coming from completed.html)
 const urlParams = new URLSearchParams(window.location.search);
@@ -132,9 +133,28 @@ $('next-btn').addEventListener('click', () => nextPuzzle());
 $('nav-back').addEventListener('click', navBack);
 $('nav-forward').addEventListener('click', navForward);
 $('show-piece-btn').addEventListener('click', activatePieceHint);
-// v0.23 Task 4 — gated wrong-move continuation.
-$('show-followup-btn').addEventListener('click', () => triggerFollowup());
 
+// §30.2 — result-card actions. One dominant action per state; the buttons
+// follow the card (data-action set by showResult): 'tryagain' soft-resets to the
+// puzzle start (lesson kept), 'next' advances the queue.
+function cardAction(e) {
+  const action = e.currentTarget.dataset.action;
+  if (action === 'tryagain') resetPuzzleStateAndRender({ keepGate: true, keepReview: true });
+  else if (action === 'next') nextPuzzle();
+}
+$('card-primary').addEventListener('click', cardAction);
+$('card-secondary').addEventListener('click', cardAction);
+// §30.6 #3 — the quiet "Show me the answer" escape (from the 2nd miss).
+$('card-showanswer').addEventListener('click', () => forceReveal());
+
+// §29.3 — mobile progressive-disclosure accordions (comparison + coach). The
+// header toggles .acc-collapsed; desktop CSS ignores the class (always open).
+for (const head of document.querySelectorAll('.acc-head')) {
+  head.addEventListener('click', () => {
+    const card = head.closest('#comparison, .coach-card');
+    if (card) card.classList.toggle('acc-collapsed');
+  });
+}
 // AI review button — triggers the coach explanation on demand. The auto-fire
 // was removed so the player only spends tokens when they actually want feedback.
 $('ai-review-btn').addEventListener('click', async () => {
@@ -284,6 +304,9 @@ $('coach-form').addEventListener('submit', (e) => {
   sendCoachMessage(value);
 });
 
+// §31 (v0.52) — choose the preview variant + embed the comparison in the card
+// BEFORE the first render so the relocated #comparison node is in place.
+initVariants();
 resetPuzzleStateAndRender();
 initStockfish().catch((err) => setInlineStatus('Engine failed: ' + err.message, 'error'));
 

@@ -60,6 +60,7 @@ export function updateNavLabel() {
   $('nav-forward').disabled = !total || state.viewIndex === null;
 }
 export function navBack() {
+  state.revealOverlay = null;
   if (!state.viewHistory.length) return;
   // Start from the position before current; walk back skipping engine-played entries (T3).
   let newIdx = state.viewIndex === null ? state.viewHistory.length - 1 : state.viewIndex - 1;
@@ -69,6 +70,7 @@ export function navBack() {
   updateNavLabel(); renderBoard();
 }
 export function navForward() {
+  state.revealOverlay = null;
   if (!state.viewHistory.length || state.viewIndex === null) return;
   // Walk forward skipping engine-played entries; past the end → live (null) (T3).
   let newIdx = state.viewIndex + 1;
@@ -155,6 +157,20 @@ export function escapeHtmlPuzzle(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+// §31 — format the per-move eval change as a pawn delta with a loss-tiered
+// colour chip. cpLoss is the centipawns surrendered vs the engine's best (0 for
+// the best move). Pawn change = -(cpLoss/100), one decimal. null cpLoss (move
+// outside the top 5, where loss isn't a finite number) shows an em-free dash.
+function evalChangeCell(cpLoss) {
+  if (cpLoss == null) return '<span class="eval-chip eval-na">--</span>';
+  const pawns = -(cpLoss / 100);
+  const txt = (pawns <= 0 && pawns > -0.05) ? '0.0' : pawns.toFixed(1);
+  let cls = 'eval-good';
+  if (cpLoss >= 100) cls = 'eval-bad';
+  else if (cpLoss >= 50) cls = 'eval-mid';
+  return `<span class="eval-chip ${cls}">${txt}</span>`;
+}
+
 export function renderComparison(opts) {
   // live = true while the puzzle is still in progress; hides engine/game cols.
   // live = false (default) at resolution. But: per the v0.6 no-spoiler tighten,
@@ -192,10 +208,17 @@ export function renderComparison(opts) {
     const yoursHtml = `${escapeHtmlPuzzle(yours.san)} <span class="rank-badge ${rankClass}">${rankText}</span>${cpHtml}`;
 
     const engine = (yours.engineBestAtPoint && yours.engineBestAtPoint.san) || '—';
+    // §31 — Eval change column, in pawns, from the player's perspective:
+    //   change = -cpLoss / 100  (a clean move ≈ 0.0; a loss is negative).
+    // Coloured by magnitude of loss: ~0 green, mild amber, big red. Sits under
+    // the SAME no-spoiler gate as the engine column (col-eval hidden until the
+    // answer is earned) — it is never shown during retries.
+    const evalHtml = evalChangeCell(cpLoss);
     rows.push(`<tr data-move-idx="${i}">
       <td>${i + 1}</td>
       <td class="col-yours">${yoursHtml}</td>
       <td class="col-engine">${escapeHtmlPuzzle(engine)}</td>
+      <td class="col-eval">${evalHtml}</td>
     </tr>`);
   }
   const tbody = $('comparison-rows');
@@ -221,6 +244,7 @@ export function renderComparison(opts) {
 // overlay arrows: red = what the user played, green = engine's preferred (if
 // different). Uses the existing nav viewIndex + annotations mechanisms.
 export function jumpToUserMove(userMoveIdx) {
+  state.revealOverlay = null;
   if (!state.viewHistory.length) return;
   // B1 fix (v0.49): map the comparison-row index (which counts ONLY user moves)
   // to the real viewHistory entry by walking and counting user-played entries.
@@ -261,4 +285,51 @@ function scrollBoardIntoViewOnMobile() {
     const wrap = document.querySelector('.board-wrap');
     if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch { /* scrolling is best-effort */ }
+}
+
+
+// §30.3 + §30.6 #2 (v0.50) — stop-point reveal. Auto-play the correct move ONCE
+// on the board, then leave the green best-move arrow up. Static jump (no slide)
+// per the §30.6 #4 interim until the piece-animation feature lands. The "answer"
+// is the engine's #1 at the FIRST user decision (where the player first went
+// wrong). Called from finishPuzzle when the reveal is earned (3rd fail / solve)
+// or forced via the quiet escape link.
+const REVEAL_ARROW = 'rgba(60, 180, 100, 0.85)';
+export function revealAnswerOnBoard() {
+  const firstUser = state.attemptHistory.find((h) => h.mover === 'user');
+  const best = firstUser && firstUser.engineBestAtPoint;
+  if (!firstUser || !best || !best.uci) { renderBoard(); return; }
+  const decisionFen = firstUser.fenBefore;
+  const from = best.uci.slice(0, 2), to = best.uci.slice(2, 4);
+  // Step 1: show the decision position with the green best-move arrow up.
+  state.viewIndex = null;
+  state.revealOverlay = { fen: decisionFen, lastMove: null };
+  state.annotations = [{ type: 'arrow', from, to, color: REVEAL_ARROW }];
+  state.correctSquares = null;
+  renderBoard();
+  // Step 2: after a short beat, auto-play the correct move once (static), and
+  // leave the arrow up on the resulting position. Interim until the animated
+  // slide lands (§30.4). Guarded so a new puzzle mid-beat cancels it.
+  const fenAtScheduling = decisionFen;
+  setTimeout(() => {
+    if (state.phase !== 'resolved') return;
+    if (!state.revealOverlay || state.revealOverlay.fen !== fenAtScheduling) return; // navigated away
+    let resultFen = decisionFen;
+    try { const c = new Chess(decisionFen); c.move({ from, to, promotion: 'q' }); resultFen = c.fen(); } catch {}
+    state.revealOverlay = { fen: resultFen, lastMove: { from, to } };
+    state.annotations = [{ type: 'arrow', from, to, color: REVEAL_ARROW }];
+    renderBoard();
+  }, 650);
+}
+
+// Plain-language answer for the result card (§30.3). Truthful and minimal — the
+// move itself, plus the motif when known. We deliberately do NOT fabricate a
+// "wins a pawn, safer king" rationale (no engine prose available here); the AI
+// review explains the why on demand. Returns '' when no best move is known.
+export function bestMoveAnswerText(puzzle) {
+  const firstUser = state.attemptHistory.find((h) => h.mover === 'user');
+  const best = firstUser && firstUser.engineBestAtPoint;
+  const san = best && best.san;
+  if (!san) return '';
+  return 'The best move was ' + san + '.';
 }

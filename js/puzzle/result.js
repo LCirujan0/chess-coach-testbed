@@ -13,6 +13,8 @@ import { renderBoard, renderTitleAndMeta } from './board.js';
 import { renderFilterTabs, renderCategoryTabs, getCurrentPuzzle } from './queue.js';
 import { startThinkingGate } from './gate.js';
 import { puzzleAccuracy, setAttemptComponent } from './grade.js';
+import { bestMoveAnswerText } from './review.js';
+import { renderPending, clearPending } from './pending.js';
 
 export function pickHeadline(grade, repeated, accuracy) {
   if (repeated && grade.tier === 'outside') return 'Same move as in your game, same mistake.';
@@ -57,58 +59,134 @@ export function pickBody(grade, played, accuracy) {
 export function showResult(grade, played) {
   if (!grade) return;
   const puzzle = getCurrentPuzzle();
-  // "Repeated" only makes sense if the played move is the user's FIRST move
-  // of this attempt — only then does comparing against the puzzle's original
-  // game move make sense. On move 2 or 3 the position is completely different.
-  const userMovesSoFar = state.attemptHistory.filter((h) => h.mover === 'user').length;
-  const isFirstUserMove = userMovesSoFar === 1;
+  const userMovesArr = state.attemptHistory.filter((h) => h.mover === 'user');
+  const isFirstUserMove = userMovesArr.length === 1;
   const repeated = isFirstUserMove && puzzle && puzzle.userMoveSan && played && played.san === puzzle.userMoveSan;
   const accuracy = puzzleAccuracy();
 
   // A "top 5" move that hemorrhaged more than MAX_CP_LOSS_FOR_SUCCESS counts
-  // as a fail, not a pass — same rule that the move-flow gate uses.
-  const userMovesForResult = state.attemptHistory.filter((h) => h.mover === 'user');
-  const anyBigCpLossResult = userMovesForResult.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  // as a fail, not a pass — same rule the move-flow gate uses.
+  const anyBigCpLoss = userMovesArr.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
   let tier;
-  if (grade.tier === 'outside' || anyBigCpLossResult) tier = 'fail';
+  if (grade.tier === 'outside' || anyBigCpLoss) tier = 'fail';
   else if (accuracy != null && accuracy < 70) tier = 'warn';
   else tier = 'pass';
+  const solved = tier !== 'fail';
+
+  // §30.0: recordAttempt has already run (finishPuzzle calls it first), so this
+  // count INCLUDES the just-resolved attempt. The reveal opens on the 3rd fail
+  // OR the quiet escape (state.revealForced) OR a solve.
+  const puzzleId = puzzle?.id;
+  const sessionFails = state.sessionFailures[puzzleId] || 0;
+  const triesLeft = Math.max(0, 3 - sessionFails);
+  const revealed = solved || sessionFails >= 3 || state.revealForced;
+
+  // SAN of the player's first move + the engine's best at that decision.
+  const firstUser = userMovesArr[0] || null;
+  const userSan = firstUser ? firstUser.san : (played ? played.san : null);
+  const bestSan = firstUser && firstUser.engineBestAtPoint ? firstUser.engineBestAtPoint.san : null;
 
   const result = $('result');
-  result.classList.remove('hidden', 'pass', 'warn', 'fail');
+  clearPending();   // §31 — leave the calm pre-move face before painting a verdict
+  result.classList.remove('hidden', 'pass', 'warn', 'fail', 'pending');
   result.classList.add(tier);
-  $('result-headline').textContent = pickHeadline(grade, repeated, accuracy);
-  $('result-body').textContent = pickBody(grade, played, accuracy);
 
-  // Spec-02 motif chip — gated by the same earned-reveal predicate as the
-  // engine column on the comparison table, so it never appears on an unsolved
-  // board. Surfaces the tag once the user has either solved the puzzle within
-  // budget OR failed it 3+ times this session. Before v0.7 the motif lived
-  // only inside the Filters → Theme submenu and was effectively invisible.
-  const motifChip = $('result-motif');
-  motifChip.classList.add('hidden');
-  if (puzzle && puzzle.motif) {
-    const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
-    const anyBigCpLossR = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
-    const lastGradeR = userMoves[userMoves.length - 1]?.grade;
-    const solvedR = lastGradeR && lastGradeR.tier !== 'outside' && !anyBigCpLossR;
-    const sessionFailsR = state.sessionFailures[puzzle.id] || 0;
-    const engineRevealedR = solvedR || sessionFailsR >= 3;
-    if (engineRevealedR && puzzle.motif !== 'none-tactical') {
-      motifChip.innerHTML = `<span class="label">Theme:</span> ${MOTIF_LABELS[puzzle.motif] || puzzle.motif}`;
-      motifChip.classList.remove('hidden');
-    }
+  // --- Verdict banner (binary, §29.1) ---
+  $('verdict-icon').textContent = solved ? '\u2713' : '\u2715';
+  $('verdict-word').textContent = solved ? 'Solved' : 'Not solved';
+
+  // --- Attempt pips (§29.2) — only on the fail track ---
+  const pipsEl = $('result-pips');
+  if (!solved) {
+    pipsEl.classList.remove('hidden');
+    let pips = '';
+    for (let i = 0; i < 3; i++) pips += `<span class="pip${i < sessionFails ? ' spent' : ''}"></span>`;
+    pipsEl.innerHTML = pips;
+  } else {
+    pipsEl.classList.add('hidden');
+    pipsEl.innerHTML = '';
   }
 
-  // Post-puzzle component picker (Deep mode only). Renders the 7-button row
-  // and pre-selects whatever the user has previously tagged this puzzle as.
-  // Idempotent: tapping a different pill overwrites the tag.
+  // --- Sub-line (quiet nuance) ---
+  const sub = $('result-subline');
+  if (solved) {
+    if (accuracy != null && userMovesArr.length > 1) sub.textContent = `Solved \u00b7 ${accuracy}% accuracy`;
+    else if (bestSan) sub.textContent = `Best move \u00b7 ${bestSan}`;
+    else sub.textContent = 'Solved';
+    sub.classList.remove('hidden');
+  } else if (revealed) {
+    sub.textContent = "That wasn't the move.";
+    sub.classList.remove('hidden');
+  } else {
+    sub.classList.add('hidden');
+  }
+
+  // --- Nudge (TRYING only) ---
+  const nudge = $('result-nudge');
+  if (!solved && !revealed) {
+    nudge.textContent = triesLeft > 1 ? 'Try once or twice more.' : 'One try left.';
+    nudge.classList.remove('hidden');
+  } else {
+    nudge.classList.add('hidden');
+  }
+
+  // --- One-line contrast (§29.3) — only once the answer is earned ---
+  const contrast = $('result-contrast');
+  if ((revealed || solved) && bestSan) {
+    if (solved && userSan === bestSan) {
+      contrast.innerHTML = `You found it \u00b7 <span class="c-best">${escapeResult(bestSan)}</span>`;
+    } else {
+      contrast.innerHTML = `You <span class="c-you">${escapeResult(userSan || '\u2014')}</span> \u00b7 Best <span class="c-best">${escapeResult(bestSan)}</span>`;
+    }
+    contrast.classList.remove('hidden');
+  } else {
+    contrast.classList.add('hidden');
+  }
+
+  // --- Plain-language answer at the stop point (§30.3) ---
+  const answerEl = $('result-answer');
+  if (!solved && revealed) {
+    answerEl.textContent = bestMoveAnswerText(puzzle) || (bestSan ? `The best move was ${bestSan}.` : 'Here is the move.');
+    answerEl.classList.remove('hidden');
+  } else {
+    answerEl.classList.add('hidden');
+  }
+
+  // --- Card actions: one dominant action per state (§29.4/§30.2) ---
+  const primary = $('card-primary');
+  const secondary = $('card-secondary');
+  const escape = $('card-showanswer');
+  if (solved) {
+    primary.textContent = 'Next puzzle'; primary.dataset.action = 'next';
+    secondary.classList.add('hidden');
+    escape.classList.add('hidden');
+  } else if (revealed) {
+    // STOP / ANSWER — the answer is shown; Next is dominant, retry is secondary.
+    primary.textContent = 'Next puzzle'; primary.dataset.action = 'next';
+    secondary.textContent = 'Try once more'; secondary.dataset.action = 'tryagain';
+    secondary.classList.remove('hidden');
+    escape.classList.add('hidden');
+  } else {
+    // TRYING — send them back to think; the answer stays hidden.
+    primary.textContent = 'Try again'; primary.dataset.action = 'tryagain';
+    secondary.textContent = 'Next puzzle'; secondary.dataset.action = 'next';
+    secondary.classList.remove('hidden');
+    // Quiet escape from the 2nd miss (§30.6 #3).
+    escape.classList.toggle('hidden', sessionFails < 2);
+  }
+
+  // --- Motif chip (gated by the earned reveal) ---
+  const motifChip = $('result-motif');
+  motifChip.classList.add('hidden');
+  if (puzzle && puzzle.motif && revealed && puzzle.motif !== 'none-tactical') {
+    motifChip.innerHTML = `<span class="label">Theme:</span> ${MOTIF_LABELS[puzzle.motif] || puzzle.motif}`;
+    motifChip.classList.remove('hidden');
+  }
+
+  // --- Post-puzzle component picker (Deep mode only) ---
   const compRow = $('result-components');
-  // Clear any previously-rendered pills (keep the label div, which is the
-  // first child). This guards against stale buttons accumulating across
-  // puzzles when the result panel is re-rendered.
   while (compRow.children.length > 1) compRow.removeChild(compRow.lastChild);
-  if (state.mode === 'deep' && puzzle) {
+  if (state.mode === 'deep' && puzzle && revealed) {
     const tagged = state.attempts[puzzle.id]?.lastComponent || null;
     for (const c of TRAINING_COMPONENTS) {
       const btn = document.createElement('button');
@@ -129,17 +207,19 @@ export function showResult(grade, played) {
     compRow.classList.add('hidden');
   }
 
-  // The repeat-note is now redundant when the headline already says "same move
-  // — same mistake." We only show it for nuance: when the user got the puzzle
-  // RIGHT and we want to acknowledge that the original game move was different.
+  // Repeat note (nuance, solved-and-different-from-game only).
   const repeatEl = $('result-repeat');
-  if (puzzle && puzzle.userMoveSan && isFirstUserMove && !repeated && tier !== 'fail') {
-    // User passed move 1 with a different move than the game's mistake — worth noting.
+  if (puzzle && puzzle.userMoveSan && isFirstUserMove && !repeated && solved) {
     repeatEl.textContent = `In your actual game you played ${puzzle.userMoveSan} here.`;
     repeatEl.classList.remove('hidden');
   } else {
     repeatEl.classList.add('hidden');
   }
+}
+
+// Minimal HTML escape for SAN strings rendered via innerHTML in the card.
+function escapeResult(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
 // ============================================================================
@@ -173,9 +253,13 @@ export function resetPuzzleStateAndRender(opts) {
       ? 'Drill mode shows puzzles you have already attempted, or inaccuracies. Solve some in Deep first.'
       : 'Try switching to Drill mode, or change the severity filter, or ingest more games.';
     $('result').classList.add('hidden');
+    $('result').classList.remove('pending');
+    $('controls').classList.remove('hidden');
     $('next-btn').classList.remove('hidden');
     $('ai-review-btn').classList.add('hidden');
     $('gate-card').classList.add('hidden');
+    state.revealForced = false;
+    state.revealOverlay = null;
     setInlineStatus('');
     clearCoachLog();
     renderFilterTabs(); renderCategoryTabs(); renderBoard();
@@ -196,8 +280,8 @@ export function resetPuzzleStateAndRender(opts) {
   state.correctSquares = null;      // v0.23
   state.viewHistory = [];
   state.viewIndex = null;
-  const sfBtn = $('show-followup-btn');
-  if (sfBtn) sfBtn.classList.add('hidden');
+  state.revealForced = false;       // §30 — fresh attempt, no forced reveal
+  state.revealOverlay = null;       // §30.3 — clear any stop-point auto-play
   // Show piece: reset shownPiece on a brand-new puzzle (the 50% cap should not
   // carry forward). On soft-reset/keepReview attempts the user is repeating
   // the same puzzle to practise, so we still reset shownPiece — they get a
@@ -213,10 +297,11 @@ export function resetPuzzleStateAndRender(opts) {
   // "pieces went back to their original position after castling".
   $('comparison').classList.add('hidden');
   $('nav-arrows').classList.add('hidden');
-  if (!keepReview) {
-    $('result').classList.add('hidden');
-    $('result-repeat').classList.add('hidden');
-  }
+  // §30.2 — the result card is a post-attempt surface; a fresh OR retried
+  // attempt always clears it and restores the play controls (Hint/Restart/Next).
+  $('result').classList.add('hidden');
+  $('result-repeat').classList.add('hidden');
+  $('controls').classList.remove('hidden');
   // Next puzzle is always visible (covers both "skip" and "move on").
   $('next-btn').classList.remove('hidden');
   if (!keepReview) {
@@ -225,6 +310,9 @@ export function resetPuzzleStateAndRender(opts) {
   $('gate-card').classList.add('hidden');
   if (!keepReview) clearCoachLog();
   renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs(); renderBoard();
+  // §31 — the feedback card occupies its slot from a PENDING state so the board
+  // never shifts when a verdict later appears.
+  renderPending();
   if (state.engineReady) {
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
     analyzePosition(state.chess.fen(), STOCKFISH_DEPTH).then(() => {
@@ -239,6 +327,7 @@ export function resetPuzzleStateAndRender(opts) {
         startThinkingGate();
       }
       renderBoard(); // re-render so .locked cursor clears once phase is 'playing'
+      renderPending(); // §31 — refresh PENDING once phase settles (gate→playing, idle→playing)
     }).catch((err) => setInlineStatus('Engine error: ' + err.message, 'error'));
   }
 }

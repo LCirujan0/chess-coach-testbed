@@ -12,8 +12,25 @@ import { commitAndEvaluate } from './grade.js';
 export function sideToMoveLabel() { return state.chess.turn() === 'w' ? 'White' : 'Black'; }
 export function renderTitleAndMeta() {
   const puzzle = getCurrentPuzzle();
-  if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); return; }
-  $('side-to-move-title').textContent = sideToMoveLabel() + ' to move.';
+  if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden'); return; }
+  // §31 (v0.52) — title/meta is now "Puzzle X of Y · Category · Phase" (sentence
+  // case). The "side to move" + the "find the best move" invitation moved INTO
+  // the PENDING feedback card (renderPending in pending.js), so the goal is told
+  // where the verdict will later appear — no pop-in, no duplicate prompt.
+  const cap = (s) => { s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; };
+  const idx = state.reviewPuzzleId ? null : (state.queueIndex + 1);
+  const total = state.queue ? state.queue.length : 0;
+  const catLabel = cap(puzzle.category === 'middlegame' ? 'Middlegame' : puzzle.category);
+  const titleParts = [];
+  if (idx != null && total) titleParts.push(`Puzzle ${idx} of ${total}`);
+  else titleParts.push('Review puzzle');
+  if (catLabel) titleParts.push(catLabel);
+  if (puzzle.severity) titleParts.push(cap(puzzle.severity));
+  $('side-to-move-title').textContent = titleParts.join(' \u00b7 ');
+  // §31 — the old standalone task prompt is retired; keep the node hidden so any
+  // cached markup or state that toggles it can't resurface "Find the best move."
+  const tp = $('task-prompt');
+  if (tp) { tp.classList.add('hidden'); }
 
   // Repeat badge: shown when this puzzle has prior attempts.
   const priorAttempts = attemptsCount(puzzle.id);
@@ -50,6 +67,8 @@ export function renderTitleAndMeta() {
 // (viewHistory[i].from/to, derived from attemptHistory). Returns null when
 // there is no relevant move (e.g. starting position).
 export function lastMoveForDisplay() {
+  // §30.3 reveal auto-play: the transient overlay carries its own last-move.
+  if (state.revealOverlay && state.viewIndex === null) return state.revealOverlay.lastMove || null;
   if (state.viewIndex !== null && state.viewHistory && state.viewHistory[state.viewIndex]) {
     const v = state.viewHistory[state.viewIndex];
     if (v && v.from && v.to) return { from: v.from, to: v.to };
@@ -73,6 +92,9 @@ export function renderBoard() {
   let renderChess = state.chess;
   if (state.viewIndex !== null && state.viewHistory[state.viewIndex]) {
     try { renderChess = new Chess(state.viewHistory[state.viewIndex].fen); } catch {}
+  } else if (state.revealOverlay && state.revealOverlay.fen) {
+    // §30.3 — stop-point answer auto-play paints a transient position.
+    try { renderChess = new Chess(state.revealOverlay.fen); } catch {}
   }
   const fen = renderChess.fen();
   const { files, ranks } = state.orientation;

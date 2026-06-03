@@ -7,6 +7,7 @@ import { $ } from './dom.js';
 import { getCurrentPuzzle } from './queue.js';
 // runtime dep — renderBoard called inside event listener body
 import { renderBoard } from './board.js';
+import { renderPending } from './pending.js';
 
 export function severitySeconds() {
   const p = getCurrentPuzzle();
@@ -71,6 +72,7 @@ $('gate-submit')?.addEventListener('click', async () => {
   if (state.gateInterval) { clearInterval(state.gateInterval); state.gateInterval = null; }
   $('gate-card').classList.add('hidden');
   renderBoard(); // re-render so square locked-cursor goes away
+  renderPending(); // §31 — show the calm PENDING feedback card once the board unlocks
   // v0.7: the auto-fired pre-move CCTO coach feedback used to land here. It's
   // been removed for two reasons: (1) it was an auto-generated message mid-solve,
   // which violates Jorge's "coach panel = coach + Jorge only" rule from v0.6
