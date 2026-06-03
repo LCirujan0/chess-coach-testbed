@@ -986,6 +986,22 @@
      Layout — mobile is a single column; desktop @ ≥880px splits.
      ============================================================ */
   .layout-grid { display: flex; flex-direction: column; }
+  /* Two structural columns (desktop). On mobile they flatten via display:contents
+     and `order` reproduces the original single-column sequence so the gate sits
+     above the board and the verdict sits below the controls, as before. */
+  .lg-left, .lg-right { display: contents; }
+  .layout-grid > .lg-left > #side-to-move-title { order: 1; }
+  .layout-grid > .lg-left > #task-prompt        { order: 2; }
+  .layout-grid > .lg-left > #repeat-badge       { order: 3; }
+  .layout-grid > .lg-left > #puzzle-meta        { order: 4; }
+  .layout-grid > .lg-left > #inline-status      { order: 5; }
+  .layout-grid > .lg-right > #gate-card         { order: 6; }
+  .layout-grid > .lg-left > .board-wrap         { order: 7; }
+  .layout-grid > .lg-left > .controls           { order: 8; }
+  .layout-grid > .lg-right > #result            { order: 9; }
+  .layout-grid > .lg-left > #nav-arrows         { order: 10; }
+  .layout-grid > .lg-right > #comparison        { order: 11; }
+  .layout-grid > .lg-right > .coach-card        { order: 12; }
 
   @media (min-width: 880px) {
     body {
@@ -994,7 +1010,11 @@
       padding-bottom: 28px;
       font-size: 15px;
     }
-    .container { max-width: 1320px; }
+    /* Left-align the content against the sidebar gutter. The base rule centres
+       a narrow column (mobile); on desktop the body already reserves 248px for
+       the fixed sidebar, so centring a capped 1320px column opened a dead band
+       between the sidebar and the content on wide screens. Hug the gutter. */
+    .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
     .tab-bar { display: none; }
 
     .nav-drawer {
@@ -1010,85 +1030,38 @@
     }
     .nav-backdrop { display: none !important; }
 
-    /* Each child gets its OWN grid-area — no two children share a slot.
-       Empty rows (e.g. repeat-badge while hidden, comparison until resolved)
-       collapse because their grid-template-rows default to auto. */
-    .layout-grid > #comparison { grid-area: comparison; align-self: start; }
-    .layout-grid > #result { grid-area: result; align-self: start; }
-    .layout-grid > .coach-card { grid-area: coach; align-self: stretch; }
-    .layout-grid > #side-to-move-title { grid-area: title; }
-    .layout-grid > #repeat-badge { grid-area: badge; justify-self: start; }
-    .layout-grid > #puzzle-meta { grid-area: meta; }
-    .layout-grid > #inline-status { grid-area: status; }
-    .layout-grid > #gate-card { grid-area: gate; align-self: stretch; }
-    .layout-grid > #task-prompt { grid-area: taskprompt; }
-    .layout-grid > .board-wrap { grid-area: board; }
-    .layout-grid > .controls { grid-area: controls; }
-    .layout-grid > #nav-arrows { grid-area: navarrows; }
-
-    /* State A — gate visible (Deep, pre-play): gate top-right. */
-    .layout-grid:has(#gate-card:not(.hidden)) {
+    /* Desktop: two independent columns. The board (left) and the panels
+       (right) live in separate flex containers, so tall right-column content
+       (verdict, comparison, coach) can never push the board down. Resets the
+       mobile `display:contents` + order weave back to real two-column layout. */
+    .layout-grid {
       display: grid;
       grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       gate"
-        "badge       gate"
-        "meta        gate"
-        "status      gate"
-        "taskprompt  gate"
-        "board       gate"
-        "controls    coach"
-        "navarrows   coach"
-        "result      coach";
-      gap: 12px 28px;
+      gap: 0 28px;
       align-items: start;
     }
-
-    /* State B — gate hidden, verdict visible: right column = verdict → comparison → coach.
-       Spec §6 desktop puzzle right-column order. Board owns the left column. */
-    .layout-grid:has(#gate-card.hidden):has(#result:not(.hidden)) {
-      display: grid;
-      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       result"
-        "badge       result"
-        "meta        comparison"
-        "status      comparison"
-        "taskprompt  coach"
-        "board       coach"
-        "controls    coach"
-        "navarrows   coach";
-      gap: 12px 28px;
-      align-items: start;
+    .lg-left, .lg-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+      align-self: start;
     }
+    /* The base per-child `order` rules also hold on desktop (ascending within
+       each column), so they need no reset here; left and right both flow in
+       their intended top-to-bottom sequence. */
+    .layout-grid > .lg-left > #repeat-badge { align-self: start; }
+    /* Gate (Deep pre-play) and the coach both stretch to fill their column. */
+    .lg-right > #gate-card { align-self: stretch; }
 
-    /* State C — gate hidden, no verdict yet: coach takes the right column.
-       Comparison is hidden in this state (no verdict yet) so it doesn't claim a row. */
-    .layout-grid:has(#gate-card.hidden):has(#result.hidden) {
-      display: grid;
-      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       coach"
-        "badge       coach"
-        "meta        coach"
-        "status      coach"
-        "taskprompt  coach"
-        "board       coach"
-        "controls    coach"
-        "navarrows   coach";
-      gap: 12px 28px;
-      align-items: start;
-    }
-
-    .layout-grid > .board-wrap .board { max-width: 560px; }
-    .layout-grid > .board-wrap .material-row { width: 560px; }
+    .lg-left > .board-wrap .board { max-width: 560px; }
+    .lg-left > .board-wrap .material-row { width: 560px; }
     .mb-piece { width: 22px; height: 22px; }
     .mb-score { font-size: 13px; }
-    /* Spec §6: coach panel height-capped (~235px) and scrolls internally so a long
-       review can't balloon the page. The grid cell aligns the panel to the TOP of
-       its area; whatever space is left below stays empty. */
-    .layout-grid > .coach-card { align-self: start; max-height: 235px; min-height: 0; }
-    .layout-grid > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+    /* Coach fills the remaining right-column space and only scrolls if it
+       actually exceeds the viewport (no fixed cap that strands empty space). */
+    .lg-right > .coach-card { align-self: stretch; min-height: 0; max-height: calc(100vh - 60px); }
+    .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
 
     /* Touch up desktop type */
     h1 { font-size: 30px; }
@@ -1165,12 +1138,32 @@
   </div>
 
   <div class="layout-grid">
+  <div class="lg-left">
   <h1 id="side-to-move-title">Loading…</h1>
   <div class="task-prompt hidden" id="task-prompt">Find the best move.</div>
   <div class="repeat-badge hidden" id="repeat-badge"></div>
   <div class="puzzle-meta hidden" id="puzzle-meta"></div>
   <div class="inline-status" id="inline-status">Loading engine…</div>
 
+  <div class="board-wrap">
+    <div class="material-row material-top" id="material-top"></div>
+    <div class="board" id="board"></div>
+    <div class="material-row material-bottom" id="material-bottom"></div>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
+    <button class="btn" id="reset-btn">Restart</button>
+    <button class="btn" id="next-btn">Next puzzle</button>
+  </div>
+
+  <div class="nav-arrows hidden" id="nav-arrows">
+    <button class="nav-step" id="nav-back" type="button">◀</button>
+    <span class="nav-label" id="nav-label">Current position</span>
+    <button class="nav-step" id="nav-forward" type="button">▶</button>
+  </div>
+  </div>
+  <div class="lg-right">
   <div class="gate-card hidden" id="gate-card">
     <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
 
@@ -1187,18 +1180,6 @@
     <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
 
     <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
-  </div>
-
-  <div class="board-wrap">
-    <div class="material-row material-top" id="material-top"></div>
-    <div class="board" id="board"></div>
-    <div class="material-row material-bottom" id="material-bottom"></div>
-  </div>
-
-  <div class="controls" id="controls">
-    <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
-    <button class="btn" id="reset-btn">Restart</button>
-    <button class="btn" id="next-btn">Next puzzle</button>
   </div>
 
   <div class="result hidden" id="result">
@@ -1222,12 +1203,6 @@
     <div class="result-components hidden" id="result-components">
       <div class="result-components-label">What did this puzzle test? (tap one)</div>
     </div>
-  </div>
-
-  <div class="nav-arrows hidden" id="nav-arrows">
-    <button class="nav-step" id="nav-back" type="button">◀</button>
-    <span class="nav-label" id="nav-label">Current position</span>
-    <button class="nav-step" id="nav-forward" type="button">▶</button>
   </div>
 
   <div class="comparison hidden acc-collapsed" id="comparison">
@@ -1254,6 +1229,8 @@
       <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
     </form>
   </div>
+  </div>
+
   </div>
 </div>
 
