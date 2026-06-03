@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
 <link rel="stylesheet" href="/css/gate.css">
+<link rel="stylesheet" href="/css/screen.css">
+<link rel="stylesheet" href="/css/session-wrap.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -944,28 +946,17 @@
   .coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ============================================================
-     Layout — mobile is a single column; desktop @ ≥880px splits.
+     Layout — now provided by the SHARED training-screen shell
+     (css/screen.css, v0.55): .layout-grid mobile single-column +
+     desktop two-column (board left / rail right), .lg-head / .lg-left /
+     .lg-right, canonical board sizing, full-width #gate-card + .session-wrap
+     bands. puzzle.html consumes that shell unchanged; only the puzzle-SPECIFIC
+     extras that the shell does not own stay here (material rows that must track
+     the board width, coach-card sizing, desktop body padding + type touch-ups).
+     The v0.54 appearance is preserved: the shell's desktop grid + 640px board +
+     gate-band match what puzzle.html shipped, so this is a no-visual-change
+     extraction (project rule: one source for shared components).
      ============================================================ */
-  .layout-grid { display: flex; flex-direction: column; }
-  /* Two structural columns (.lg-left = board, .lg-right = panels). On mobile
-     they flatten via display:contents and `order` reproduces the original
-     single-column sequence (gate above board, verdict below controls). */
-  .lg-head, .lg-left, .lg-right { display: contents; }
-  /* Order is nesting-agnostic (target by id) so it survives .lg-head wrapping
-     the header items: single-column sequence = title→meta→status→gate→board→
-     arrows→controls→result→coach. */
-  .layout-grid #side-to-move-title { order: 1; }
-  .layout-grid #task-prompt        { order: 2; }
-  .layout-grid #repeat-badge       { order: 3; }
-  .layout-grid #puzzle-meta        { order: 4; }
-  .layout-grid #inline-status      { order: 5; }
-  .layout-grid > #gate-card        { order: 6; }
-  .layout-grid .board-wrap         { order: 7; }
-  .layout-grid #nav-arrows         { order: 8; }
-  .layout-grid .controls           { order: 9; }
-  .layout-grid #result             { order: 10; }
-  .layout-grid .coach-card         { order: 11; }
-
   @media (min-width: 880px) {
     body {
       padding-left: 248px;     /* room for the fixed sidebar */
@@ -973,86 +964,23 @@
       padding-bottom: 28px;
       font-size: 15px;
     }
-    /* Left-align the content against the sidebar gutter. The base rule centres
-       a narrow mobile column; on desktop the body reserves 248px for the fixed
-       sidebar, so centring a capped column opened a dead band on wide screens.
-       Hug the gutter. (Confirm: no later `.container{margin:0 auto}` overrides.) */
+    /* Left-align content against the sidebar gutter (the base rule centres a
+       narrow mobile column; on desktop the body reserves 248px for the fixed
+       sidebar, so centring a capped column opened a dead band — hug the gutter). */
     .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
-    .tab-bar { display: none; }
 
-    .nav-drawer {
-      position: fixed !important;
-      top: 0; left: 0;
-      width: 224px !important; max-width: 224px !important;
-      height: 100vh;
-      transform: none !important;
-      border-right: 1px solid var(--line);
-      background: var(--surface);
-      padding: 22px 14px 18px;
-      z-index: 10;
-    }
-    .nav-backdrop { display: none !important; }
-
-    /* Desktop: two INDEPENDENT columns. The board (left) and the panels
-       (right) live in separate flex containers, so tall right-column content
-       (verdict, embedded comparison, coach) can NEVER push the board down.
-       This retires the old :has() shared-row grid (the push-down bug). */
-    .layout-grid {
-      display: grid;
-      grid-template-columns: minmax(440px, 660px) minmax(300px, 1fr);
-      grid-template-rows: auto auto auto;  /* 1=gate band, 2=left header, 3=columns */
-      gap: 0 22px;            /* tighter inter-column gap */
-      align-items: start;
-    }
-    /* v0.53b — the thinking-gate is its OWN full-width band spanning BOTH
-       columns at the top of the grid. It is no longer a member of .lg-right's
-       flex column, so a tall gate can NEVER push the coach down or squeeze it.
-       Gate (pre-move) and feedback+coach (post-move) are mutually exclusive in
-       time, so the gate owning a full-width band while visible costs the coach
-       nothing — the coach simply renders below in its column once the board
-       unlocks and the gate is hidden. */
-    .layout-grid > #gate-card { grid-column: 1 / -1; grid-row: 1; align-self: start; margin-bottom: 4px; }
-    /* ch.4 — the left header (title/meta/status) is its OWN grid row (row 2,
-       left column only). The board column (.lg-left) and the panel column
-       (.lg-right) then BOTH start at grid-row 3, so the feedback card's top
-       edge lines up with the board's top edge, not the page title. */
-    .layout-grid > .lg-head { grid-column: 1; grid-row: 2; align-self: start; min-width: 0; }
-    .lg-left  { grid-column: 1; grid-row: 3; }
-    .lg-right { grid-column: 2; grid-row: 3; }
-    .lg-head, .lg-left, .lg-right {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;             /* tighter intra-column gap (coach↔card, board↔arrows) */
-      min-width: 0;
-      align-self: start;
-    }
-    .lg-head { gap: 6px; }   /* tighter stack for the title/meta/status band */
-    .layout-grid > .lg-head > #repeat-badge { align-self: start; }
-    /* Gate is a full-width grid band (grid-column 1 / -1 above), decoupled from
-       the right column so its height never squeezes the coach. */
-    .layout-grid > #gate-card { align-self: stretch; }
-
-    /* BIGGER board on desktop — it dominates the left column (toward 640px,
-       inside the 660px column track so it never overflows). Material rows track
-       the same width so the captured-piece rows stay flush with the board. */
-    .lg-left > .board-wrap .board { max-width: 640px; }
+    /* Material rows track the desktop board width so captured-piece rows stay
+       flush with the board (the shell sizes the board itself to 640px). */
     .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
     .mb-piece { width: 22px; height: 22px; }
     .mb-score { font-size: 13px; }
 
-    /* Tighten the board → nav-arrows gap specifically (they read as one unit). */
-    .lg-left > .board-wrap { margin-bottom: 2px; }
-    .lg-left > #nav-arrows { margin-bottom: 0; margin-top: 2px; }
-
-    /* Coach fills the remaining right-column space (no 235px cap that stranded
-       empty space). Only its own .coach-log scrolls for very long reviews. */
+    /* Coach fills the remaining right-column space; only its own log scrolls. */
     .lg-right > .coach-card {
       align-self: stretch; flex: 1 1 auto;
       min-height: 0; max-height: calc(100vh - 56px);
     }
     .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
-    /* Trim the right column's own outer padding so the panels hug their edge. */
-    .lg-right > #result { margin-bottom: 0; }
     .lg-right > .coach-card { margin-bottom: 0; }
 
     /* Touch up desktop type */
@@ -1212,8 +1140,8 @@
 
   <div class="layout-grid">
   <!-- Deep-mode CCTO thinking-gate (v0.54). A FULL-WIDTH grid band rendered
-       ABOVE the board and the left column's controls (see css/gate.css +
-       .layout-grid > #gate-card: grid-row 1, grid-column 1 / -1), so the
+       ABOVE the board and the left column's controls (the full-width gate band is
+       defined by the shared shell css/screen.css + css/gate.css, v0.55), so the
        "think first" prompt sits on top of the board on every viewport and its
        height can never squeeze the coach in the right column. Single clean
        layout (the horizontal 3-column "row" — the former variant A); the
@@ -1249,10 +1177,19 @@
     <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
   </div>
 
+  <!-- Persistent in-session wrapper (v0.55, css/session-wrap.css + js/session-wrap.js).
+       A full-width band ABOVE the board that keeps the Today block progress
+       ("Mistake 3 of 8 · Block 1 of 2") visible for the whole block once a player
+       deep-links in from session.html. Rendered ONLY when ?session=today&block=
+       matches an active block; otherwise it stays hidden and the plain canonical
+       screen shows. Driven off chess-coach-session-v1 (no new storage key). -->
+  <div class="session-wrap hidden" id="session-wrap"></div>
+
   <!-- Left-column header band (title/meta/status). Pulled OUT of .lg-left so on
        desktop it occupies its own grid row above the board, and .lg-left (board
-       onwards) shares grid-row 3 with .lg-right — making the feedback card's top
-       edge line up with the board's top edge, not the page title (v0.54 ch.4).
+       onwards) shares the columns row with .lg-right, making the feedback card's
+       top edge line up with the board's top edge, not the page title. The grid
+       row scheme now lives in the shared shell (css/screen.css, v0.55).
        On mobile it is display:contents, so its children flatten back into the
        single-column order (1..5) above the gate + board. -->
   <div class="lg-head">

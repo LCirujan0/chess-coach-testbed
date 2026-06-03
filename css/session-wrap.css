@@ -1,0 +1,69 @@
+/* ============================================================================
+   session-wrap.css — PERSISTENT in-session Today wrapper (redesign-spec §32, v0.55)
+   ----------------------------------------------------------------------------
+   The block-progress readout ("Mistake 3 of 8 · Block 1 of 2") used to live
+   ONLY on session.html, so the moment a player deep-linked into a solving
+   surface (puzzle.html?session=today&block=...) they left session.html and the
+   progress vanished for the whole block. This component renders that same
+   readout INSIDE the training screen (css/screen.css), as a full-width band
+   above the board, so it stays visible for the entire block on whatever
+   surface the block uses.
+
+   It is a shared component (css/board.css / nav.css / type.css / gate.css /
+   screen.css family). It is driven off the EXISTING session state
+   (chess-coach-session-v1) + the ?session=today&block= params — NO new
+   localStorage key. It renders ONLY when a matching Today block is active; the
+   render helper (js/session-wrap.js) returns early otherwise, so the surface
+   shows the plain canonical screen when opened directly.
+
+   Markup is produced by renderSessionWrap() into a `.session-wrap` element.
+   ============================================================================ */
+
+.session-wrap {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card, 16px);
+  box-shadow: 0 6px 16px -12px rgba(20,30,55,.18);
+  margin-bottom: 12px;
+}
+.session-wrap.hidden { display: none; }
+
+.session-wrap .sw-exit {
+  width: 32px; height: 32px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted); font-size: 15px; flex-shrink: 0;
+  text-decoration: none; font-family: inherit; line-height: 1;
+}
+.session-wrap .sw-exit:hover { background: var(--surface2); }
+
+.session-wrap .sw-body { flex: 1; min-width: 0; }
+.session-wrap .sw-line {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; margin-bottom: 6px;
+}
+.session-wrap .sw-now {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800; font-size: 15px; letter-spacing: -0.01em; color: var(--ink);
+}
+.session-wrap .sw-of {
+  font-family: "Spline Sans Mono", ui-monospace, monospace;
+  font-size: 13px; color: var(--muted); flex-shrink: 0; white-space: nowrap;
+}
+
+/* segmented rail: one segment per block, a pip per item */
+.session-wrap .sw-rail { display: flex; gap: 8px; flex-wrap: wrap; }
+.session-wrap .sw-seg { display: flex; flex-direction: column; gap: 3px; }
+.session-wrap .sw-pips { display: flex; gap: 3px; flex-wrap: wrap; }
+.session-wrap .sw-pip { width: 14px; height: 5px; border-radius: 3px; background: var(--surface3); }
+.session-wrap .sw-pip.done { background: var(--accent); }
+.session-wrap .sw-pip.cur  { background: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.session-wrap .sw-seglabel { font-size: 11px; font-family: "Spline Sans Mono", monospace; color: var(--muted); }
+
+.session-wrap .sw-mode {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted); border: 1px solid var(--line); border-radius: 14px;
+  padding: 4px 10px; flex-shrink: 0;
+}

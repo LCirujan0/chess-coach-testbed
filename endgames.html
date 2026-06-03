@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
+<link rel="stylesheet" href="/css/screen.css">
+<link rel="stylesheet" href="/css/session-wrap.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,7 +54,7 @@
   .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
   @media (min-width: 880px) {
     body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-    .container { max-width:780px; }
+    .container { max-width:1100px; margin-left:0; margin-right:auto; }
     .tab-bar { display:none; }
     .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
     .nav-backdrop { display:none !important; }
@@ -70,7 +72,7 @@
   .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
 
   /* Board — canonical component (css/board.css, §22) */
-  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
+  /* .board-wrap layout + canonical board size now come from css/screen.css (v0.55). */
 
   /* Status + verdict */
   #status-line { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
@@ -121,43 +123,59 @@
     <span class="page-title">Endgames</span>
   </div>
 
-  <!-- lesson header -->
-  <div class="lesson-card" id="lesson-card">
-    <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
-    <div id="lesson-title" class="lesson-title">—</div>
-    <div id="lesson-stm" class="lesson-stm">—</div>
-    <div class="lesson-meta-row">
-      <button id="show-technique-btn" class="technique-btn">Show technique</button>
-      <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
+  <!-- Canonical training screen (css/screen.css, v0.55): same board-left /
+       rail-right composition as puzzle.html. -->
+  <div class="layout-grid">
+
+    <!-- Persistent in-session wrapper (v0.55) — shows the Today block progress
+         only when deep-linked from a session; hidden otherwise. -->
+    <div class="session-wrap hidden" id="session-wrap"></div>
+
+    <!-- Head band: lesson card + status (left column / own row on desktop). -->
+    <div class="lg-head">
+      <div class="lesson-card" id="lesson-card">
+        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
+        <div id="lesson-title" class="lesson-title">—</div>
+        <div id="lesson-stm" class="lesson-stm">—</div>
+        <div class="lesson-meta-row">
+          <button id="show-technique-btn" class="technique-btn">Show technique</button>
+          <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
+        </div>
+        <div id="technique-text" class="technique-text hidden"></div>
+      </div>
+      <div id="status-line"></div>
     </div>
-    <div id="technique-text" class="technique-text hidden"></div>
+
+    <!-- Board column: canonical board + controls. -->
+    <div class="lg-left">
+      <div class="board-wrap">
+        <div id="board" class="board"></div>
+        <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
+      </div>
+
+      <!-- controls -->
+      <div class="controls-row" id="controls-row">
+        <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
+        <button id="prev-btn" class="ctrl-btn">← Prev</button>
+        <button id="next-btn" class="ctrl-btn">Next →</button>
+      </div>
+    </div>
+
+    <!-- Rail column: verdict + why + lesson list. -->
+    <div class="lg-right">
+      <!-- verdict (shown after each lesson ends) -->
+      <div id="verdict-card" class="verdict-card hidden">
+        <div id="verdict-headline" class="verdict-headline"></div>
+        <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+        <button id="why-btn" class="why-btn">Why?</button>
+        <div id="why-output" class="why-output hidden"></div>
+      </div>
+
+      <!-- lesson list -->
+      <div class="lesson-list-card" id="lesson-list"></div>
+    </div>
+
   </div>
-
-  <!-- board -->
-  <div class="board-wrap">
-    <div id="board" class="board"></div>
-    <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
-  </div>
-
-  <div id="status-line"></div>
-
-  <!-- verdict (shown after each lesson ends) -->
-  <div id="verdict-card" class="verdict-card hidden">
-    <div id="verdict-headline" class="verdict-headline"></div>
-    <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
-    <button id="why-btn" class="why-btn">Why?</button>
-    <div id="why-output" class="why-output hidden"></div>
-  </div>
-
-  <!-- controls -->
-  <div class="controls-row" id="controls-row">
-    <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
-    <button id="prev-btn" class="ctrl-btn">← Prev</button>
-    <button id="next-btn" class="ctrl-btn">Next →</button>
-  </div>
-
-  <!-- lesson list -->
-  <div class="lesson-list-card" id="lesson-list"></div>
 </div>
 
 <!-- Nav drawer -->
@@ -214,6 +232,7 @@ window.addEventListener('unhandledrejection', (e) => surfaceError('Error: ' + e.
 import { Chess } from './js/puzzle/lib.js';
 import { PIECE_IMG, PIECE_GLYPH, FILES_STD, RANKS_STD, FILES_FLIP, RANKS_FLIP } from './js/puzzle/config.js';
 import { parseMultiPV, pvToSan, normalizeEval } from './js/puzzle/engine.js';
+import { renderSessionWrap } from '/js/session-wrap.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SF_URL = '/engine/stockfish-17.1-lite-single-03e3232.js';
@@ -297,6 +316,7 @@ function sfWaitForEG(matcher, timeoutMs = 30000) {
 }
 
 async function initSF() {
+  if (eg.sfWorker) return; // idempotent: only spin up one worker
   setStatus('Loading engine…');
   eg.sfWorker = new Worker(SF_URL);
   eg.sfWorker.postMessage('uci');
@@ -306,6 +326,25 @@ async function initSF() {
   await sfWaitForEG('readyok', 15000);
   eg.sfReady = true;
   setStatus('');
+}
+
+// v0.55 US-3: lazily ensure the engine is ready. Called from handleTraineeMove
+// so the trainee can move FIRST (no eager init), and a slow/failed engine
+// surfaces a visible, recoverable state instead of a silently dead board. If
+// the engine has not started yet (init deferred), it starts it now.
+let egEnginePromise = null;
+async function ensureEngineReady() {
+  if (eg.sfReady) return true;
+  setStatus('Loading engine…');
+  try {
+    if (!egEnginePromise) egEnginePromise = initSF();
+    await egEnginePromise;
+    return eg.sfReady === true;
+  } catch (err) {
+    egEnginePromise = null; // allow a later retry
+    surfaceError('Engine failed to load. Tap Retry to try again.');
+    return false;
+  }
 }
 
 // Returns { eval: {cp|mate}, pvUci: [uci,...], pvSan: [san,...] } or null.
@@ -378,7 +417,13 @@ function onBoardClick(e) {
 }
 
 function onSquareTap(square) {
-  if (eg.phase !== 'playing' || !eg.sfReady) return;
+  // v0.55 US-3 fix: do NOT gate selection on eg.sfReady. The engine is only
+  // needed AFTER the trainee's move (handleTraineeMove awaits readiness). The
+  // old gate silently swallowed every tap until the ~7MB depth-20 engine
+  // finished loading (or forever, if it failed) -> the board looked ready but
+  // was dead, which is why endgame technique was unplayable. Selection only
+  // needs chess.js (loaded synchronously), so let the player move immediately.
+  if (eg.phase !== 'playing') return;
   if (!eg.selectedSquare) {
     const piece = eg.chess.get(square);
     if (!piece || piece.color !== eg.chess.turn()) return;
@@ -451,6 +496,11 @@ function checkThreshold(lesson, evalCp) {
 async function handleTraineeMove() {
   eg.traineeMovesPlayed++;
   const lesson = eg.lessons[eg.idx];
+  // v0.55 US-3: the move is already on the board; make sure the engine is up
+  // before we ask it to respond. ensureEngineReady() lazily boots + awaits it
+  // and surfaces a recoverable error on failure (instead of dropping the tap).
+  const ready = await ensureEngineReady();
+  if (!ready) { eg.phase = 'playing'; renderBoardEG(); return; }
   setStatus('Thinking…');
 
   // Analyse after trainee's move
@@ -658,7 +708,9 @@ function loadLesson(idx) {
   document.getElementById('retry-btn').disabled = true;
 
   renderBoardEG();
-  setStatus(eg.sfReady ? '' : 'Loading engine…');
+  // v0.55: board is immediately playable; don't show a blocking "Loading engine"
+  // hint at rest (the engine warms in the background / on first move).
+  setStatus('');
   updateLessonList();
 }
 
@@ -764,14 +816,16 @@ async function init() {
     return;
   }
   if (!eg.lessons.length) { surfaceError('No lessons found in endgames.json'); return; }
+  // v0.55 US-2/US-4: persistent in-session wrapper (hidden unless deep-linked
+  // into a Today block); the surface shows the plain canonical screen otherwise.
+  renderSessionWrap(document.getElementById('session-wrap'), { exitHref: '/session.html' });
   loadLesson(0);
-  try {
-    await initSF();
-    setStatus('');
-    renderBoardEG();
-  } catch (err) {
-    surfaceError('Engine failed: ' + err.message);
-  }
+  // v0.55 US-3 + perf: the board is playable immediately (selection needs only
+  // chess.js). The ~7MB depth-20 engine boots lazily on the trainee's first
+  // move via ensureEngineReady(), so a slow/failed engine load no longer leaves
+  // a dead board, and we avoid eager init cost on every page open. Warm it in
+  // the background so the first reply is snappy, but never block play on it.
+  ensureEngineReady().then(function () { setStatus(''); renderBoardEG(); });
 }
 
 init();

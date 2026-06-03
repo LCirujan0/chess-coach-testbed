@@ -1,0 +1,118 @@
+/* ============================================================================
+   screen.css — THE canonical TRAINING-SCREEN shell (redesign-spec §31, v0.55)
+   ----------------------------------------------------------------------------
+   One source of the training-screen LAYOUT for every solving/playing surface:
+   puzzle solving (puzzle.html), endgame technique (endgames.html), and endgame
+   recognition (endgame-recognition.html). It defines the chess.com-style view
+   that is identical whether you are solving a puzzle, playing out a technique,
+   or judging a position:
+
+     • the board sits on the LEFT at a single canonical size,
+     • an info / feedback rail sits on the RIGHT,
+     • desktop (>=880px) is a two-column grid; mobile is a single-column stack,
+     • consistent gaps + padding across all surfaces.
+
+   This is the layout sibling of the existing shared components: css/board.css
+   (the board CELLS), css/nav.css, css/type.css, css/gate.css. No surface may
+   hand-roll its own training-screen column layout — adopt this shell instead
+   (project rule: shared-component changes apply to ALL surfaces). A surface
+   whose board placement / size / rail differs from this file is a bug, however
+   close it looks (mirrors css/board.css §22-A).
+
+   STRUCTURE the markup must provide inside `.layout-grid`:
+     .layout-grid
+       > #gate-card        (OPTIONAL full-width band, e.g. the Deep gate)      — css/gate.css
+       > .session-wrap     (OPTIONAL full-width band, the Today block progress) — css/session-wrap.css
+       > .lg-head          (title / meta / status; left column, own row)
+       > .lg-left          (board-wrap, nav, controls)
+       > .lg-right         (feedback / verdict / coach rail)
+
+   On MOBILE .lg-head/.lg-left/.lg-right are display:contents so their children
+   flatten into one column; `order` reproduces the canonical single-column
+   sequence. On DESKTOP they become real flex columns inside the grid.
+
+   Every consumer must define the Daylight tokens in :root (puzzle.html is the
+   reference set: --surface, --line, --accent, --r-board, etc.).
+   ============================================================================ */
+
+/* ---- mobile: one column. .lg-* are transparent; children ordered by id/class
+   so board sits below the head band and above the rail. ------------------- */
+.layout-grid { display: flex; flex-direction: column; }
+.lg-head, .lg-left, .lg-right { display: contents; }
+
+/* Canonical single-column order (nesting-agnostic; target the well-known
+   landmarks so it survives the .lg-* wrappers):
+   gate -> session-wrap -> head(title/meta/status) -> board -> nav -> controls
+   -> feedback/verdict -> coach.  Surfaces only use the landmarks they have. */
+.layout-grid > #gate-card        { order: 1; }
+.layout-grid > .session-wrap     { order: 2; }
+.layout-grid #side-to-move-title,
+.layout-grid #lesson-card,
+.layout-grid #recog-head         { order: 3; }
+.layout-grid #task-prompt        { order: 4; }
+.layout-grid #repeat-badge       { order: 5; }
+.layout-grid #puzzle-meta        { order: 6; }
+.layout-grid #inline-status,
+.layout-grid #status-line        { order: 7; }
+.layout-grid .board-wrap         { order: 8; }
+.layout-grid #nav-arrows         { order: 9; }
+.layout-grid .controls,
+.layout-grid .controls-row       { order: 10; }
+.layout-grid #result,
+.layout-grid #verdict-card       { order: 11; }
+.layout-grid .coach-card,
+.layout-grid #why-output         { order: 12; }
+/* Lesson/position lists and any extra trailing rail content sit last. */
+.layout-grid #lesson-list,
+.layout-grid #drill-root         { order: 13; }
+
+/* The board is centred in its column on mobile at the canonical size. The
+   actual .board cell styling (squares, pieces, highlights) lives in
+   css/board.css; here we only own the WRAP + canonical max size + spacing. */
+.layout-grid .board-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; margin: 0 auto;
+}
+.layout-grid .board-wrap .board { max-width: 380px; }
+
+@media (min-width: 880px) {
+  /* Two INDEPENDENT columns. The board (left) and the rail (right) live in
+     separate grid tracks so tall right-column content (verdict, comparison,
+     coach, lesson list) can NEVER push the board down. Row layout:
+       row 1 = optional full-width band (gate)
+       row 2 = optional full-width band (session wrapper)
+       row 3 = left header band (title/meta/status), left column only
+       row 4 = board column (.lg-left) + rail column (.lg-right) side by side
+     so the rail's top edge lines up with the BOARD's top edge, not the title. */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: minmax(440px, 660px) minmax(300px, 1fr);
+    grid-template-rows: auto auto auto auto;
+    gap: 0 22px;
+    align-items: start;
+  }
+  .layout-grid > #gate-card    { grid-column: 1 / -1; grid-row: 1; align-self: stretch; margin-bottom: 4px; }
+  .layout-grid > .session-wrap { grid-column: 1 / -1; grid-row: 2; align-self: start; margin-bottom: 6px; }
+  .layout-grid > .lg-head      { grid-column: 1; grid-row: 3; align-self: start; min-width: 0; }
+  .lg-left  { grid-column: 1; grid-row: 4; }
+  .lg-right { grid-column: 2; grid-row: 4; }
+
+  .lg-head, .lg-left, .lg-right {
+    display: flex; flex-direction: column;
+    gap: 10px; min-width: 0; align-self: start;
+  }
+  .lg-head { gap: 6px; }
+
+  /* BIGGER board on desktop — it dominates the left column (toward 640px,
+     inside the 660px track so it never overflows). */
+  .lg-left .board-wrap { align-items: stretch; }
+  .lg-left .board-wrap .board { max-width: 640px; }
+
+  /* Tighten board -> nav gap (read as one unit). */
+  .lg-left .board-wrap { margin-bottom: 2px; }
+  .lg-left #nav-arrows { margin-bottom: 0; margin-top: 2px; }
+
+  /* Rail content hugs its column edge. */
+  .lg-right > #result,
+  .lg-right > #verdict-card { margin-bottom: 0; }
+}

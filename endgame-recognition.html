@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
+<link rel="stylesheet" href="/css/screen.css">
+<link rel="stylesheet" href="/css/session-wrap.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -203,27 +205,39 @@
   .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
   @media (min-width: 880px) {
     body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+    .container { max-width:1100px; margin-left:0; margin-right:auto; }
     .tab-bar { display:none; }
     .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
     .nav-backdrop { display:none !important; }
   }
+  /* v0.55 - #drill-root is transparent so its JS-built .lg-left/.lg-right
+     columns become children of the shared .layout-grid (css/screen.css).
+     The full-screen states (results/error/loading) are single children
+     that fill column 1. */
+  #drill-root { display: contents; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header-bar">
+  <div id="recog-head" class="header-bar">
     <a href="/today.html" class="back-btn">← Today</a>
     <span class="page-title">Endgame recognition</span>
     <div class="score-pill" id="score-pill">0 / 0</div>
   </div>
 
-  <div id="drill-root">
-    <div class="loading-state">Loading positions…</div>
+  <!-- Canonical training screen (css/screen.css, v0.55): board left, rail right.
+       The session wrapper shows only inside a Today session (US-4). -->
+  <div class="layout-grid">
+    <div class="session-wrap hidden" id="session-wrap"></div>
+    <div id="drill-root">
+      <div class="loading-state">Loading positions…</div>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import { renderStaticBoard } from '/js/board-static.js';
+import { renderSessionWrap } from '/js/session-wrap.js';
 /* ===========================================================================
  * endgame-recognition.html — Spec 08 drill
  * v0.28 · Releases-B · 2026-06-01
@@ -389,17 +403,23 @@ import { renderStaticBoard } from '/js/board-static.js';
   function renderPosition(pos) {
     var sideStr = pos.side === 'w' ? 'White' : 'Black';
     var progressPct = Math.round((sessionTotal / SESSION_SIZE) * 100);
+    // v0.55 US-4: canonical training screen — board in .lg-left, prompt +
+    // verdict + reveal in the .lg-right rail (matches puzzle/endgames).
     root.innerHTML =
-      '<div class="progress-wrap"><div class="progress-bar" style="width:' + progressPct + '%"></div></div>' +
-      renderBoard(pos) +
-      '<p class="prompt">Is this <b>winning or drawn</b> for ' + esc(sideStr) + ' to move?</p>' +
-      '<div class="verdict-btns">' +
-        '<button class="vbtn win" id="btn-winning">Winning</button>' +
-        '<button class="vbtn draw" id="btn-drawn">Drawn</button>' +
-        '<button class="vbtn lose" id="btn-losing">Losing</button>' +
+      '<div class="lg-left">' +
+        '<div class="progress-wrap"><div class="progress-bar" style="width:' + progressPct + '%"></div></div>' +
+        renderBoard(pos) +
       '</div>' +
-      '<div class="reveal" id="reveal-panel"></div>' +
-      '<div id="next-area"></div>';
+      '<div class="lg-right">' +
+        '<p class="prompt">Is this <b>winning or drawn</b> for ' + esc(sideStr) + ' to move?</p>' +
+        '<div class="verdict-btns">' +
+          '<button class="vbtn win" id="btn-winning">Winning</button>' +
+          '<button class="vbtn draw" id="btn-drawn">Drawn</button>' +
+          '<button class="vbtn lose" id="btn-losing">Losing</button>' +
+        '</div>' +
+        '<div class="reveal" id="reveal-panel"></div>' +
+        '<div id="next-area"></div>' +
+      '</div>';
 
     renderStaticBoard(document.getElementById('recog-board'), pos.fen, { orientation: pos.side });
 
@@ -544,6 +564,9 @@ import { renderStaticBoard } from '/js/board-static.js';
 
   // ---- Boot ----------------------------------------------------------------
   function boot() {
+    // v0.55 US-4: persistent in-session wrapper (hidden unless deep-linked into
+    // a Today session); recognition shows the plain canonical screen otherwise.
+    renderSessionWrap(document.getElementById("session-wrap"), { exitHref: "/session.html" });
     fetch('/data/endgame-recognition.json')
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
