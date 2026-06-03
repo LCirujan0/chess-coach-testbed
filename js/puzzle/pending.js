@@ -73,10 +73,7 @@ export function renderPending() {
 
   // No card actions while pending — the play controls (Hint/Restart/Next) below
   // the board are the only affordances. Hide the result-card action row.
-  $('card-primary').classList.add('hidden');
-  $('card-secondary').classList.add('hidden');
   $('card-showanswer').classList.add('hidden');
-  const air = $('ai-review-btn'); if (air) air.classList.add('hidden');
   const actions = $('result-actions'); if (actions) actions.classList.add('hidden');
 
   // The embedded comparison stays hidden until there is a move to compare;

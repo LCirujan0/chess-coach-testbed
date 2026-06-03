@@ -1111,7 +1111,7 @@
 
   /* ---- Layout fix 1: left-align the desktop container (no dead band). ---- */
   @media (min-width: 880px) {
-    .container { margin: 0; }            /* was: margin:0 auto → dead left band */
+    .container { max-width: 1100px; margin-left: 0; margin-right: auto; }  /* robust: matches fix/puzzle-layout-quickwins — cap width + pin to sidebar gutter */
   }
 
   /* ---- Eval-change chips (shared by all variants) ---- */
