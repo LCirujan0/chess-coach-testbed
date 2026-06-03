@@ -950,18 +950,21 @@
   /* Two structural columns (.lg-left = board, .lg-right = panels). On mobile
      they flatten via display:contents and `order` reproduces the original
      single-column sequence (gate above board, verdict below controls). */
-  .lg-left, .lg-right { display: contents; }
-  .layout-grid > .lg-left  > #side-to-move-title { order: 1; }
-  .layout-grid > .lg-left  > #task-prompt        { order: 2; }
-  .layout-grid > .lg-left  > #repeat-badge       { order: 3; }
-  .layout-grid > .lg-left  > #puzzle-meta        { order: 4; }
-  .layout-grid > .lg-left  > #inline-status      { order: 5; }
-  .layout-grid > #gate-card                       { order: 6; }
-  .layout-grid > .lg-left  > .board-wrap         { order: 7; }
-  .layout-grid > .lg-left  > #nav-arrows         { order: 8; }
-  .layout-grid > .lg-left  > .controls           { order: 9; }
-  .layout-grid > .lg-right > #result             { order: 10; }
-  .layout-grid > .lg-right > .coach-card         { order: 11; }
+  .lg-head, .lg-left, .lg-right { display: contents; }
+  /* Order is nesting-agnostic (target by id) so it survives .lg-head wrapping
+     the header items: single-column sequence = title→meta→status→gate→board→
+     arrows→controls→result→coach. */
+  .layout-grid #side-to-move-title { order: 1; }
+  .layout-grid #task-prompt        { order: 2; }
+  .layout-grid #repeat-badge       { order: 3; }
+  .layout-grid #puzzle-meta        { order: 4; }
+  .layout-grid #inline-status      { order: 5; }
+  .layout-grid > #gate-card        { order: 6; }
+  .layout-grid .board-wrap         { order: 7; }
+  .layout-grid #nav-arrows         { order: 8; }
+  .layout-grid .controls           { order: 9; }
+  .layout-grid #result             { order: 10; }
+  .layout-grid .coach-card         { order: 11; }
 
   @media (min-width: 880px) {
     body {
@@ -996,7 +999,8 @@
        This retires the old :has() shared-row grid (the push-down bug). */
     .layout-grid {
       display: grid;
-      grid-template-columns: minmax(440px, 620px) minmax(300px, 1fr);
+      grid-template-columns: minmax(440px, 660px) minmax(300px, 1fr);
+      grid-template-rows: auto auto auto;  /* 1=gate band, 2=left header, 3=columns */
       gap: 0 22px;            /* tighter inter-column gap */
       align-items: start;
     }
@@ -1007,22 +1011,32 @@
        time, so the gate owning a full-width band while visible costs the coach
        nothing — the coach simply renders below in its column once the board
        unlocks and the gate is hidden. */
-    .layout-grid > #gate-card { grid-column: 1 / -1; align-self: start; margin-bottom: 4px; }
-    .lg-left, .lg-right {
+    .layout-grid > #gate-card { grid-column: 1 / -1; grid-row: 1; align-self: start; margin-bottom: 4px; }
+    /* ch.4 — the left header (title/meta/status) is its OWN grid row (row 2,
+       left column only). The board column (.lg-left) and the panel column
+       (.lg-right) then BOTH start at grid-row 3, so the feedback card's top
+       edge lines up with the board's top edge, not the page title. */
+    .layout-grid > .lg-head { grid-column: 1; grid-row: 2; align-self: start; min-width: 0; }
+    .lg-left  { grid-column: 1; grid-row: 3; }
+    .lg-right { grid-column: 2; grid-row: 3; }
+    .lg-head, .lg-left, .lg-right {
       display: flex;
       flex-direction: column;
       gap: 10px;             /* tighter intra-column gap (coach↔card, board↔arrows) */
       min-width: 0;
       align-self: start;
     }
-    .layout-grid > .lg-left > #repeat-badge { align-self: start; }
+    .lg-head { gap: 6px; }   /* tighter stack for the title/meta/status band */
+    .layout-grid > .lg-head > #repeat-badge { align-self: start; }
     /* Gate is a full-width grid band (grid-column 1 / -1 above), decoupled from
        the right column so its height never squeezes the coach. */
     .layout-grid > #gate-card { align-self: stretch; }
 
-    /* BIGGER board on desktop — it dominates the left column (toward 600px). */
-    .lg-left > .board-wrap .board { max-width: 600px; }
-    .lg-left > .board-wrap .material-row { width: 600px; max-width: 600px; }
+    /* BIGGER board on desktop — it dominates the left column (toward 640px,
+       inside the 660px column track so it never overflows). Material rows track
+       the same width so the captured-piece rows stay flush with the board. */
+    .lg-left > .board-wrap .board { max-width: 640px; }
+    .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
     .mb-piece { width: 22px; height: 22px; }
     .mb-score { font-size: 13px; }
 
@@ -1197,67 +1211,59 @@
   </div>
 
   <div class="layout-grid">
-  <!-- Deep-mode CCTO thinking-gate (v0.53b). Now a FULL-WIDTH grid band at the
-       top of .layout-grid (see css/gate.css + .layout-grid > #gate-card), so its
-       height can never squeeze the coach in the right column. Variant layout is
-       set by data-gate (a|b) via ?gate= + the preview toggle below; the gate's
-       JS (js/puzzle/gate.js) only touches the ids gate-card/timer/q1/q2/q3/submit. -->
+  <!-- Deep-mode CCTO thinking-gate (v0.54). A FULL-WIDTH grid band rendered
+       ABOVE the board and the left column's controls (see css/gate.css +
+       .layout-grid > #gate-card: grid-row 1, grid-column 1 / -1), so the
+       "think first" prompt sits on top of the board on every viewport and its
+       height can never squeeze the coach in the right column. Single clean
+       layout (the horizontal 3-column "row" — the former variant A); the
+       preview toggle and the variant-B stepper have been retired. The gate's
+       JS (js/puzzle/gate.js) only touches the ids gate-card/timer/q1/q2/q3/submit.
+       data-gate="a" is kept solely as the CSS hook for the row layout. -->
   <div class="gate-card hidden" id="gate-card" data-gate="a">
-    <!-- Preview-only variant toggle. Strip this block once a variant is chosen. -->
-    <div class="gate-variant-toggle" id="gate-variant-toggle" role="group" aria-label="Gate layout (preview)">
-      <button type="button" data-variant="a">Layout A · row</button>
-      <button type="button" data-variant="b">Layout B · stepper</button>
-    </div>
-
     <div class="gate-head">
       <span class="gate-title">Think first</span>
       <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
-      <!-- Stepper progress strip (variant B only; hidden otherwise via CSS). -->
-      <div class="gate-steps" id="gate-steps" aria-hidden="true">
-        <span class="gate-step-pip current" data-step="0">1</span>
-        <span class="gate-step-pip" data-step="1">2</span>
-        <span class="gate-step-pip" data-step="2">3</span>
-      </div>
     </div>
 
     <div class="gate-fields" id="gate-fields">
-      <div class="gate-field is-active" data-step="0">
+      <div class="gate-field">
         <div class="gate-q">1. CCTO for YOUR pieces</div>
         <div class="gate-sub">Checks · Captures · Threats · Optimisations available to you. What can you do?</div>
         <textarea class="gate-text" id="gate-q1" placeholder="e.g. No checks available. Can capture the f5 bishop with my knight. Threatening mate on h7 if I can get the queen close. Could optimise by trading off my passive bishop." maxlength="800" rows="4" style="min-height: 70px;"></textarea>
       </div>
 
-      <div class="gate-field" data-step="1">
+      <div class="gate-field">
         <div class="gate-q">2. CCTO for the OPPONENT'S pieces</div>
         <div class="gate-sub">Same analysis from their side. What can they do to you?</div>
         <textarea class="gate-text" id="gate-q2" placeholder="e.g. They have no immediate checks. Could capture my d-pawn with the knight. Threatening to double on the e-file. Their rook is well-placed but could improve to e2." maxlength="800" rows="4" style="min-height: 70px;"></textarea>
       </div>
 
-      <div class="gate-field" data-step="2">
+      <div class="gate-field">
         <div class="gate-q">3. How do you put those insights into practice?</div>
         <div class="gate-sub">Your plan — what are you going to do with what you saw?</div>
         <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="min-height: 60px;"></textarea>
       </div>
     </div>
 
-    <!-- Variant B nav (Back/Next); hidden in variant A + on mobile via CSS. -->
-    <div class="gate-stepper-nav" id="gate-stepper-nav">
-      <button type="button" class="gate-nav-btn" id="gate-back" disabled>Back</button>
-      <button type="button" class="gate-nav-btn" id="gate-next">Next</button>
-    </div>
-    <!-- Submit lives outside the stepper nav so it is always present in variant A
-         and on mobile. In variant B the inline script moves it visually into the
-         nav row and only reveals it on the final step. -->
     <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
   </div>
 
-  <div class="lg-left">
+  <!-- Left-column header band (title/meta/status). Pulled OUT of .lg-left so on
+       desktop it occupies its own grid row above the board, and .lg-left (board
+       onwards) shares grid-row 3 with .lg-right — making the feedback card's top
+       edge line up with the board's top edge, not the page title (v0.54 ch.4).
+       On mobile it is display:contents, so its children flatten back into the
+       single-column order (1..5) above the gate + board. -->
+  <div class="lg-head">
   <h1 id="side-to-move-title">Loading…</h1>
   <div class="task-prompt hidden" id="task-prompt"></div>
   <div class="repeat-badge hidden" id="repeat-badge"></div>
   <div class="puzzle-meta hidden" id="puzzle-meta"></div>
   <div class="inline-status" id="inline-status">Loading engine…</div>
+  </div>
 
+  <div class="lg-left">
   <div class="board-wrap">
     <div class="material-row material-top" id="material-top"></div>
     <div class="board" id="board"></div>
@@ -1343,14 +1349,14 @@
   </div>
   <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
   <a href="/practice.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
-  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
-  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
-  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
   </div>
+  <a href="/games.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>Games</a>
+  <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
+  <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
     <div class="nav-more-label">More</div>
     <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><span class="nav-icon">▤</span>Roadmap</a>
@@ -1369,98 +1375,6 @@
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
 
-<!-- ============================================================================
-     PREVIEW-ONLY gate variant controller (v0.53b). NOT part of the gate logic.
-     Strip this <script> + the .gate-variant-toggle markup once Jorge picks a
-     variant. It only sets data-gate on #gate-card and drives variant B's
-     stepper UI (active step + progress pips + Back/Next + reveal submit on the
-     last step). All gating (timer, submit enable, unlock) stays in gate.js and
-     is untouched: this never changes the values, ids, or disabled-state logic
-     that gate.js owns — for the submit it only toggles a .step-hidden CLASS in
-     variant B (purely cosmetic step-reveal), never the `disabled` property.
-     ============================================================================ -->
-<script>
-(function () {
-  var card = document.getElementById('gate-card');
-  if (!card) return;
-  var DESKTOP = function () { return window.matchMedia('(min-width: 880px)').matches; };
-
-  // 1) Initial variant from ?gate=a|b (default a).
-  var q = new URLSearchParams(window.location.search).get('gate');
-  var variant = (q === 'b') ? 'b' : 'a';
-
-  var toggle = document.getElementById('gate-variant-toggle');
-  var fields = Array.prototype.slice.call(card.querySelectorAll('.gate-field'));
-  var pips   = Array.prototype.slice.call(card.querySelectorAll('.gate-step-pip'));
-  var back   = document.getElementById('gate-back');
-  var next   = document.getElementById('gate-next');
-  var submit = document.getElementById('gate-submit');
-  var step = 0;
-
-  function applyToggleUI() {
-    if (!toggle) return;
-    toggle.querySelectorAll('button').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-variant') === variant);
-    });
-  }
-
-  // Variant B stepper: show one .gate-field at a time on desktop. On mobile the
-  // CSS shows all fields stacked, so the stepper is a no-op there (we still keep
-  // submit visible). gate.js drives whether submit is *enabled*; we only drive
-  // whether it's *shown* (step-hidden) in variant B desktop.
-  function renderStepper() {
-    var stepping = (variant === 'b') && DESKTOP();
-    if (!stepping) {
-      // Show every field, clear stepper-only classes, always show submit.
-      fields.forEach(function (f) { f.classList.add('is-active'); });
-      submit.classList.remove('step-hidden');
-      return;
-    }
-    fields.forEach(function (f, i) { f.classList.toggle('is-active', i === step); });
-    pips.forEach(function (p, i) {
-      p.classList.toggle('current', i === step);
-      p.classList.toggle('done', i < step);
-    });
-    if (back) back.disabled = (step === 0);
-    var last = (step === fields.length - 1);
-    if (next) next.style.display = last ? 'none' : '';
-    // Reveal submit only on the last step (cosmetic; enabled-state is gate.js).
-    submit.classList.toggle('step-hidden', !last);
-  }
-
-  function setVariant(v) {
-    variant = (v === 'b') ? 'b' : 'a';
-    card.setAttribute('data-gate', variant);
-    if (variant === 'a') step = 0;
-    applyToggleUI();
-    renderStepper();
-  }
-
-  if (toggle) {
-    toggle.addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-variant]');
-      if (b) setVariant(b.getAttribute('data-variant'));
-    });
-  }
-  if (next) next.addEventListener('click', function () {
-    if (step < fields.length - 1) { step++; renderStepper(); }
-  });
-  if (back) back.addEventListener('click', function () {
-    if (step > 0) { step--; renderStepper(); }
-  });
-  window.addEventListener('resize', renderStepper);
-
-  // When gate.js re-shows the card for a new Deep puzzle (removes .hidden),
-  // reset the stepper to step 0 so each puzzle starts at prompt 1.
-  try {
-    new MutationObserver(function () {
-      if (!card.classList.contains('hidden')) { step = 0; renderStepper(); }
-    }).observe(card, { attributes: true, attributeFilter: ['class'] });
-  } catch (e) { /* MutationObserver unsupported — non-fatal for preview */ }
-
-  setVariant(variant);
-})();
-</script>
 <script type="module" src="/js/puzzle/boot.js"></script>
 </body>
 </html>

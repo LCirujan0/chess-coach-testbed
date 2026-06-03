@@ -1,5 +1,5 @@
 /* ============================================================================
-   gate.css — Deep-mode CCTO THINKING-GATE component (v0.53b)
+   gate.css — Deep-mode CCTO THINKING-GATE component (v0.54)
    ----------------------------------------------------------------------------
    The thinking-gate is its OWN component, distinct from the post-move feedback
    card (#result) and the coach (.coach-card). Gate and feedback are mutually
@@ -7,27 +7,23 @@
    feedback card + coach own the screen AFTER you move. They must never compete
    for the same vertical space.
 
-   DECOUPLING: on desktop the gate is a FULL-WIDTH grid item spanning both
-   layout columns (see puzzle.html `.layout-grid > #gate-card`), so its height
-   can NEVER squeeze the coach in the right column. The old arrangement put the
-   gate inside `.lg-right` above the coach, so a tall vertical stack of three
-   textareas dictated the column height and starved the coach — fixed here.
+   LAYOUT: on desktop the gate is a FULL-WIDTH grid item spanning both layout
+   columns and rendered ABOVE the board (see puzzle.html `.layout-grid >
+   #gate-card`: grid-row 1, grid-column 1 / -1). So the "think first" prompt
+   sits on top of the board on every viewport, and its height can NEVER squeeze
+   the coach in the right column. (Mobile stacks it above the board too.)
 
-   Two preview-only desktop LAYOUTS, switchable via `?gate=a|b` (a tiny on-page
-   toggle sets `data-gate` on #gate-card; default = a):
-     • data-gate="a" — 3 CCTO prompts as a horizontal 3-column row (your pieces |
-       opponent's pieces | plan) inside one wide "think first" panel. Short.
-     • data-gate="b" — horizontal stepper: one prompt at a time with a 1·2·3
-       progress strip and Back/Next, very short vertically.
-
-   Mobile (<880px) ALWAYS falls back to the calm vertical stack regardless of
-   the variant, so phones never get a cramped horizontal row.
+   Single composition — the horizontal 3-column "row": three CCTO prompts
+   (your pieces | opponent's pieces | plan) inside one wide "think first" panel.
+   The preview variant toggle and the variant-B stepper were retired in v0.54;
+   data-gate="a" is kept solely as the CSS hook for the row layout. Mobile
+   (<880px) falls back to the calm vertical stack.
 
    Uses the shared type system (type.css): --font-display / --font-body /
    --font-mono via .t-mono on the timer.
    ============================================================================ */
 
-/* ---- Shared shell (both variants, all viewports) ------------------------- */
+/* ---- Shared shell (all viewports) ---------------------------------------- */
 .gate-card {
   background: var(--accent-soft);
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
@@ -80,8 +76,8 @@
 .gate-submit:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 
 /* The gate "title" row + the optional grouping wrapper (purely presentational;
-   no JS depends on these). The .gate-fields wrapper is the flex/grid container
-   the variants reshape; mobile leaves it as a plain block (vertical stack). */
+   no JS depends on these). The .gate-fields wrapper is the grid container the
+   row layout reshapes; mobile leaves it as a plain block (vertical stack). */
 .gate-head {
   display: flex; align-items: baseline; gap: 10px;
   flex-wrap: wrap; margin-bottom: 4px;
@@ -91,17 +87,15 @@
   font-size: 14px; font-weight: 800; color: var(--ink);
   letter-spacing: -0.01em;
 }
-.gate-field { min-width: 0; }              /* allow flex children to shrink */
-.gate-stepper-nav { display: none; }       /* only variant B shows it */
+.gate-field { min-width: 0; }              /* allow grid children to shrink */
 
 /* On mobile the textareas keep their authored rows; nothing horizontal. */
 
 /* ====================================================================== */
-/* DESKTOP variant layouts (≥880px). Below this, always vertical stack.   */
+/* DESKTOP row layout (≥880px). Below this, always a vertical stack.      */
 /* ====================================================================== */
 @media (min-width: 880px) {
-
-  /* -------- variant A: horizontal 3-column "think first" row ----------- */
+  /* Horizontal 3-column "think first" row. */
   #gate-card[data-gate="a"] .gate-fields {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -116,67 +110,4 @@
   }
   /* Submit spans the full width under the three columns. */
   #gate-card[data-gate="a"] .gate-submit { margin-top: 14px; }
-
-  /* -------- variant B: horizontal stepper (one prompt at a time) ------- */
-  #gate-card[data-gate="b"] .gate-fields { position: relative; }
-  /* Hide all steps, show only the active one. JS toggles .is-active. */
-  #gate-card[data-gate="b"] .gate-field { display: none; }
-  #gate-card[data-gate="b"] .gate-field.is-active { display: block; }
-  #gate-card[data-gate="b"] .gate-field .gate-q { margin-top: 0; }
-  #gate-card[data-gate="b"] .gate-text {
-    min-height: 90px; height: 90px; resize: vertical;
-  }
-  /* Progress strip: 1 · 2 · 3 pills. */
-  #gate-card[data-gate="b"] .gate-steps {
-    display: flex; gap: 6px; margin: 0 0 12px auto;
-  }
-  #gate-card[data-gate="b"] .gate-step-pip {
-    width: 22px; height: 22px; border-radius: 50%;
-    display: grid; place-items: center;
-    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-    background: var(--surface); color: var(--muted);
-    border: 1px solid var(--line);
-  }
-  #gate-card[data-gate="b"] .gate-step-pip.done {
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-    color: var(--accent); border-color: transparent;
-  }
-  #gate-card[data-gate="b"] .gate-step-pip.current {
-    background: var(--accent); color: #fff; border-color: transparent;
-  }
-  /* Back / Next nav row, shown only for variant B. */
-  #gate-card[data-gate="b"] .gate-stepper-nav {
-    display: flex; gap: 8px; margin-top: 12px; align-items: center;
-  }
-  #gate-card[data-gate="b"] .gate-stepper-nav .gate-nav-btn {
-    padding: 9px 14px; border-radius: var(--r-btn);
-    border: 1px solid var(--line); background: var(--surface);
-    color: var(--ink); font-family: var(--font-body);
-    font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  #gate-card[data-gate="b"] .gate-stepper-nav .gate-nav-btn:disabled {
-    opacity: .4; cursor: not-allowed;
-  }
-  /* Variant B submit: full-width under the nav, revealed by JS only on the
-     final step (until then JS adds .step-hidden). */
-  #gate-card[data-gate="b"] .gate-submit { margin-top: 12px; }
-  #gate-card[data-gate="b"] .gate-submit.step-hidden { display: none; }
-}
-
-/* The 1·2·3 progress strip is only meaningful in stepper (B); hide elsewhere. */
-#gate-card:not([data-gate="b"]) .gate-steps { display: none; }
-
-/* ---- Preview-only variant toggle (stripped when Jorge picks) ------------- */
-.gate-variant-toggle {
-  display: inline-flex; gap: 0; margin: 0 0 10px;
-  border: 1px solid var(--line); border-radius: var(--r-pill);
-  overflow: hidden; background: var(--surface);
-}
-.gate-variant-toggle button {
-  border: none; background: transparent; cursor: pointer;
-  padding: 5px 12px; font-family: var(--font-body);
-  font-size: 12px; font-weight: 600; color: var(--muted);
-}
-.gate-variant-toggle button.active {
-  background: var(--accent); color: #fff;
 }
