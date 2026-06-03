@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
+<link rel="stylesheet" href="/css/gate.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,7 +89,6 @@
   .mono, .coord, .data {
     font-family: "Spline Sans Mono", ui-monospace, monospace;
   }
-  .gate-timer { font-family: "Spline Sans Mono", ui-monospace, monospace; }
 
   h1 {
     font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
@@ -392,55 +392,9 @@
   .btn.btn-followup { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
   .btn.btn-followup:hover { background: var(--accent-soft); }
 
-  /* ============================================================
-     Thinking gate (Deep mode) — kept functional, restyled
-     ============================================================ */
-  .gate-card {
-    background: var(--accent-soft);
-    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-    border-radius: var(--r-card);
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 6px 16px -10px rgba(47,158,118,.3);
-  }
-  @supports not (background: color-mix(in srgb, red 50%, transparent)) {
-    .gate-card { border-color: rgba(47,158,118,.25); }
-  }
-  .gate-card.hidden { display: none; }
-  .gate-timer {
-    font-size: 12px; color: var(--accent);
-    margin-bottom: 10px; font-weight: 600;
-  }
-  .gate-q {
-    font-size: 13px; font-weight: 700; color: var(--ink);
-    margin-bottom: 4px; margin-top: 12px;
-  }
-  .gate-q:first-of-type { margin-top: 0; }
-  .gate-sub { font-size: 11px; color: var(--muted); margin-bottom: 7px; }
-  .gate-text {
-    width: 100%; padding: 9px 11px;
-    font-size: 13px; border: 1px solid var(--line);
-    border-radius: var(--r-btn);
-    background: var(--surface); color: var(--ink);
-    font-family: inherit; outline: none;
-    transition: border-color .15s ease, box-shadow .15s ease;
-  }
-  .gate-text:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
-  }
-  .gate-submit {
-    margin-top: 12px; width: 100%; padding: 11px 14px;
-    background: var(--accent); color: #fff;
-    border: none; border-radius: var(--r-btn);
-    cursor: pointer; font-size: 14px; font-weight: 700;
-    font-family: inherit;
-    box-shadow: 0 8px 18px -8px var(--accent);
-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-  }
-  .gate-submit:hover { filter: brightness(1.07); }
-  .gate-submit:active { transform: translateY(1px); }
-  .gate-submit:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+  /* Thinking gate (Deep mode) styles moved to css/gate.css (v0.53b) — it is
+     now its own component, decoupled from the right column so its height can
+     never squeeze the coach. */
 
   /* ============================================================
      Board (spec §5) — warm wood
@@ -1002,7 +956,7 @@
   .layout-grid > .lg-left  > #repeat-badge       { order: 3; }
   .layout-grid > .lg-left  > #puzzle-meta        { order: 4; }
   .layout-grid > .lg-left  > #inline-status      { order: 5; }
-  .layout-grid > .lg-right > #gate-card          { order: 6; }
+  .layout-grid > #gate-card                       { order: 6; }
   .layout-grid > .lg-left  > .board-wrap         { order: 7; }
   .layout-grid > .lg-left  > #nav-arrows         { order: 8; }
   .layout-grid > .lg-left  > .controls           { order: 9; }
@@ -1046,6 +1000,14 @@
       gap: 0 22px;            /* tighter inter-column gap */
       align-items: start;
     }
+    /* v0.53b — the thinking-gate is its OWN full-width band spanning BOTH
+       columns at the top of the grid. It is no longer a member of .lg-right's
+       flex column, so a tall gate can NEVER push the coach down or squeeze it.
+       Gate (pre-move) and feedback+coach (post-move) are mutually exclusive in
+       time, so the gate owning a full-width band while visible costs the coach
+       nothing — the coach simply renders below in its column once the board
+       unlocks and the gate is hidden. */
+    .layout-grid > #gate-card { grid-column: 1 / -1; align-self: start; margin-bottom: 4px; }
     .lg-left, .lg-right {
       display: flex;
       flex-direction: column;
@@ -1054,8 +1016,9 @@
       align-self: start;
     }
     .layout-grid > .lg-left > #repeat-badge { align-self: start; }
-    /* Gate (Deep pre-play) and the coach both stretch to fill their column. */
-    .lg-right > #gate-card { align-self: stretch; }
+    /* Gate is a full-width grid band (grid-column 1 / -1 above), decoupled from
+       the right column so its height never squeezes the coach. */
+    .layout-grid > #gate-card { align-self: stretch; }
 
     /* BIGGER board on desktop — it dominates the left column (toward 600px). */
     .lg-left > .board-wrap .board { max-width: 600px; }
@@ -1234,6 +1197,60 @@
   </div>
 
   <div class="layout-grid">
+  <!-- Deep-mode CCTO thinking-gate (v0.53b). Now a FULL-WIDTH grid band at the
+       top of .layout-grid (see css/gate.css + .layout-grid > #gate-card), so its
+       height can never squeeze the coach in the right column. Variant layout is
+       set by data-gate (a|b) via ?gate= + the preview toggle below; the gate's
+       JS (js/puzzle/gate.js) only touches the ids gate-card/timer/q1/q2/q3/submit. -->
+  <div class="gate-card hidden" id="gate-card" data-gate="a">
+    <!-- Preview-only variant toggle. Strip this block once a variant is chosen. -->
+    <div class="gate-variant-toggle" id="gate-variant-toggle" role="group" aria-label="Gate layout (preview)">
+      <button type="button" data-variant="a">Layout A · row</button>
+      <button type="button" data-variant="b">Layout B · stepper</button>
+    </div>
+
+    <div class="gate-head">
+      <span class="gate-title">Think first</span>
+      <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
+      <!-- Stepper progress strip (variant B only; hidden otherwise via CSS). -->
+      <div class="gate-steps" id="gate-steps" aria-hidden="true">
+        <span class="gate-step-pip current" data-step="0">1</span>
+        <span class="gate-step-pip" data-step="1">2</span>
+        <span class="gate-step-pip" data-step="2">3</span>
+      </div>
+    </div>
+
+    <div class="gate-fields" id="gate-fields">
+      <div class="gate-field is-active" data-step="0">
+        <div class="gate-q">1. CCTO for YOUR pieces</div>
+        <div class="gate-sub">Checks · Captures · Threats · Optimisations available to you. What can you do?</div>
+        <textarea class="gate-text" id="gate-q1" placeholder="e.g. No checks available. Can capture the f5 bishop with my knight. Threatening mate on h7 if I can get the queen close. Could optimise by trading off my passive bishop." maxlength="800" rows="4" style="min-height: 70px;"></textarea>
+      </div>
+
+      <div class="gate-field" data-step="1">
+        <div class="gate-q">2. CCTO for the OPPONENT'S pieces</div>
+        <div class="gate-sub">Same analysis from their side. What can they do to you?</div>
+        <textarea class="gate-text" id="gate-q2" placeholder="e.g. They have no immediate checks. Could capture my d-pawn with the knight. Threatening to double on the e-file. Their rook is well-placed but could improve to e2." maxlength="800" rows="4" style="min-height: 70px;"></textarea>
+      </div>
+
+      <div class="gate-field" data-step="2">
+        <div class="gate-q">3. How do you put those insights into practice?</div>
+        <div class="gate-sub">Your plan — what are you going to do with what you saw?</div>
+        <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="min-height: 60px;"></textarea>
+      </div>
+    </div>
+
+    <!-- Variant B nav (Back/Next); hidden in variant A + on mobile via CSS. -->
+    <div class="gate-stepper-nav" id="gate-stepper-nav">
+      <button type="button" class="gate-nav-btn" id="gate-back" disabled>Back</button>
+      <button type="button" class="gate-nav-btn" id="gate-next">Next</button>
+    </div>
+    <!-- Submit lives outside the stepper nav so it is always present in variant A
+         and on mobile. In variant B the inline script moves it visually into the
+         nav row and only reveals it on the final step. -->
+    <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
+  </div>
+
   <div class="lg-left">
   <h1 id="side-to-move-title">Loading…</h1>
   <div class="task-prompt hidden" id="task-prompt"></div>
@@ -1261,23 +1278,6 @@
   </div>
 
   <div class="lg-right">
-  <div class="gate-card hidden" id="gate-card">
-    <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
-
-    <div class="gate-q">1. CCTO for YOUR pieces</div>
-    <div class="gate-sub">Checks · Captures · Threats · Optimisations available to you. What can you do?</div>
-    <textarea class="gate-text" id="gate-q1" placeholder="e.g. No checks available. Can capture the f5 bishop with my knight. Threatening mate on h7 if I can get the queen close. Could optimise by trading off my passive bishop." maxlength="800" rows="4" style="resize: vertical; min-height: 70px;"></textarea>
-
-    <div class="gate-q">2. CCTO for the OPPONENT'S pieces</div>
-    <div class="gate-sub">Same analysis from their side. What can they do to you?</div>
-    <textarea class="gate-text" id="gate-q2" placeholder="e.g. They have no immediate checks. Could capture my d-pawn with the knight. Threatening to double on the e-file. Their rook is well-placed but could improve to e2." maxlength="800" rows="4" style="resize: vertical; min-height: 70px;"></textarea>
-
-    <div class="gate-q">3. How do you put those insights into practice?</div>
-    <div class="gate-sub">Your plan — what are you going to do with what you saw?</div>
-    <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
-
-    <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
-  </div>
 
   <div class="result hidden" id="result">
     <div class="result-verdict" id="result-verdict">
@@ -1369,6 +1369,98 @@
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
 
+<!-- ============================================================================
+     PREVIEW-ONLY gate variant controller (v0.53b). NOT part of the gate logic.
+     Strip this <script> + the .gate-variant-toggle markup once Jorge picks a
+     variant. It only sets data-gate on #gate-card and drives variant B's
+     stepper UI (active step + progress pips + Back/Next + reveal submit on the
+     last step). All gating (timer, submit enable, unlock) stays in gate.js and
+     is untouched: this never changes the values, ids, or disabled-state logic
+     that gate.js owns — for the submit it only toggles a .step-hidden CLASS in
+     variant B (purely cosmetic step-reveal), never the `disabled` property.
+     ============================================================================ -->
+<script>
+(function () {
+  var card = document.getElementById('gate-card');
+  if (!card) return;
+  var DESKTOP = function () { return window.matchMedia('(min-width: 880px)').matches; };
+
+  // 1) Initial variant from ?gate=a|b (default a).
+  var q = new URLSearchParams(window.location.search).get('gate');
+  var variant = (q === 'b') ? 'b' : 'a';
+
+  var toggle = document.getElementById('gate-variant-toggle');
+  var fields = Array.prototype.slice.call(card.querySelectorAll('.gate-field'));
+  var pips   = Array.prototype.slice.call(card.querySelectorAll('.gate-step-pip'));
+  var back   = document.getElementById('gate-back');
+  var next   = document.getElementById('gate-next');
+  var submit = document.getElementById('gate-submit');
+  var step = 0;
+
+  function applyToggleUI() {
+    if (!toggle) return;
+    toggle.querySelectorAll('button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-variant') === variant);
+    });
+  }
+
+  // Variant B stepper: show one .gate-field at a time on desktop. On mobile the
+  // CSS shows all fields stacked, so the stepper is a no-op there (we still keep
+  // submit visible). gate.js drives whether submit is *enabled*; we only drive
+  // whether it's *shown* (step-hidden) in variant B desktop.
+  function renderStepper() {
+    var stepping = (variant === 'b') && DESKTOP();
+    if (!stepping) {
+      // Show every field, clear stepper-only classes, always show submit.
+      fields.forEach(function (f) { f.classList.add('is-active'); });
+      submit.classList.remove('step-hidden');
+      return;
+    }
+    fields.forEach(function (f, i) { f.classList.toggle('is-active', i === step); });
+    pips.forEach(function (p, i) {
+      p.classList.toggle('current', i === step);
+      p.classList.toggle('done', i < step);
+    });
+    if (back) back.disabled = (step === 0);
+    var last = (step === fields.length - 1);
+    if (next) next.style.display = last ? 'none' : '';
+    // Reveal submit only on the last step (cosmetic; enabled-state is gate.js).
+    submit.classList.toggle('step-hidden', !last);
+  }
+
+  function setVariant(v) {
+    variant = (v === 'b') ? 'b' : 'a';
+    card.setAttribute('data-gate', variant);
+    if (variant === 'a') step = 0;
+    applyToggleUI();
+    renderStepper();
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-variant]');
+      if (b) setVariant(b.getAttribute('data-variant'));
+    });
+  }
+  if (next) next.addEventListener('click', function () {
+    if (step < fields.length - 1) { step++; renderStepper(); }
+  });
+  if (back) back.addEventListener('click', function () {
+    if (step > 0) { step--; renderStepper(); }
+  });
+  window.addEventListener('resize', renderStepper);
+
+  // When gate.js re-shows the card for a new Deep puzzle (removes .hidden),
+  // reset the stepper to step 0 so each puzzle starts at prompt 1.
+  try {
+    new MutationObserver(function () {
+      if (!card.classList.contains('hidden')) { step = 0; renderStepper(); }
+    }).observe(card, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) { /* MutationObserver unsupported — non-fatal for preview */ }
+
+  setVariant(variant);
+})();
+</script>
 <script type="module" src="/js/puzzle/boot.js"></script>
 </body>
 </html>
