@@ -1100,6 +1100,207 @@
   .nav-drawer-link.secondary:hover { background:var(--surface2); }
   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+
+  /* ============================================================
+     §31 (v0.52) — PUZZLE SCREEN REDESIGN VARIANTS (preview only)
+     ------------------------------------------------------------
+     Three switchable compositions scoped under [data-variant]. Shared
+     foundations first (PENDING card, embedded comparison, eval column,
+     switcher, layout fixes), then per-variant skins.
+     ============================================================ */
+
+  /* ---- Layout fix 1: left-align the desktop container (no dead band). ---- */
+  @media (min-width: 880px) {
+    .container { margin: 0; }            /* was: margin:0 auto → dead left band */
+  }
+
+  /* ---- Eval-change chips (shared by all variants) ---- */
+  .col-eval { text-align: right; white-space: nowrap; }
+  .comparison th.col-eval { text-align: right; }
+  .eval-chip {
+    display: inline-block; min-width: 40px; text-align: center;
+    padding: 2px 8px; border-radius: var(--r-pill);
+    font-family: "Spline Sans Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  }
+  .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }
+  .eval-chip.eval-mid  { background: #FBF5EA; color: var(--warn); }
+  .eval-chip.eval-bad  { background: #FBF0ED; color: var(--bad); }
+  .eval-chip.eval-na   { background: var(--surface2); color: var(--muted); font-weight: 600; }
+
+  /* ---- No-spoiler gate for the eval column: hidden during live play AND
+     while the answer isn't yet earned (resolved-locked), exactly like the
+     engine column. Only the fully-resolved (earned) state shows it. ---- */
+  .comparison[data-mode="live"] th.col-eval,
+  .comparison[data-mode="live"] td.col-eval,
+  .comparison[data-mode="resolved-locked"] th.col-eval,
+  .comparison[data-mode="resolved-locked"] td.col-eval { display: none; }
+
+  /* ---- Embedded comparison: now nested inside #result, drop the standalone
+     card chrome so it reads as a section of the feedback card. ---- */
+  #result > .comparison {
+    margin: 0; padding: 0; border: none; box-shadow: none; background: transparent;
+    border-top: 1px solid var(--line); padding-top: 11px;
+  }
+  #result > .comparison .comparison-title { margin-bottom: 6px; }
+
+  /* ---- PENDING feedback card (calm pre-move face) ---- */
+  .result.pending {
+    background: var(--surface); border-color: var(--line);
+    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+  }
+  .result.pending .verdict-icon {
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 20px; font-weight: 700;
+  }
+  .result.pending .verdict-word { color: var(--ink); font-size: 18px; }
+  .result.pending .result-subline { color: var(--ink); font-weight: 600; }
+  .result.pending .result-nudge { color: var(--muted); font-weight: 500; }
+
+  /* ---- Variant switcher (fixed, bottom-right; out of the way on mobile) ---- */
+  #variant-switcher {
+    position: fixed; right: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+    z-index: 120; display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 7px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-pill); box-shadow: 0 10px 26px -12px rgba(20,30,55,.4);
+  }
+  #variant-switcher .vs-label {
+    font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding: 0 4px;
+  }
+  #variant-switcher .vs-btn {
+    width: 28px; height: 26px; border-radius: 13px; border: none; cursor: pointer;
+    background: var(--surface2); color: var(--muted);
+    font-family: "Spline Sans Mono", monospace; font-size: 12px; font-weight: 700;
+    transition: background .15s ease, color .15s ease, transform .15s ease;
+  }
+  #variant-switcher .vs-btn:hover { background: var(--surface3); }
+  #variant-switcher .vs-btn.active { background: var(--accent); color: #fff; }
+  @media (min-width: 880px) {
+    #variant-switcher { bottom: 18px; right: 18px; }
+  }
+
+  /* =====================================================================
+     VARIANT A — Card-led right column, embedded comparison TABLE.
+     The verdict card leads the right column; comparison renders as the
+     existing table inside it. Closest to today, cleanest information grid.
+     ===================================================================== */
+  [data-variant="a"] #result > .comparison table { width: 100%; }
+  [data-variant="a"] #result .result-contrast { display: none; } /* table carries the contrast */
+
+  /* =====================================================================
+     VARIANT B — Scannable move-ROWS instead of a table; eval as chips.
+     Hides the table chrome and lays each move out as a flex row with the
+     eval chip pinned right. Optimised for fast scanning on a phone.
+     ===================================================================== */
+  [data-variant="b"] #result > .comparison table { border-collapse: collapse; width: 100%; }
+  [data-variant="b"] #result > .comparison thead { display: none; }
+  [data-variant="b"] #result > .comparison tr {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; margin-bottom: 6px;
+    background: var(--surface2); border-radius: 10px; border-bottom: none;
+  }
+  [data-variant="b"] #result > .comparison tr:last-child { margin-bottom: 0; }
+  [data-variant="b"] #result > .comparison td { border: none; padding: 0; font-size: 13px; }
+  [data-variant="b"] #result > .comparison td:first-child {
+    flex: 0 0 22px; color: var(--muted); font-family: "Spline Sans Mono", monospace; font-size: 11px;
+  }
+  [data-variant="b"] #result > .comparison td.col-yours { flex: 1 1 auto; }
+  [data-variant="b"] #result > .comparison td.col-engine { flex: 0 0 auto; margin-left: auto; }
+  [data-variant="b"] #result > .comparison td.col-eval { flex: 0 0 auto; }
+  [data-variant="b"] #result > .comparison tr.active { background: var(--accent-soft); }
+
+  /* =====================================================================
+     VARIANT C — Compact verdict HERO + nested comparison/eval panel.
+     The verdict row becomes a big hero; comparison sits in a tinted inset
+     panel below it. Optimised for a confident, focused single read.
+     ===================================================================== */
+  [data-variant="c"] .result-verdict { padding: 2px 0 8px; }
+  [data-variant="c"] .verdict-icon { width: 44px; height: 44px; font-size: 24px; }
+  [data-variant="c"] .verdict-word { font-size: 26px; }
+  [data-variant="c"] #result > .comparison {
+    background: var(--surface2); border: 1px solid var(--line); border-top: 1px solid var(--line);
+    border-radius: var(--r-panel); padding: 12px 14px; margin-top: 2px;
+  }
+  [data-variant="c"] #result > .comparison .comparison-title { color: var(--muted); }
+  [data-variant="c"] #result > .comparison td,
+  [data-variant="c"] #result > .comparison th { border-bottom-color: rgba(0,0,0,.06); }
+
+  /* =====================================================================
+     §31 — Composition: desktop right-column + iPhone stacked order.
+     Comparison is now embedded in #result, so it no longer occupies its own
+     top-level grid area. We redefine the desktop grid WITHOUT a `comparison`
+     area, and resolve board + feedback + coach in one ~900px viewport.
+     ===================================================================== */
+  @media (min-width: 880px) {
+    /* Layout fix 2: remove the coach max-height cap (was 235px → scrolled
+       internally while surrounded by empty space). The coach now fills its
+       column; its own .coach-log keeps the internal scroll for long reviews. */
+    .layout-grid > .coach-card { max-height: none; }
+
+    /* State B (resolved, verdict visible) — re-laid WITHOUT the comparison
+       area (now nested in #result). Left = board; right = feedback card on
+       top, coach beneath. Tighter rows so it resolves at ~900px. */
+    .layout-grid:has(#gate-card.hidden):has(#result:not(.hidden)) {
+      grid-template-columns: minmax(380px, 540px) minmax(320px, 1fr);
+      grid-template-areas:
+        "title       result"
+        "badge       result"
+        "meta        result"
+        "status      result"
+        "board       result"
+        "controls    coach"
+        "navarrows   coach";
+      gap: 10px 28px;
+    }
+    /* State C (no verdict yet, e.g. PENDING is showing the calm card) — the
+       feedback card rides the right column above the coach, so the board
+       does not move when the verdict later replaces the pending face. */
+    .layout-grid:has(#gate-card.hidden):has(#result.hidden) {
+      grid-template-areas:
+        "title       result"
+        "badge       result"
+        "meta        result"
+        "status      result"
+        "board       coach"
+        "controls    coach"
+        "navarrows   coach";
+      gap: 10px 28px;
+    }
+    /* PENDING card is not .hidden, so it falls into the State-B selector
+       above and rides the right column from the start — no pop-in shift. */
+
+    /* Variant C wants a slightly wider feedback column to host the inset
+       comparison panel comfortably beside a 520px board. */
+    [data-variant="c"].layout-grid:has(#gate-card.hidden) {
+      grid-template-columns: minmax(360px, 520px) minmax(340px, 1fr);
+    }
+    /* Keep the board from forcing internal scroll while space sits empty:
+       cap to the comfortable size and let the column breathe. */
+    .layout-grid > .board-wrap .board { max-width: 520px; }
+    .layout-grid > .board-wrap .material-row { width: 520px; max-width: 520px; }
+  }
+
+  /* ---- iPhone stacked order (card is vertical-first). On mobile the single
+     column already flows: title → meta → status → board → controls →
+     nav-arrows → result(+embedded comparison) → coach. The card is
+     vertical-first by construction; we just make sure the embedded comparison
+     never imposes a tiny internal scroll and the coach is not capped. ---- */
+  @media (max-width: 879px) {
+    #result > .comparison { max-height: none; overflow: visible; }
+    .coach-card { max-height: none; }
+    /* Variant B rows already stack; nothing extra needed. Variant C inset
+       panel keeps full width on mobile. */
+    #variant-switcher { bottom: calc(env(safe-area-inset-bottom, 0px) + 70px); }
+  }
+
+
+  /* §31 — honour prefers-reduced-motion: drop the verdict-card slide-in and the
+     switcher button motion for users who ask for reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .result { animation: none !important; }
+    #variant-switcher .vs-btn { transition: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -1166,7 +1367,7 @@
 
   <div class="layout-grid">
   <h1 id="side-to-move-title">Loading…</h1>
-  <div class="task-prompt hidden" id="task-prompt">Find the best move.</div>
+  <div class="task-prompt hidden" id="task-prompt"></div>
   <div class="repeat-badge hidden" id="repeat-badge"></div>
   <div class="puzzle-meta hidden" id="puzzle-meta"></div>
   <div class="inline-status" id="inline-status">Loading engine…</div>
@@ -1234,7 +1435,7 @@
     <div class="acc-head" data-acc="comparison"><span class="acc-caret">▸</span>See move by move</div>
     <div class="comparison-title">Move-by-move comparison</div>
     <table>
-      <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th></tr></thead>
+      <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th><th class="col-eval">Eval change</th></tr></thead>
       <tbody id="comparison-rows"></tbody>
     </table>
   </div>

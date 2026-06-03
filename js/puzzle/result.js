@@ -14,6 +14,7 @@ import { renderFilterTabs, renderCategoryTabs, getCurrentPuzzle } from './queue.
 import { startThinkingGate } from './gate.js';
 import { puzzleAccuracy, setAttemptComponent } from './grade.js';
 import { bestMoveAnswerText } from './review.js';
+import { renderPending, clearPending } from './pending.js';
 
 export function pickHeadline(grade, repeated, accuracy) {
   if (repeated && grade.tier === 'outside') return 'Same move as in your game, same mistake.';
@@ -86,7 +87,8 @@ export function showResult(grade, played) {
   const bestSan = firstUser && firstUser.engineBestAtPoint ? firstUser.engineBestAtPoint.san : null;
 
   const result = $('result');
-  result.classList.remove('hidden', 'pass', 'warn', 'fail');
+  clearPending();   // §31 — leave the calm pre-move face before painting a verdict
+  result.classList.remove('hidden', 'pass', 'warn', 'fail', 'pending');
   result.classList.add(tier);
 
   // --- Verdict banner (binary, §29.1) ---
@@ -251,6 +253,7 @@ export function resetPuzzleStateAndRender(opts) {
       ? 'Drill mode shows puzzles you have already attempted, or inaccuracies. Solve some in Deep first.'
       : 'Try switching to Drill mode, or change the severity filter, or ingest more games.';
     $('result').classList.add('hidden');
+    $('result').classList.remove('pending');
     $('controls').classList.remove('hidden');
     $('next-btn').classList.remove('hidden');
     $('ai-review-btn').classList.add('hidden');
@@ -307,6 +310,9 @@ export function resetPuzzleStateAndRender(opts) {
   $('gate-card').classList.add('hidden');
   if (!keepReview) clearCoachLog();
   renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs(); renderBoard();
+  // §31 — the feedback card occupies its slot from a PENDING state so the board
+  // never shifts when a verdict later appears.
+  renderPending();
   if (state.engineReady) {
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
     analyzePosition(state.chess.fen(), STOCKFISH_DEPTH).then(() => {
@@ -321,6 +327,7 @@ export function resetPuzzleStateAndRender(opts) {
         startThinkingGate();
       }
       renderBoard(); // re-render so .locked cursor clears once phase is 'playing'
+      renderPending(); // §31 — refresh PENDING once phase settles (gate→playing, idle→playing)
     }).catch((err) => setInlineStatus('Engine error: ' + err.message, 'error'));
   }
 }

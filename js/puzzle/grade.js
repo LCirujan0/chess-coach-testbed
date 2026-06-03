@@ -14,6 +14,7 @@ import { renderFilterTabs, renderCategoryTabs, isSolved, getCurrentPuzzle } from
 // runtime deps — called inside function bodies only; live bindings handle the cycles
 import { showResult } from './result.js';
 import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex, revealAnswerOnBoard } from './review.js';
+import { renderPending } from './pending.js';
 import { fireCoachExplanation } from './coach.js';
 
 export function gradeMove(userUci) {
@@ -160,6 +161,7 @@ export async function playEngineResponseAndRearm() {
   // active again so the player can ask for a hint on this fresh decision.
   state.pieceHintSquare = null;
   $('show-piece-btn').disabled = false;
+  renderPending(); // §31 — refresh the in-progress feedback face for the new turn
 }
 
 export async function finishPuzzle({ grade, played, terminal }) {

@@ -50,6 +50,7 @@ import { resetPuzzleStateAndRender } from './result.js';
 import { navBack, navForward, activatePieceHint } from './review.js';
 import { forceReveal } from './grade.js';
 import { sendCoachMessage, fireCoachExplanation } from './coach.js';
+import { initVariants } from './variants.js';
 
 // Parse URL for review mode (coming from completed.html)
 const urlParams = new URLSearchParams(window.location.search);
@@ -303,6 +304,9 @@ $('coach-form').addEventListener('submit', (e) => {
   sendCoachMessage(value);
 });
 
+// §31 (v0.52) — choose the preview variant + embed the comparison in the card
+// BEFORE the first render so the relocated #comparison node is in place.
+initVariants();
 resetPuzzleStateAndRender();
 initStockfish().catch((err) => setInlineStatus('Engine failed: ' + err.message, 'error'));
 
