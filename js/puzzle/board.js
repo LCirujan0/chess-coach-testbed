@@ -14,9 +14,10 @@ export function renderTitleAndMeta() {
   const puzzle = getCurrentPuzzle();
   if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden'); return; }
   $('side-to-move-title').textContent = sideToMoveLabel() + ' to move.';
-  // §29.4 — a plain task prompt above the board so a new player knows the goal.
+  // §29.4 task prompt ("Find the best move.") removed in v0.51 — it stated the
+  // obvious and added a redundant line above the board. Keep the element hidden.
   const tp = $('task-prompt');
-  if (tp) { tp.textContent = 'Find the best move.'; tp.classList.remove('hidden'); }
+  if (tp) { tp.classList.add('hidden'); }
 
   // Repeat badge: shown when this puzzle has prior attempts.
   const priorAttempts = attemptsCount(puzzle.id);
@@ -33,14 +34,19 @@ export function renderTitleAndMeta() {
 
   const meta = $('puzzle-meta');
   if (state.hasIngestedPuzzles) {
+    // v0.51 — sentence-case meta line: "Puzzle X of Y · <Category> · <Phase>".
+    // Category derives from the puzzle's severity (the per-puzzle source-type
+    // signal); Phase from its `category` field (opening/middlegame/endgame).
+    // Opponent + date were dropped from this line. Each segment degrades
+    // gracefully: a missing field is simply omitted.
+    const cap = (s) => { const t = String(s || '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''; };
     const parts = [];
-    if (state.reviewPuzzleId) parts.push('review');
-    else parts.push(`puzzle ${state.queueIndex + 1} of ${state.queue.length}`);
-    // Defensive em/en dash → middle-dot for legacy stored puzzle.source / brief
-    // strings ingested before the no-em-dash rule landed.
-    const clean = (s) => String(s).replace(/[—–]/g, '·');
-    if (puzzle.source) parts.push(clean(puzzle.source));
-    if (puzzle.severity) parts.push(puzzle.severity);
+    if (state.reviewPuzzleId) parts.push('Review');
+    else parts.push(`Puzzle ${state.queueIndex + 1} of ${state.queue.length}`);
+    const category = cap(puzzle.severity);   // e.g. "Mistake", "Blunder", "Inaccuracy"
+    if (category) parts.push(category);
+    const phase = cap(puzzle.category);      // e.g. "Opening", "Middlegame", "Endgame"
+    if (phase) parts.push(phase);
     meta.textContent = parts.join(' · ');
     meta.classList.remove('hidden');
   } else {

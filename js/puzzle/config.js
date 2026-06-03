@@ -4,7 +4,7 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.50 · drill experience rework (§29/§30) · 2026-06-02';
+export const APP_VERSION = 'v0.53 · puzzle screen + type system · 2026-06-03';
 // Inject the stamp lazily once the DOM is parsed.
 queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
 
@@ -27,7 +27,19 @@ export const DECISIVE_CP = 500;
 // A move in the engine's top 5 still fails the puzzle if it gives up more
 // than this many centipawns vs the best move. Catches the case where #2 or
 // #3 is technically "in top 5" but loses a piece outright.
-export const MAX_CP_LOSS_FOR_SUCCESS = 200;
+//
+// v0.53 grading fix: lowered 200 -> 100 so the success ceiling lines up with
+// the "mistake"-tier boundary in grade.js (good<50, warn<100, mistake>=100).
+// At 200 the entire 100-199cp "mistake" band counted as solved -- a move the
+// comparison labelled a Mistake still passed (root cause of "passed me even
+// though I lost ~250cp": anything in 100-200 slipped through). Tying the
+// ceiling to 100 means a move graded "mistake" can never be "solved". The
+// 50/100 tier thresholds + 0.3 accuracy multiplier are unchanged (project
+// rule). Eval clamping (DECISIVE_CP / mate->+-10000 in normalizeEval) was
+// checked and does NOT compress a real ~250cp loss below the ceiling -- both
+// lines carry honest cp scores at the same decision point, so
+// cpLoss = bestCp - userCp is faithful; the sole bug was the ceiling value.
+export const MAX_CP_LOSS_FOR_SUCCESS = 100;
 
 // Wrong-move punishment: engine plays X plies after a wrong move so the player
 // sees the consequence on the board before the coach explains.

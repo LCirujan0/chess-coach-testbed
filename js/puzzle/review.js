@@ -157,6 +157,20 @@ export function escapeHtmlPuzzle(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+// §31 — format the per-move eval change as a pawn delta with a loss-tiered
+// colour chip. cpLoss is the centipawns surrendered vs the engine's best (0 for
+// the best move). Pawn change = -(cpLoss/100), one decimal. null cpLoss (move
+// outside the top 5, where loss isn't a finite number) shows an em-free dash.
+function evalChangeCell(cpLoss) {
+  if (cpLoss == null) return '<span class="eval-chip eval-na">--</span>';
+  const pawns = -(cpLoss / 100);
+  const txt = (pawns <= 0 && pawns > -0.05) ? '0.0' : pawns.toFixed(1);
+  let cls = 'eval-good';
+  if (cpLoss >= 100) cls = 'eval-bad';
+  else if (cpLoss >= 50) cls = 'eval-mid';
+  return `<span class="eval-chip ${cls}">${txt}</span>`;
+}
+
 export function renderComparison(opts) {
   // live = true while the puzzle is still in progress; hides engine/game cols.
   // live = false (default) at resolution. But: per the v0.6 no-spoiler tighten,
@@ -194,10 +208,17 @@ export function renderComparison(opts) {
     const yoursHtml = `${escapeHtmlPuzzle(yours.san)} <span class="rank-badge ${rankClass}">${rankText}</span>${cpHtml}`;
 
     const engine = (yours.engineBestAtPoint && yours.engineBestAtPoint.san) || '—';
+    // §31 — Eval change column, in pawns, from the player's perspective:
+    //   change = -cpLoss / 100  (a clean move ≈ 0.0; a loss is negative).
+    // Coloured by magnitude of loss: ~0 green, mild amber, big red. Sits under
+    // the SAME no-spoiler gate as the engine column (col-eval hidden until the
+    // answer is earned) — it is never shown during retries.
+    const evalHtml = evalChangeCell(cpLoss);
     rows.push(`<tr data-move-idx="${i}">
       <td>${i + 1}</td>
       <td class="col-yours">${yoursHtml}</td>
       <td class="col-engine">${escapeHtmlPuzzle(engine)}</td>
+      <td class="col-eval">${evalHtml}</td>
     </tr>`);
   }
   const tbody = $('comparison-rows');

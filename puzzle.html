@@ -11,6 +11,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
+<link rel="stylesheet" href="/css/type.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -488,16 +489,22 @@
   .nav-arrows.hidden { display: none; }
   .nav-arrows .nav-step {
     background: transparent; border: none;
-    cursor: pointer; font-size: 16px;
+    cursor: pointer; font-size: 15px; line-height: 1;
     padding: 4px 10px; color: var(--ink);
     border-radius: 8px;
+    /* §53 — pin the arrow glyphs to the UI font so they don't fall back to a
+       serif/system glyph (Jorge flagged the nav-arrows font). */
+    font-family: var(--font-body, "Inter", system-ui, sans-serif);
     transition: background .15s ease;
   }
   .nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
   .nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
   .nav-label {
     flex: 1; text-align: center;
-    font-size: 12px; color: var(--muted);
+    /* §53 — use the type system (Inter body), readable size + weight. */
+    font-family: var(--font-body, "Inter", system-ui, sans-serif);
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.01em;
   }
 
   /* ============================================================
@@ -986,6 +993,21 @@
      Layout — mobile is a single column; desktop @ ≥880px splits.
      ============================================================ */
   .layout-grid { display: flex; flex-direction: column; }
+  /* Two structural columns (.lg-left = board, .lg-right = panels). On mobile
+     they flatten via display:contents and `order` reproduces the original
+     single-column sequence (gate above board, verdict below controls). */
+  .lg-left, .lg-right { display: contents; }
+  .layout-grid > .lg-left  > #side-to-move-title { order: 1; }
+  .layout-grid > .lg-left  > #task-prompt        { order: 2; }
+  .layout-grid > .lg-left  > #repeat-badge       { order: 3; }
+  .layout-grid > .lg-left  > #puzzle-meta        { order: 4; }
+  .layout-grid > .lg-left  > #inline-status      { order: 5; }
+  .layout-grid > .lg-right > #gate-card          { order: 6; }
+  .layout-grid > .lg-left  > .board-wrap         { order: 7; }
+  .layout-grid > .lg-left  > #nav-arrows         { order: 8; }
+  .layout-grid > .lg-left  > .controls           { order: 9; }
+  .layout-grid > .lg-right > #result             { order: 10; }
+  .layout-grid > .lg-right > .coach-card         { order: 11; }
 
   @media (min-width: 880px) {
     body {
@@ -994,7 +1016,11 @@
       padding-bottom: 28px;
       font-size: 15px;
     }
-    .container { max-width: 1320px; }
+    /* Left-align the content against the sidebar gutter. The base rule centres
+       a narrow mobile column; on desktop the body reserves 248px for the fixed
+       sidebar, so centring a capped column opened a dead band on wide screens.
+       Hug the gutter. (Confirm: no later `.container{margin:0 auto}` overrides.) */
+    .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
     .tab-bar { display: none; }
 
     .nav-drawer {
@@ -1010,85 +1036,47 @@
     }
     .nav-backdrop { display: none !important; }
 
-    /* Each child gets its OWN grid-area — no two children share a slot.
-       Empty rows (e.g. repeat-badge while hidden, comparison until resolved)
-       collapse because their grid-template-rows default to auto. */
-    .layout-grid > #comparison { grid-area: comparison; align-self: start; }
-    .layout-grid > #result { grid-area: result; align-self: start; }
-    .layout-grid > .coach-card { grid-area: coach; align-self: stretch; }
-    .layout-grid > #side-to-move-title { grid-area: title; }
-    .layout-grid > #repeat-badge { grid-area: badge; justify-self: start; }
-    .layout-grid > #puzzle-meta { grid-area: meta; }
-    .layout-grid > #inline-status { grid-area: status; }
-    .layout-grid > #gate-card { grid-area: gate; align-self: stretch; }
-    .layout-grid > #task-prompt { grid-area: taskprompt; }
-    .layout-grid > .board-wrap { grid-area: board; }
-    .layout-grid > .controls { grid-area: controls; }
-    .layout-grid > #nav-arrows { grid-area: navarrows; }
-
-    /* State A — gate visible (Deep, pre-play): gate top-right. */
-    .layout-grid:has(#gate-card:not(.hidden)) {
+    /* Desktop: two INDEPENDENT columns. The board (left) and the panels
+       (right) live in separate flex containers, so tall right-column content
+       (verdict, embedded comparison, coach) can NEVER push the board down.
+       This retires the old :has() shared-row grid (the push-down bug). */
+    .layout-grid {
       display: grid;
-      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       gate"
-        "badge       gate"
-        "meta        gate"
-        "status      gate"
-        "taskprompt  gate"
-        "board       gate"
-        "controls    coach"
-        "navarrows   coach"
-        "result      coach";
-      gap: 12px 28px;
+      grid-template-columns: minmax(440px, 620px) minmax(300px, 1fr);
+      gap: 0 22px;            /* tighter inter-column gap */
       align-items: start;
     }
-
-    /* State B — gate hidden, verdict visible: right column = verdict → comparison → coach.
-       Spec §6 desktop puzzle right-column order. Board owns the left column. */
-    .layout-grid:has(#gate-card.hidden):has(#result:not(.hidden)) {
-      display: grid;
-      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       result"
-        "badge       result"
-        "meta        comparison"
-        "status      comparison"
-        "taskprompt  coach"
-        "board       coach"
-        "controls    coach"
-        "navarrows   coach";
-      gap: 12px 28px;
-      align-items: start;
+    .lg-left, .lg-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;             /* tighter intra-column gap (coach↔card, board↔arrows) */
+      min-width: 0;
+      align-self: start;
     }
+    .layout-grid > .lg-left > #repeat-badge { align-self: start; }
+    /* Gate (Deep pre-play) and the coach both stretch to fill their column. */
+    .lg-right > #gate-card { align-self: stretch; }
 
-    /* State C — gate hidden, no verdict yet: coach takes the right column.
-       Comparison is hidden in this state (no verdict yet) so it doesn't claim a row. */
-    .layout-grid:has(#gate-card.hidden):has(#result.hidden) {
-      display: grid;
-      grid-template-columns: minmax(420px, 600px) minmax(300px, 1fr);
-      grid-template-areas:
-        "title       coach"
-        "badge       coach"
-        "meta        coach"
-        "status      coach"
-        "taskprompt  coach"
-        "board       coach"
-        "controls    coach"
-        "navarrows   coach";
-      gap: 12px 28px;
-      align-items: start;
-    }
-
-    .layout-grid > .board-wrap .board { max-width: 560px; }
-    .layout-grid > .board-wrap .material-row { width: 560px; }
+    /* BIGGER board on desktop — it dominates the left column (toward 600px). */
+    .lg-left > .board-wrap .board { max-width: 600px; }
+    .lg-left > .board-wrap .material-row { width: 600px; max-width: 600px; }
     .mb-piece { width: 22px; height: 22px; }
     .mb-score { font-size: 13px; }
-    /* Spec §6: coach panel height-capped (~235px) and scrolls internally so a long
-       review can't balloon the page. The grid cell aligns the panel to the TOP of
-       its area; whatever space is left below stays empty. */
-    .layout-grid > .coach-card { align-self: start; max-height: 235px; min-height: 0; }
-    .layout-grid > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+
+    /* Tighten the board → nav-arrows gap specifically (they read as one unit). */
+    .lg-left > .board-wrap { margin-bottom: 2px; }
+    .lg-left > #nav-arrows { margin-bottom: 0; margin-top: 2px; }
+
+    /* Coach fills the remaining right-column space (no 235px cap that stranded
+       empty space). Only its own .coach-log scrolls for very long reviews. */
+    .lg-right > .coach-card {
+      align-self: stretch; flex: 1 1 auto;
+      min-height: 0; max-height: calc(100vh - 56px);
+    }
+    .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+    /* Trim the right column's own outer padding so the panels hug their edge. */
+    .lg-right > #result { margin-bottom: 0; }
+    .lg-right > .coach-card { margin-bottom: 0; }
 
     /* Touch up desktop type */
     h1 { font-size: 30px; }
@@ -1100,6 +1088,87 @@
   .nav-drawer-link.secondary:hover { background:var(--surface2); }
   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+
+  /* ============================================================
+     §53 (v0.53) — PUZZLE SCREEN: single composition (no variants)
+     ------------------------------------------------------------
+     One final hybrid: compact card proportions + the move-by-move
+     comparison embedded NATIVELY inside the feedback card, with an
+     eval-change column gated to the earned reveal. Compact icon action
+     buttons; Try-again always available.
+     ============================================================ */
+
+  /* ---- Compact icon action buttons (smaller than the full-width .btn) ---- */
+  .btn.btn-action {
+    flex: 0 1 auto; min-width: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 8px 14px; font-size: 13px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .btn.btn-action .btn-ico { flex: 0 0 auto; vertical-align: middle; }
+  .btn.btn-action .btn-label { white-space: nowrap; }
+  /* The dominant (primary) action reads slightly stronger; the secondary
+     Try-again is quieter but always present. */
+  .result-actions .btn.btn-action { flex: 0 1 auto; min-width: 0; }
+  .result-actions .btn.btn-primary.btn-action { flex: 1 1 auto; }
+
+  /* ---- Embedded comparison: a NATIVE section of the feedback card.
+     Drop the standalone card chrome (border/shadow/background) so it reads as
+     part of #result; a light divider + the card's own internal padding tie it
+     in. Same type as the card. ---- */
+  #result > .comparison {
+    margin: 0; padding: 0; border: none; box-shadow: none; background: transparent;
+    border-top: 1px solid var(--line); padding-top: 11px; margin-top: 2px;
+  }
+  #result > .comparison.hidden { display: none; }
+  #result > .comparison .comparison-title { margin-bottom: 6px; }
+  #result > .comparison table { width: 100%; }
+
+  /* ---- Eval-change chips ---- */
+  .col-eval { text-align: right; white-space: nowrap; }
+  .comparison th.col-eval { text-align: right; }
+  .eval-chip {
+    display: inline-block; min-width: 40px; text-align: center;
+    padding: 2px 8px; border-radius: var(--r-pill);
+    font-family: "Spline Sans Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  }
+  .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }
+  .eval-chip.eval-mid  { background: #FBF5EA; color: var(--warn); }
+  .eval-chip.eval-bad  { background: #FBF0ED; color: var(--bad); }
+  .eval-chip.eval-na   { background: var(--surface2); color: var(--muted); font-weight: 600; }
+
+  /* ---- No-spoiler gate for the eval column: hidden during live play AND
+     while the answer isn't yet earned (resolved-locked), exactly like the
+     engine column. Only the fully-resolved (earned) state shows it. ---- */
+  .comparison[data-mode="live"] th.col-eval,
+  .comparison[data-mode="live"] td.col-eval,
+  .comparison[data-mode="resolved-locked"] th.col-eval,
+  .comparison[data-mode="resolved-locked"] td.col-eval { display: none; }
+
+  /* ---- PENDING feedback card (calm pre-move / mid-solve face) ---- */
+  .result.pending {
+    background: var(--surface); border-color: var(--line);
+    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+  }
+  .result.pending .verdict-icon {
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 20px; font-weight: 700;
+  }
+  .result.pending .verdict-word { color: var(--ink); font-size: 18px; }
+  .result.pending .result-subline { color: var(--ink); font-weight: 600; }
+  .result.pending .result-nudge { color: var(--muted); font-weight: 500; }
+
+  /* ---- Mobile: embedded comparison + coach never impose a tiny inner scroll. ---- */
+  @media (max-width: 879px) {
+    #result > .comparison { max-height: none; overflow: visible; }
+    .coach-card { max-height: none; }
+  }
+
+  /* Honour prefers-reduced-motion — drop the verdict-card slide-in. */
+  @media (prefers-reduced-motion: reduce) {
+    .result { animation: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -1165,12 +1234,33 @@
   </div>
 
   <div class="layout-grid">
+  <div class="lg-left">
   <h1 id="side-to-move-title">Loading…</h1>
-  <div class="task-prompt hidden" id="task-prompt">Find the best move.</div>
+  <div class="task-prompt hidden" id="task-prompt"></div>
   <div class="repeat-badge hidden" id="repeat-badge"></div>
   <div class="puzzle-meta hidden" id="puzzle-meta"></div>
   <div class="inline-status" id="inline-status">Loading engine…</div>
 
+  <div class="board-wrap">
+    <div class="material-row material-top" id="material-top"></div>
+    <div class="board" id="board"></div>
+    <div class="material-row material-bottom" id="material-bottom"></div>
+  </div>
+
+  <div class="nav-arrows hidden" id="nav-arrows">
+    <button class="nav-step" id="nav-back" type="button">◀</button>
+    <span class="nav-label" id="nav-label">Current position</span>
+    <button class="nav-step" id="nav-forward" type="button">▶</button>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
+    <button class="btn" id="reset-btn">Restart</button>
+    <button class="btn" id="next-btn">Next puzzle</button>
+  </div>
+  </div>
+
+  <div class="lg-right">
   <div class="gate-card hidden" id="gate-card">
     <div class="gate-timer" id="gate-timer">⏱ Sit with it: 30s…</div>
 
@@ -1189,18 +1279,6 @@
     <button class="gate-submit" id="gate-submit" disabled>Submit and unlock the board</button>
   </div>
 
-  <div class="board-wrap">
-    <div class="material-row material-top" id="material-top"></div>
-    <div class="board" id="board"></div>
-    <div class="material-row material-bottom" id="material-bottom"></div>
-  </div>
-
-  <div class="controls" id="controls">
-    <button class="btn" id="show-piece-btn" title="Highlights the piece you need to move on this turn. Caps puzzle accuracy at 50%.">Hint</button>
-    <button class="btn" id="reset-btn">Restart</button>
-    <button class="btn" id="next-btn">Next puzzle</button>
-  </div>
-
   <div class="result hidden" id="result">
     <div class="result-verdict" id="result-verdict">
       <span class="verdict-icon" id="verdict-icon" aria-hidden="true"></span>
@@ -1212,31 +1290,29 @@
     <div class="result-contrast hidden" id="result-contrast"></div>
     <div class="result-answer hidden" id="result-answer"></div>
     <div class="result-actions" id="result-actions">
-      <button class="btn btn-primary" id="card-primary" type="button">Next puzzle</button>
-      <button class="btn" id="card-secondary" type="button">Try again</button>
-      <button class="btn btn-review hidden" id="ai-review-btn" type="button">AI review</button>
+      <button class="btn btn-primary btn-action" id="card-primary" type="button">Next puzzle</button>
+      <button class="btn btn-action" id="card-secondary" type="button">Try again</button>
+      <button class="btn btn-review btn-action hidden" id="ai-review-btn" type="button">AI review</button>
     </div>
     <button class="result-escape hidden" id="card-showanswer" type="button">Show me the answer</button>
+
+    <!-- §53 — the move-by-move comparison is now a NATIVE section of the
+         feedback card (embedded in #result), not a standalone accordion. The
+         eval-change column is gated to the earned reveal (data-mode on the
+         element) so it never spoils during retries. -->
+    <div class="comparison hidden" id="comparison">
+      <div class="comparison-title">Move by move</div>
+      <table>
+        <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th><th class="col-eval">Eval change</th></tr></thead>
+        <tbody id="comparison-rows"></tbody>
+      </table>
+    </div>
+
     <div class="result-repeat hidden" id="result-repeat"></div>
     <div class="result-motif hidden" id="result-motif"></div>
     <div class="result-components hidden" id="result-components">
       <div class="result-components-label">What did this puzzle test? (tap one)</div>
     </div>
-  </div>
-
-  <div class="nav-arrows hidden" id="nav-arrows">
-    <button class="nav-step" id="nav-back" type="button">◀</button>
-    <span class="nav-label" id="nav-label">Current position</span>
-    <button class="nav-step" id="nav-forward" type="button">▶</button>
-  </div>
-
-  <div class="comparison hidden acc-collapsed" id="comparison">
-    <div class="acc-head" data-acc="comparison"><span class="acc-caret">▸</span>See move by move</div>
-    <div class="comparison-title">Move-by-move comparison</div>
-    <table>
-      <thead><tr><th>#</th><th class="col-yours">You played</th><th class="col-engine">Engine</th></tr></thead>
-      <tbody id="comparison-rows"></tbody>
-    </table>
   </div>
 
   <div class="coach-card acc-collapsed">

@@ -14,6 +14,7 @@ import { renderFilterTabs, renderCategoryTabs, getCurrentPuzzle } from './queue.
 import { startThinkingGate } from './gate.js';
 import { puzzleAccuracy, setAttemptComponent } from './grade.js';
 import { bestMoveAnswerText } from './review.js';
+import { renderPending, clearPending } from './pending.js';
 
 export function pickHeadline(grade, repeated, accuracy) {
   if (repeated && grade.tier === 'outside') return 'Same move as in your game, same mistake.';
@@ -86,7 +87,8 @@ export function showResult(grade, played) {
   const bestSan = firstUser && firstUser.engineBestAtPoint ? firstUser.engineBestAtPoint.san : null;
 
   const result = $('result');
-  result.classList.remove('hidden', 'pass', 'warn', 'fail');
+  clearPending();   // §31 — leave the calm pre-move face before painting a verdict
+  result.classList.remove('hidden', 'pass', 'warn', 'fail', 'pending');
   result.classList.add(tier);
 
   // --- Verdict banner (binary, §29.1) ---
@@ -150,28 +152,38 @@ export function showResult(grade, played) {
     answerEl.classList.add('hidden');
   }
 
-  // --- Card actions: one dominant action per state (§29.4/§30.2) ---
+  // --- Card actions: one dominant action per state, but "Try again" is ALWAYS
+  // available in every post-move state (§53). Compact icon buttons:
+  //   • TRYING   — dominant Try again (refresh) · secondary Next (forward)
+  //   • SOLVED   — dominant Next (forward)      · secondary Try again (refresh)
+  //   • REVEALED — dominant Next (forward)      · secondary Try again (refresh)
+  // The old behaviour hid the secondary on solved, leaving no retry affordance.
   const primary = $('card-primary');
   const secondary = $('card-secondary');
   const escape = $('card-showanswer');
+  // Both actions get an icon; the data-action drives the click handler in boot.
   if (solved) {
-    primary.textContent = 'Next puzzle'; primary.dataset.action = 'next';
-    secondary.classList.add('hidden');
+    setBtn(primary, 'next', 'Next puzzle'); primary.dataset.action = 'next';
+    setBtn(secondary, 'retry', 'Try again'); secondary.dataset.action = 'tryagain';
+    secondary.classList.remove('hidden');   // §53 — retry always surfaced on solved
     escape.classList.add('hidden');
   } else if (revealed) {
-    // STOP / ANSWER — the answer is shown; Next is dominant, retry is secondary.
-    primary.textContent = 'Next puzzle'; primary.dataset.action = 'next';
-    secondary.textContent = 'Try once more'; secondary.dataset.action = 'tryagain';
-    secondary.classList.remove('hidden');
+    // STOP / ANSWER — the answer is shown; Next is dominant, Try again secondary.
+    setBtn(primary, 'next', 'Next puzzle'); primary.dataset.action = 'next';
+    setBtn(secondary, 'retry', 'Try again'); secondary.dataset.action = 'tryagain';
+    secondary.classList.remove('hidden');   // §53 — retry always surfaced when revealed
     escape.classList.add('hidden');
   } else {
     // TRYING — send them back to think; the answer stays hidden.
-    primary.textContent = 'Try again'; primary.dataset.action = 'tryagain';
-    secondary.textContent = 'Next puzzle'; secondary.dataset.action = 'next';
+    setBtn(primary, 'retry', 'Try again'); primary.dataset.action = 'tryagain';
+    setBtn(secondary, 'next', 'Next puzzle'); secondary.dataset.action = 'next';
     secondary.classList.remove('hidden');
     // Quiet escape from the 2nd miss (§30.6 #3).
     escape.classList.toggle('hidden', sessionFails < 2);
   }
+  // AI review label gets the lightbulb icon (visibility/disabled is set by
+  // applyResolutionUI's earned-reveal gate; we only paint the label here).
+  setBtn($('ai-review-btn'), 'bulb', 'AI review');
 
   // --- Motif chip (gated by the earned reveal) ---
   const motifChip = $('result-motif');
@@ -215,6 +227,26 @@ export function showResult(grade, played) {
   }
 }
 
+// §53 — inline action-button icons in the app's nav-icon idiom (viewBox 0 0 24
+// 24, stroke=currentColor, ~16px) so they inherit the button's text colour and
+// disabled/hover states. Returned as a label builder: icon + text in one go.
+const ICON = {
+  // circular refresh / rotate — "Try again"
+  retry: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>',
+  // lightbulb — "AI review"
+  bulb: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.3 1 2.1V16h6v-.4c0-.8.4-1.5 1-2.1A6 6 0 0 0 12 3Z"/></svg>',
+  // forward arrow — "Next puzzle"
+  next: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>',
+};
+// Paint an icon + label into a button. Uses textContent for the label (no HTML
+// injection) and an SVG span for the glyph.
+function setBtn(btn, iconKey, label) {
+  if (!btn) return;
+  btn.innerHTML = (ICON[iconKey] || '') + '<span class="btn-label"></span>';
+  const lbl = btn.querySelector('.btn-label');
+  if (lbl) lbl.textContent = label;
+}
+
 // Minimal HTML escape for SAN strings rendered via innerHTML in the card.
 function escapeResult(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -251,6 +283,7 @@ export function resetPuzzleStateAndRender(opts) {
       ? 'Drill mode shows puzzles you have already attempted, or inaccuracies. Solve some in Deep first.'
       : 'Try switching to Drill mode, or change the severity filter, or ingest more games.';
     $('result').classList.add('hidden');
+    $('result').classList.remove('pending');
     $('controls').classList.remove('hidden');
     $('next-btn').classList.remove('hidden');
     $('ai-review-btn').classList.add('hidden');
@@ -307,6 +340,9 @@ export function resetPuzzleStateAndRender(opts) {
   $('gate-card').classList.add('hidden');
   if (!keepReview) clearCoachLog();
   renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs(); renderBoard();
+  // §31 — the feedback card occupies its slot from a PENDING state so the board
+  // never shifts when a verdict later appears.
+  renderPending();
   if (state.engineReady) {
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
     analyzePosition(state.chess.fen(), STOCKFISH_DEPTH).then(() => {
@@ -321,6 +357,7 @@ export function resetPuzzleStateAndRender(opts) {
         startThinkingGate();
       }
       renderBoard(); // re-render so .locked cursor clears once phase is 'playing'
+      renderPending(); // §31 — refresh PENDING once phase settles (gate→playing, idle→playing)
     }).catch((err) => setInlineStatus('Engine error: ' + err.message, 'error'));
   }
 }

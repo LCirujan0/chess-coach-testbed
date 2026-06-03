@@ -1,0 +1,72 @@
+/* ============================================================================
+   type.css — shared TYPE SYSTEM (v0.53)
+   ----------------------------------------------------------------------------
+   Single source of truth for the app's typefaces. Linked in the <head> of all
+   12 shell pages AFTER board.css/nav.css so it can enforce the font stacks
+   centrally and override any per-page drift. This file does NOT change the
+   actual typefaces — it centralises the three stacks the app already used:
+
+     • Plus Jakarta Sans — display / headings
+     • Inter             — body / UI text
+     • Spline Sans Mono  — data: evals, FEN, coordinates, counts, timers
+
+   Rule (project): shared component changes apply to ALL pages. Type is now a
+   shared component alongside board.css and nav.css. Per-page duplicated
+   font-family declarations that could diverge have been removed so the system
+   is enforced from here. Further componentisation of other patterns is a
+   follow-up — type, board, and nav are the shared components for now.
+   ============================================================================ */
+
+:root {
+  /* Type tokens — reference these instead of re-declaring stacks per page. */
+  --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Base body font — Inter for all body/UI prose. Pages set their own colours
+   and sizing; this only governs the family so the UI never falls back to a
+   system default if a page forgets to declare it. */
+body {
+  font-family: var(--font-body);
+}
+
+/* Headings — Plus Jakarta Sans display stack, app-wide. */
+h1, h2, h3, h4,
+.t-display {
+  font-family: var(--font-display);
+}
+
+/* Form controls inherit the page/body font rather than the UA default. */
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+/* Data type — evals, FEN, board coordinates, counts, timers, monospace chips.
+   Apply .t-mono (or the existing per-component mono rules) for tabular data. */
+.t-mono,
+.mono,
+.eval-chip,
+.gate-timer {
+  font-family: var(--font-mono);
+}
+
+/* The post-move move-by-move comparison + the board nav-arrows label were
+   flagged for inconsistent fonts. Pin them to the system here so they read
+   cleanly regardless of page-level overrides:
+     – comparison title + "You played" column = UI (Inter)
+     – engine column + eval chips             = data (mono)
+     – nav-arrows label                       = UI (Inter), mono not appropriate
+*/
+.comparison,
+.comparison-title,
+.comparison .col-yours,
+.nav-arrows,
+.nav-label {
+  font-family: var(--font-body);
+}
+.comparison .col-engine,
+.comparison .rank-badge,
+.comparison .cp-loss-small {
+  font-family: var(--font-mono);
+}
