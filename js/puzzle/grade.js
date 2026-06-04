@@ -2,7 +2,7 @@
 // SECTION 10 — Grading + move flow + wrong-move punishment
 // ============================================================================
 import {
-  MAX_CP_LOSS_FOR_SUCCESS, MAX_USER_MOVES_PER_PUZZLE,
+  MAX_CP_LOSS_PER_MOVE, MAX_CP_LOSS_TOTAL, MAX_USER_MOVES_PER_PUZZLE,
   STOCKFISH_DEPTH_FOLLOW, STORAGE_KEY_SESSION,
 } from './config.js';
 import { state } from './state.js';
@@ -75,6 +75,10 @@ export async function commitAndEvaluate(move) {
     };
   }
   state.userMovesMade++;
+  // Phase 2 — record per-move cp loss and running total
+  const moveCp = grade.cpLoss ?? 0;
+  state.moveCpLoss.push(moveCp);
+  state.totalCpLoss += moveCp;
   // Capture the engine's preferred move AT THIS DECISION POINT for the
   // post-resolution comparison view + the AI review prompt's per-step trace.
   const engineBestAtPoint = state.engineLines[0]
@@ -108,8 +112,11 @@ export async function commitAndEvaluate(move) {
   // centipawns. A #2 that loses 500cp (e.g. hanging a piece) is treated as
   // a wrong move, not a passable continuation.
   const inTop5 = grade.rank !== null;
-  const cpLossOK = (grade.cpLoss || 0) <= MAX_CP_LOSS_FOR_SUCCESS;
+  const perMoveOK = (grade.cpLoss || 0) <= MAX_CP_LOSS_PER_MOVE;
+  const totalOK   = state.totalCpLoss <= MAX_CP_LOSS_TOTAL;
+  const cpLossOK  = perMoveOK && totalOK;
   const passesGate = inTop5 && cpLossOK;
+  renderCpBar();
   if (passesGate && state.userMovesMade < MAX_USER_MOVES_PER_PUZZLE) {
     await playEngineResponseAndRearm();
     return;
@@ -197,7 +204,7 @@ export function applyResolutionUI({ grade, played, terminal }) {
   const puzzleId = getCurrentPuzzle()?.id;
   const sessionFails = state.sessionFailures[puzzleId] || 0;
   const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
-  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   const solved = grade && grade.tier !== 'outside' && !anyBigCpLoss;
   // The answer is earned by solving, by the 3rd session fail, or by the quiet
   // escape link (state.revealForced). Same as the legacy reviewEarned gate plus
@@ -273,7 +280,7 @@ export function recordAttempt(grade) {
   // to be ranked #2-#5 (e.g. losing a piece in a tactical sequence) still
   // counts as a failure.
   const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
-  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   const isSuccess = grade.tier !== 'outside' && !anyBigCpLoss;
   const accuracy = puzzleAccuracy();
   if (isSuccess) {
@@ -361,3 +368,27 @@ export function setAttemptComponent(componentName) {
 // Retry button (id #reset-btn, see SECTION 14) is now the only way to rewind:
 // it does a soft reset to the puzzle's starting position while keeping the
 // coach review and result panel on screen.
+
+export function renderCpBar() {
+  const bar = document.getElementById('cp-bar');
+  if (!bar) return;
+  const segs = bar.querySelectorAll('.cp-seg');
+  segs.forEach((seg, i) => {
+    const loss = state.moveCpLoss[i];   // number | undefined
+    if (loss == null) {
+      seg.className = 'cp-seg cp-seg--pending';
+      seg.textContent = '';
+    } else {
+      const exceeded = loss > MAX_CP_LOSS_PER_MOVE;
+      seg.className = 'cp-seg' + (exceeded ? ' cp-seg--red' : ' cp-seg--ok');
+      // Show loss in pawns: "1.50" not "150cp"
+      seg.textContent = loss === 0 ? '\u2713' : `\u2212${(loss / 100).toFixed(2)}`;
+    }
+  });
+  // Budget label: "X.XX / 2.00p used"
+  const label = bar.querySelector('.cp-bar-label');
+  if (label) {
+    const used = (state.totalCpLoss / 100).toFixed(2);
+    label.textContent = `${used} / ${(MAX_CP_LOSS_TOTAL / 100).toFixed(2)} p used`;
+  }
+}
