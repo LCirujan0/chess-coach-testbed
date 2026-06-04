@@ -191,6 +191,66 @@
     </ul>
   </div>
 
+  <!-- US-16 (v0.55a) — the active delivery backlog. The Loops below are the
+       strategic arc; these Runs are the concrete near-term work currently in
+       flight, kept in step with docs/backlog.md. -->
+  <div class="loop now">
+    <div class="loop-head">
+      <span class="loop-num">Run 1</span>
+      <span class="loop-title">Canonical training screen + session wrapper</span>
+      <span class="loop-pill">In progress</span>
+    </div>
+    <div class="loop-why">One shared training screen (<code>css/screen.css</code>) for puzzles, endgames and recognition, plus a persistent in-session wrapper so Today block progress stays visible wherever a block deep-links.</div>
+    <ul class="loop-steps">
+      <li class="done"><span class="step-mark">✓</span><div>Extract the puzzle layout into <code>css/screen.css</code>; endgames + recognition adopt it.<span class="step-meta">v0.55</span></div></li>
+      <li class="now"><span class="step-mark">→</span><div>Close the desktop regressions from the extraction (puzzle desktop nav, recognition board size + rail, session-wrapper direct-access chrome, puzzle feedback polish).<span class="step-meta">v0.55a · this run</span></div></li>
+      <li><span class="step-mark">·</span><div>Persistent in-session wrapper driven off the existing session plan; no new storage key.<span class="step-meta">js/session-wrap.js · shown only inside a Today block</span></div></li>
+    </ul>
+  </div>
+
+  <div class="loop next">
+    <div class="loop-head">
+      <span class="loop-num">Run 2</span>
+      <span class="loop-title">Today driven by Insights</span>
+      <span class="loop-pill">Next</span>
+    </div>
+    <div class="loop-why">The daily session stops being a flat queue and becomes a diagnosis: target the weakest areas first, cover everything over time, and mix in previous days so nothing is dropped.</div>
+    <ul class="loop-steps">
+      <li><span class="step-mark">·</span><div>Weakest-first ordering — Today pulls the blocks that target your lowest-signal components first.</div></li>
+      <li><span class="step-mark">·</span><div>Full coverage — every weak area is reached on a rolling basis, not just the single worst.</div></li>
+      <li><span class="step-mark">·</span><div>Previous-days mixing — unfinished or older items fold back into today's plan.</div></li>
+    </ul>
+  </div>
+
+  <div class="loop">
+    <div class="loop-head">
+      <span class="loop-num">Run 3</span>
+      <span class="loop-title">Close Loop 2 — coach as conductor</span>
+      <span class="loop-pill">Queued</span>
+    </div>
+    <div class="loop-why">Finish the conductor slice: the coach narrates your games, prescribes the next step, and recognition writes its results back into the diagnosis.</div>
+    <ul class="loop-steps">
+      <li><span class="step-mark">·</span><div>Post-game narration — walk an ingested game move-by-move with the coach naming the leaks.</div></li>
+      <li><span class="step-mark">·</span><div>Coach's pick — one ranked next-step on the Practice hub from the deterministic diagnosis.</div></li>
+      <li><span class="step-mark">·</span><div>Recognition write-back — recognition results feed the per-component signal.</div></li>
+    </ul>
+  </div>
+
+  <div class="loop">
+    <div class="loop-head">
+      <span class="loop-num">Also queued</span>
+      <span class="loop-title">Standalone items</span>
+      <span class="loop-pill">Queued</span>
+    </div>
+    <div class="loop-why">Discrete pieces that sit alongside the runs above.</div>
+    <ul class="loop-steps">
+      <li><span class="step-mark">·</span><div>Endgame technique — playable redesign (separate run).</div></li>
+      <li><span class="step-mark">·</span><div>Recognition feedback correctness — fix the verdict classification (separate run).</div></li>
+      <li><span class="step-mark">·</span><div>Chess.com rating extraction — robust pull of the live rapid rating.</div></li>
+      <li><span class="step-mark">·</span><div>type.css dedup — collapse per-page type rules into the shared <code>css/type.css</code>.</div></li>
+    </ul>
+  </div>
+
   <div class="loop now">
     <div class="loop-head">
       <span class="loop-num">Loop 01</span>

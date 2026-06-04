@@ -615,11 +615,20 @@
   .result-contrast .c-best { color: var(--pos); font-weight: 600; }
   .result-contrast .c-you  { color: var(--bad); font-weight: 600; }
 
-  /* Plain-language answer at the stop point (§30.3) */
+  /* Engine best line at the stop point (§30.3 + US-13). Reads as a quiet
+     labelled line, not a separate alert box — the contrast line above already
+     carries the verdict colour. */
   .result-answer {
-    font-size: 14px; font-weight: 700; color: var(--ink);
+    font-size: 13px; color: var(--ink);
     background: var(--accent-soft); border-left: 3px solid var(--accent);
-    border-radius: 6px; padding: 9px 12px; line-height: 1.45;
+    border-radius: 6px; padding: 8px 12px; line-height: 1.5;
+  }
+  .result-answer .answer-label {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--accent); margin-right: 6px;
+  }
+  .result-answer .answer-line {
+    font-family: "Spline Sans Mono", ui-monospace, monospace; font-weight: 600;
   }
   .result-answer.hidden { display: none; }
 
@@ -963,6 +972,20 @@
       padding-right: 28px;
       padding-bottom: 28px;
       font-size: 15px;
+    }
+    /* v0.55a — desktop nav restore. The screen.css extraction kept the body
+       padding for the sidebar gutter but dropped the two rules that actually
+       convert the off-canvas mobile drawer into the fixed desktop sidebar and
+       hide the bottom tab-bar. Without them puzzle.html showed the mobile
+       tab-bar and no sidebar at >=880px (recognition kept these, hence the
+       drift). Mirrors endgame-recognition.html's >=880px block. */
+    .tab-bar { display: none; }
+    .nav-backdrop { display: none !important; }
+    .nav-drawer {
+      position: fixed !important; top: 0; left: 0;
+      width: 224px !important; max-width: 224px !important; height: 100vh;
+      transform: none !important; border-right: 1px solid var(--line);
+      background: var(--surface); padding: 22px 14px 18px; z-index: 10;
     }
     /* Left-align content against the sidebar gutter (the base rule centres a
        narrow mobile column; on desktop the body reserves 248px for the fixed

@@ -143,11 +143,30 @@ export function showResult(grade, played) {
     contrast.classList.add('hidden');
   }
 
-  // --- Plain-language answer at the stop point (§30.3) ---
+  // --- Best line at the stop point (§30.3 + US-13, v0.55a) ---
+  // The "You X · Best Y" contrast line above already names the best FIRST
+  // move, so the old "The best move was Y." sentence here was redundant (it
+  // duplicated the contrast). Instead, when the answer is earned on a miss,
+  // show the engine's CONTINUATION from the first decision (the principal
+  // variation) so the player sees the whole line, not just the first move.
+  // Data comes from the existing MultiPV snapshot (state.engineLineFromStart /
+  // firstUser.engineBestAtPoint.pvSan) — no extra engine call. Gated to the
+  // earned reveal, so it never spoils during retries.
   const answerEl = $('result-answer');
   if (!solved && revealed) {
-    answerEl.textContent = bestMoveAnswerText(puzzle) || (bestSan ? `The best move was ${bestSan}.` : 'Here is the move.');
-    answerEl.classList.remove('hidden');
+    const line = bestLineSans();
+    if (line.length > 1) {
+      answerEl.innerHTML = `<span class="answer-label">Best line</span> <span class="answer-line">${escapeResult(line.join(' '))}</span>`;
+    } else if (line.length === 1) {
+      // Only the first ply is known — show it rather than nothing, and flag in
+      // the markup that the continuation isn't stored yet (US-13 partial data).
+      answerEl.innerHTML = `<span class="answer-label">Best line</span> <span class="answer-line">${escapeResult(line[0])}</span>`;
+    } else if (bestSan) {
+      answerEl.innerHTML = `<span class="answer-label">Best line</span> <span class="answer-line">${escapeResult(bestSan)}</span>`;
+    } else {
+      answerEl.textContent = '';
+    }
+    answerEl.classList.toggle('hidden', !answerEl.textContent && !answerEl.children.length);
   } else {
     answerEl.classList.add('hidden');
   }
@@ -245,6 +264,23 @@ function setBtn(btn, iconKey, label) {
   btn.innerHTML = (ICON[iconKey] || '') + '<span class="btn-label"></span>';
   const lbl = btn.querySelector('.btn-label');
   if (lbl) lbl.textContent = label;
+}
+
+// US-13 (v0.55a) — the engine's best LINE (principal variation) from the FIRST
+// user decision, in SAN. Uses the snapshot captured at move time
+// (state.engineLineFromStart.pvSan) and falls back to the first user move's
+// stored PV, then to the single best move. Capped at 6 plies (the depth the
+// snapshot stores). Returns [] when nothing is available.
+function bestLineSans() {
+  const fromStart = state.engineLineFromStart && Array.isArray(state.engineLineFromStart.pvSan)
+    ? state.engineLineFromStart.pvSan : null;
+  if (fromStart && fromStart.length) return fromStart.filter(Boolean).slice(0, 6);
+  const firstUser = state.attemptHistory.find((h) => h.mover === 'user');
+  const pv = firstUser && firstUser.engineBestAtPoint && Array.isArray(firstUser.engineBestAtPoint.pvSan)
+    ? firstUser.engineBestAtPoint.pvSan : null;
+  if (pv && pv.length) return pv.filter(Boolean).slice(0, 6);
+  const bestSan = firstUser && firstUser.engineBestAtPoint ? firstUser.engineBestAtPoint.san : null;
+  return bestSan ? [bestSan] : [];
 }
 
 // Minimal HTML escape for SAN strings rendered via innerHTML in the card.

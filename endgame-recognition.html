@@ -58,6 +58,7 @@
     box-shadow:0 1px 2px rgba(0,0,0,.04); transition:background .15s;
   }
   .back-btn:hover { background:var(--surface2); }
+  .back-btn.hidden { display:none; }
   .page-title { font-size:17px; font-weight:700; letter-spacing:-.01em; font-family:"Plus Jakarta Sans",sans-serif; }
   .score-pill {
     margin-left:auto; background:var(--surface2); border-radius:var(--r-pill);
@@ -65,13 +66,24 @@
     font-family:"Spline Sans Mono",monospace; white-space:nowrap;
   }
 
-  /* board — canonical component (css/board.css + js/board-static.js, §22) */
-  .board-wrap { margin:0 auto 16px; max-width:380px; position:relative; }
+  /* board — canonical component (css/board.css + js/board-static.js, §22).
+     v0.55a: do NOT cap the wrap here. css/screen.css owns the canonical board
+     size (.layout-grid .board-wrap .board: 380px mobile / 640px desktop). The
+     old inline max-width:380px on the WRAP clamped the board to ~310-380px on
+     desktop, so recognition rendered far smaller than puzzle/endgames. Keep
+     only the overlay positioning context. */
+  .board-wrap { position:relative; }
   .board-side-label {
     text-align:center; font-size:11px; font-weight:600; color:var(--muted);
     font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px;
   }
 
+  /* canonical feedback card — matches puzzle.html .result so the rail reads
+     on-brand (was loose bare elements that looked mobile-ish at desktop). */
+  .verdict-card {
+    padding:16px 18px; border:1px solid var(--line); border-radius:var(--r-card);
+    background:var(--surface); box-shadow:0 6px 16px -10px rgba(20,30,55,.16);
+  }
   /* prompt + verdict */
   .prompt {
     text-align:center; font-size:15px; font-weight:600; color:var(--ink);
@@ -95,9 +107,9 @@
 
   /* result reveal */
   .reveal {
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card);
-    padding:16px 18px; margin-bottom:14px; display:none;
-    box-shadow:0 8px 20px -12px rgba(20,30,55,.2);
+    background:transparent; border:none; border-radius:0; box-shadow:none;
+    border-top:1px solid var(--line); padding:12px 0 0; margin-top:12px;
+    display:none;
   }
   .reveal.show { display:block; }
   .verdict-badge {
@@ -220,7 +232,10 @@
 <body>
 <div class="container">
   <div id="recog-head" class="header-bar">
-    <a href="/today.html" class="back-btn">← Today</a>
+    <!-- US-4: the "Today" back chip belongs to the Today session wrapper, not
+         direct access. Hidden by default; shown only when renderSessionWrap()
+         reports an active Today block (see boot). -->
+    <a href="/today.html" class="back-btn hidden" id="recog-back">← Today</a>
     <span class="page-title">Endgame recognition</span>
     <div class="score-pill" id="score-pill">0 / 0</div>
   </div>
@@ -411,14 +426,16 @@ import { renderSessionWrap } from '/js/session-wrap.js';
         renderBoard(pos) +
       '</div>' +
       '<div class="lg-right">' +
-        '<p class="prompt">Is this <b>winning or drawn</b> for ' + esc(sideStr) + ' to move?</p>' +
-        '<div class="verdict-btns">' +
-          '<button class="vbtn win" id="btn-winning">Winning</button>' +
-          '<button class="vbtn draw" id="btn-drawn">Drawn</button>' +
-          '<button class="vbtn lose" id="btn-losing">Losing</button>' +
+        '<div class="verdict-card" id="verdict-card">' +
+          '<p class="prompt">Is this <b>winning or drawn</b> for ' + esc(sideStr) + ' to move?</p>' +
+          '<div class="verdict-btns">' +
+            '<button class="vbtn win" id="btn-winning">Winning</button>' +
+            '<button class="vbtn draw" id="btn-drawn">Drawn</button>' +
+            '<button class="vbtn lose" id="btn-losing">Losing</button>' +
+          '</div>' +
+          '<div class="reveal" id="reveal-panel"></div>' +
+          '<div id="next-area"></div>' +
         '</div>' +
-        '<div class="reveal" id="reveal-panel"></div>' +
-        '<div id="next-area"></div>' +
       '</div>';
 
     renderStaticBoard(document.getElementById('recog-board'), pos.fen, { orientation: pos.side });
@@ -566,7 +583,12 @@ import { renderSessionWrap } from '/js/session-wrap.js';
   function boot() {
     // v0.55 US-4: persistent in-session wrapper (hidden unless deep-linked into
     // a Today session); recognition shows the plain canonical screen otherwise.
-    renderSessionWrap(document.getElementById("session-wrap"), { exitHref: "/session.html" });
+    var inTodaySession = renderSessionWrap(document.getElementById("session-wrap"), { exitHref: "/session.html" });
+    // US-4: the header "Today" back chip is part of the Today session chrome.
+    // Show it only inside an active Today session; on direct access it stays
+    // hidden so the surface reads as a plain canonical screen.
+    var backChip = document.getElementById("recog-back");
+    if (backChip) backChip.classList.toggle("hidden", !inTodaySession);
     fetch('/data/endgame-recognition.json')
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
