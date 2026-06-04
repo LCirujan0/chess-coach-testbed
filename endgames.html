@@ -331,27 +331,31 @@ function saveResult(id, passed, clean) {
 // engine and NEVER busy-loops.
 function sfSend(msg) { eg.sfWorker.postMessage(msg); }
 
-// Wait for a line containing `matcher`. We keep ONLY the last `info` line (the
-// deepest, which carries the final score + pv) plus the matched line — we do
-// NOT accumulate every message, so a long search can't grow an unbounded buffer
-// or make the await-handler progressively heavier on the main thread.
-function sfWaitForEG(matcher, timeoutMs = 20000) {
+// Wait for a line containing `matcher`. Mirrors the proven puzzle surface
+// (js/puzzle/engine.js sfWaitFor): the listener is attached synchronously in
+// the Promise executor, we accumulate EVERY message, and resolve on the matched
+// line (clearing the timeout + removing the listener). `onAttached` (optional)
+// fires immediately AFTER the listener is live so the caller can post `go` with
+// the listener guaranteed to be attached first — closing the race where a fast
+// depth-14/movetime-1200 `bestmove` arrives before the listener and is missed.
+function sfWaitForEG(matcher, timeoutMs = 60000, onAttached) {
   return new Promise((resolve, reject) => {
-    let lastInfo = '';
+    const messages = [];
     const t = setTimeout(() => {
       eg.sfWorker.removeEventListener('message', handler);
       reject(new Error('SF timeout waiting for: ' + matcher));
     }, timeoutMs);
     function handler(e) {
       const msg = typeof e.data === 'string' ? e.data : '';
-      if (msg.startsWith('info') && msg.indexOf(' pv ') !== -1) lastInfo = msg;
+      messages.push(msg);
       if (msg.indexOf(matcher) !== -1) {
         clearTimeout(t);
         eg.sfWorker.removeEventListener('message', handler);
-        resolve({ matched: msg, lastInfo });
+        resolve({ matched: msg, all: messages });
       }
     }
     eg.sfWorker.addEventListener('message', handler);
+    if (typeof onAttached === 'function') onAttached();
   });
 }
 
@@ -359,11 +363,9 @@ async function initSF() {
   if (eg.sfWorker) return;
   setStatus('Loading engine…');
   eg.sfWorker = new Worker(SF_URL);
-  eg.sfWorker.postMessage('uci');
-  await sfWaitForEG('uciok', 25000);
+  await sfWaitForEG('uciok', 25000, function () { eg.sfWorker.postMessage('uci'); });
   eg.sfWorker.postMessage('setoption name MultiPV value 1');
-  eg.sfWorker.postMessage('isready');
-  await sfWaitForEG('readyok', 15000);
+  await sfWaitForEG('readyok', 15000, function () { eg.sfWorker.postMessage('isready'); });
   eg.sfReady = true;
   setStatus('');
 }
@@ -390,10 +392,13 @@ async function ensureEngineReady() {
 // { eval:{cp|mate}, pvUci:[...] } or null. Fully async (awaited Worker round-trip).
 async function analyzeEG(fen) {
   sfSend('ucinewgame');
-  sfSend('position fen ' + fen);
-  sfSend('go depth ' + SF_DEPTH + ' movetime ' + SF_MOVETIME_MS);
-  const { lastInfo } = await sfWaitForEG('bestmove');
-  const lines = parseMultiPV(lastInfo ? [lastInfo] : [], 1);
+  // The listener is attached inside sfWaitForEG BEFORE the `go` is posted (via
+  // the onAttached callback), so the bestmove can never arrive unobserved.
+  const { all } = await sfWaitForEG('bestmove', 60000, function () {
+    sfSend('position fen ' + fen);
+    sfSend('go depth ' + SF_DEPTH + ' movetime ' + SF_MOVETIME_MS);
+  });
+  const lines = parseMultiPV(all, 1);
   if (!lines.length) return null;
   const l = lines[0];
   return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves };
@@ -596,6 +601,9 @@ function recordEval(cp) {
 // the current trainee-PoV eval. Returns null to keep playing, else
 // { passed, outcome }. We only stop on a genuine spoil or a converted win.
 function evaluateStop(lesson, cp) {
+  // Require a valid engine eval before any stop decision. Without a finite cp we
+  // keep playing rather than misclassify a missing/zero eval as a spoil.
+  if (typeof cp !== 'number' || !Number.isFinite(cp)) return null;
   const cls = classify(cp);
   if (lesson.result === 'win') {
     // Win converted decisively => success.
@@ -870,7 +878,26 @@ async function init() {
   loadLesson(0);
   // Board is playable immediately (selection needs only chess.js). Warm the
   // engine in the background so the first reply is snappy, but never block play.
-  ensureEngineReady().then(function () { setStatus(''); renderBoardEG(); });
+  ensureEngineReady().then(async function () {
+    setStatus('');
+    renderBoardEG();
+    // Show the true starting eval instead of a flat 50/50 (e.g. KQK reads as a
+    // decisive white edge). Non-blocking; guarded so a transient engine miss
+    // just leaves the neutral bar. Only paint if we're still on the same,
+    // un-started lesson (no trainee move yet) to avoid clobbering live play.
+    if (!eg.sfReady || !eg.chess) return;
+    const startFen = eg.chess.fen();
+    const movesAtStart = eg.traineeMovesPlayed;
+    try {
+      const line = await analyzeEG(startFen);
+      if (line && eg.chess && eg.chess.fen() === startFen && eg.traineeMovesPlayed === movesAtStart) {
+        const traineeCp = normalizeEval(line.eval);   // side-to-move = trainee at start
+        eg.lastEvalCp = traineeCp;
+        const mate = line.eval && line.eval.mate;
+        setEvalBar(whiteCpFromTrainee({ cp: traineeCp }), evalLabelFor(eg.traineeColor === 'w' ? traineeCp : -traineeCp, mate));
+      }
+    } catch (_) { /* leave the neutral bar; play is unaffected */ }
+  });
 }
 
 init();
