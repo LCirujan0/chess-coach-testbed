@@ -178,6 +178,16 @@ export async function finishPuzzle({ grade, played, terminal }) {
   // live sessionFailures count for THIS attempt (the whole fix: the fail is
   // recorded the moment the move resolves, not when a follow-up is viewed).
   recordAttempt(grade);
+
+  // Phase 3: lazy AI tag on first curriculum completion (fire-and-forget).
+  // Uses dynamic import so tagger.js is only loaded when actually needed.
+  const _taggedPuzzle = getCurrentPuzzle ? getCurrentPuzzle() : null;
+  if (_taggedPuzzle && _taggedPuzzle.source && _taggedPuzzle.source !== 'mistake' && !_taggedPuzzle.motif) {
+    import('/js/tagger.js').then(({ tagAndSaveCurriculum }) => {
+      tagAndSaveCurriculum([_taggedPuzzle]).catch(err => console.warn('Curriculum tag failed:', err));
+    }).catch(err => console.warn('Tagger import failed:', err));
+  }
+
   renderFilterTabs();
   renderCategoryTabs();
   state.viewHistory = buildViewHistory();

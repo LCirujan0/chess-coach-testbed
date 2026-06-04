@@ -163,6 +163,18 @@ async function loadStaticPuzzleSets() {
   } catch (err) {
     console.warn('loadStaticPuzzleSets: endgame-recognition.json fetch failed', err);
   }
+  // Phase 3: Merge any previously-computed AI tags from chess-coach-tags-v1.
+  // Tags were written by tagger.js after a curriculum puzzle was completed; we
+  // merge them back here so the motif/themes/aiTaggedAt fields are present in
+  // state.puzzles before the queue is built.
+  const storedTags = JSON.parse(localStorage.getItem('chess-coach-tags-v1') || '{}');
+  if (Object.keys(storedTags).length) {
+    for (const p of state.puzzles) {
+      if (p && p.id && storedTags[p.id]) {
+        Object.assign(p, storedTags[p.id]);  // merge motif/themes/aiTaggedAt
+      }
+    }
+  }
 }
 
 // Page default puzzle-type filter. puzzle.html pins "mistake" (its critical

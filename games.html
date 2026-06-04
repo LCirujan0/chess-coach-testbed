@@ -463,6 +463,7 @@ const THINNING_WINDOW = 7;
 // ============================================================================
 
 import { Chess } from 'https://esm.sh/chess.js@1.4.0';
+import { tagAndSaveMistakes } from '/js/tagger.js';
 
 const state = {
   engineReady: false,
@@ -1098,6 +1099,10 @@ async function handleIngestSubmit(e) {
     // Persist mistakes (de-duplicated by id).
     const merged = mergeMistakes(loadMistakes(), fresh);
     saveMistakes(merged);
+
+    // Fire-and-forget AI tagging of newly ingested mistakes (Phase 3).
+    // Non-blocking: tagging failure must never affect the ingest flow.
+    tagAndSaveMistakes().catch(err => console.warn('Tagging failed (non-blocking):', err));
 
     // Spec 06 — persist this run's per-game scorecards under the new key.
     // Idempotent merge: a re-ingest of the same gameUrl overwrites the older
