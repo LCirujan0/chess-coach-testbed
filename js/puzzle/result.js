@@ -4,7 +4,7 @@
 import { Chess } from './lib.js';
 import {
   DEFAULT_PUZZLE, TRAINING_COMPONENTS, MOTIF_LABELS,
-  MAX_CP_LOSS_FOR_SUCCESS, STOCKFISH_MULTIPV, STOCKFISH_DEPTH,
+  MAX_CP_LOSS_PER_MOVE, STOCKFISH_MULTIPV, STOCKFISH_DEPTH,
 } from './config.js';
 import { state } from './state.js';
 import { $, appendCoachMessage, clearCoachLog, setInlineStatus } from './dom.js';
@@ -12,7 +12,7 @@ import { orientationFor, buildPositionSummary, analyzePosition } from './engine.
 import { renderBoard, renderTitleAndMeta } from './board.js';
 import { renderFilterTabs, renderCategoryTabs, getCurrentPuzzle } from './queue.js';
 import { startThinkingGate } from './gate.js';
-import { puzzleAccuracy, setAttemptComponent } from './grade.js';
+import { puzzleAccuracy, setAttemptComponent, renderCpBar } from './grade.js';
 import { bestMoveAnswerText } from './review.js';
 import { renderPending, clearPending } from './pending.js';
 
@@ -22,7 +22,7 @@ export function pickHeadline(grade, repeated, accuracy) {
   // as a fail regardless of tier. Use the same gate for the headline so we
   // never say "Solved" when the centipawn budget was blown.
   const userMovesAll = state.attemptHistory.filter((h) => h.mover === 'user');
-  const anyBigCpLoss = userMovesAll.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMovesAll.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   const failed = grade.tier === 'outside' || anyBigCpLoss;
   // Multi-move success: use accuracy-tiered headline (only if not failed).
   if (!failed && accuracy != null) {
@@ -53,7 +53,7 @@ export function pickBody(grade, played, accuracy) {
   if (accuracy != null) return `Puzzle accuracy: ${accuracy}%.`;
   if (grade.tier === 'outside') return `${played?.san || ''} wasn't in the engine's top 5.`;
   if (grade.tier === 'best') return `${played?.san || ''} matches the engine's top choice.`;
-  if (grade.cpLoss != null) return `${played?.san || ''} loses about ${grade.cpLoss} centipawns.`;
+  if (grade.cpLoss != null) return `${played?.san || ''} loses about ${(grade.cpLoss / 100).toFixed(2)} pawns.`;
   return '';
 }
 export function showResult(grade, played) {
@@ -66,7 +66,7 @@ export function showResult(grade, played) {
 
   // A "top 5" move that hemorrhaged more than MAX_CP_LOSS_FOR_SUCCESS counts
   // as a fail, not a pass — same rule the move-flow gate uses.
-  const anyBigCpLoss = userMovesArr.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMovesArr.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   let tier;
   if (grade.tier === 'outside' || anyBigCpLoss) tier = 'fail';
   else if (accuracy != null && accuracy < 70) tier = 'warn';
@@ -339,6 +339,8 @@ export function resetPuzzleStateAndRender(opts) {
   state.lastMove = null;
   state.userMovesMade = 0;
   state.attemptHistory = [];
+  state.moveCpLoss = [];
+  state.totalCpLoss = 0;
   state.engineLineFromStart = null;            // v0.13 — reset on new puzzle
   state.wrongMoveSnapshot = null;
   state.pendingWrongMove = null;    // v0.23
@@ -378,6 +380,7 @@ export function resetPuzzleStateAndRender(opts) {
   renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs(); renderBoard();
   // §31 — the feedback card occupies its slot from a PENDING state so the board
   // never shifts when a verdict later appears.
+  renderCpBar();
   renderPending();
   if (state.engineReady) {
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
