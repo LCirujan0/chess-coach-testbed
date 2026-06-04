@@ -51,6 +51,8 @@ export const state = {
   phase: 'idle',                      // 'idle' | 'thinking' | 'playing' | 'punishment' | 'resolved'
   userMovesMade: 0,
   attemptHistory: [],
+  moveCpLoss: [],    // Array<number|null> — cp loss for each user move (up to 3), null = pending
+  totalCpLoss: 0,    // running sum of moveCpLoss
   // v0.13 (Spec 05) — snapshot of the engine's whole line at the FIRST user
   // decision; used by the line-vs-line review prompt. { pvSan, endEvalCp } |
   // null. Reset on each new puzzle load (resetPuzzleStateAndRender).
