@@ -1101,6 +1101,43 @@
   @media (prefers-reduced-motion: reduce) {
     .result { animation: none !important; }
   }
+
+/* Phase 2: per-move cp progress bar */
+.cp-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0 2px;
+}
+.cp-bar.hidden { display: none !important; }
+.cp-seg {
+  flex: 1;
+  border-radius: 3px;
+  background: var(--surface3);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1;
+  padding: 8px 4px 4px;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  transition: background 0.2s, color 0.2s;
+  color: var(--muted);
+}
+.cp-seg--pending { background: var(--surface2); }
+.cp-seg--ok { background: var(--accent-soft); color: var(--pos); border-color: var(--accent); }
+.cp-seg--red { background: #FEE2E0; color: var(--bad); border-color: var(--bad); }
+.cp-bar-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 90px;
+  text-align: right;
+}
 </style>
 </head>
 <body>
@@ -1238,6 +1275,14 @@
     <button class="nav-step" id="nav-back" type="button">◀</button>
     <span class="nav-label" id="nav-label">Current position</span>
     <button class="nav-step" id="nav-forward" type="button">▶</button>
+  </div>
+
+  <!-- Phase 2: per-move cp progress bar -->
+  <div id="cp-bar" class="cp-bar hidden">
+    <div class="cp-seg cp-seg--pending"></div>
+    <div class="cp-seg cp-seg--pending"></div>
+    <div class="cp-seg cp-seg--pending"></div>
+    <span class="cp-bar-label"></span>
   </div>
 
   <div class="controls" id="controls">
