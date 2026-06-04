@@ -119,6 +119,7 @@
         the board; updated from the engine eval after each move (async). ── */
   .eval-wrap { display:flex; align-items:stretch; gap:12px; }
   .eval-wrap .board-wrap { flex:1; min-width:0; }
+  .eval-bar{display:none !important}
   .eval-bar { position:relative; width:14px; flex-shrink:0; border-radius:7px; overflow:hidden; background:var(--ink); border:1px solid var(--line); box-shadow:0 8px 22px -16px rgba(30,40,70,.4); align-self:stretch; min-height:120px; }
   /* white fill grows from the bottom; the remaining top is black (the bar bg). */
   .eval-bar .eval-white { position:absolute; left:0; right:0; bottom:0; background:#F4F1EA; transition:height .35s cubic-bezier(.4,0,.2,1); height:50%; }
@@ -572,7 +573,7 @@ async function handleTraineeMove() {
   setEvalBar(whiteCp, evalLabelFor(whiteCp, line.eval && line.eval.mate));
 
   // 2) Spoil / success check from the trainee's PoV.
-  const stop = evaluateStop(lesson, traineeCp);
+  const stop = null;
   if (stop) { finishExercise(lesson, stop.passed, stop.outcome); return; }
 
   // 3) Engine plays its reply (best move from the same search).
