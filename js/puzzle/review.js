@@ -2,7 +2,7 @@
 // SECTION 13b — Post-resolution review (arrows, piece hint, comparison)
 // ============================================================================
 import { Chess } from './lib.js';
-import { MAX_CP_LOSS_FOR_SUCCESS } from './config.js';
+import { MAX_CP_LOSS_PER_MOVE } from './config.js';
 import { state } from './state.js';
 import { $, appendCoachMessage } from './dom.js';
 import { renderBoard } from './board.js';
@@ -105,7 +105,7 @@ export function annotateForViewIndex() {
   const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
   const puzzle = getCurrentPuzzle();
   const sessionFails = puzzle ? (state.sessionFailures[puzzle.id] || 0) : 0;
-  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   const lastGrade = userMoves[userMoves.length - 1]?.grade;
   const solved = lastGrade && lastGrade.tier !== 'outside' && !anyBigCpLoss;
   const engineRevealed = solved || sessionFails >= 3;
@@ -185,7 +185,7 @@ export function renderComparison(opts) {
   if (!userMoves.length || !puzzle) { comparisonEl.classList.add('hidden'); return; }
   // Compute the same "earned" gate used for the AI review button.
   const sessionFails = state.sessionFailures[puzzle.id] || 0;
-  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_FOR_SUCCESS);
+  const anyBigCpLoss = userMoves.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   const lastGrade = userMoves[userMoves.length - 1]?.grade;
   const solved = lastGrade && lastGrade.tier !== 'outside' && !anyBigCpLoss;
   const engineRevealed = !live && (solved || sessionFails >= 3);
@@ -204,7 +204,7 @@ export function renderComparison(opts) {
     const cpLoss = yours.grade ? yours.grade.cpLoss : null;
     const rankClass = rank ? `rank-${rank}` : 'rank-off';
     const rankText = rank ? `#${rank}` : 'OFF';
-    const cpHtml = (cpLoss != null && cpLoss > 0) ? `<span class="cp-loss-small">-${cpLoss}cp</span>` : '';
+    const cpHtml = (cpLoss != null && cpLoss > 0) ? `<span class="cp-loss-small">−${(cpLoss / 100).toFixed(2)}p</span>` : '';
     const yoursHtml = `${escapeHtmlPuzzle(yours.san)} <span class="rank-badge ${rankClass}">${rankText}</span>${cpHtml}`;
 
     const engine = (yours.engineBestAtPoint && yours.engineBestAtPoint.san) || '—';
