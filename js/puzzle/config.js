@@ -4,7 +4,7 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.56 · canonical screen + recognition + puzzle polish · 2026-06-03';
+export const APP_VERSION = 'v0.57a · unified puzzle schema + type filter (phase 1a) · 2026-06-04';
 // Inject the stamp lazily once the DOM is parsed.
 queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
 
@@ -118,3 +118,22 @@ export const FILES_STD = ['a','b','c','d','e','f','g','h'];
 export const RANKS_STD = ['8','7','6','5','4','3','2','1'];
 export const FILES_FLIP = ['h','g','f','e','d','c','b','a'];
 export const RANKS_FLIP = ['1','2','3','4','5','6','7','8'];
+
+// ============================================================================
+// Unified puzzle schema (phase 1a) — additive. Canonical `type` discriminator
+// shared across mistake / endgame / recognition / opening / lichess puzzle
+// sources. NOTE: recognition entries already use `type` for their material
+// signature (e.g. 'KPvK'), so their puzzle-type lives in `puzzleType` instead;
+// the queue filter checks both (p.type || p.puzzleType).
+// ============================================================================
+export const PUZZLE_TYPES = ['mistake', 'endgame', 'recognition', 'opening', 'lichess'];
+export const PUZZLE_TYPE_LABELS = {
+  mistake: 'Mistakes',
+  endgame: 'Endgames',
+  recognition: 'Endgame recognition',
+  opening: 'Openings',
+  lichess: 'Lichess puzzles',
+};
+// null = no type restriction (show everything in the pool). Pages opt into a
+// single type via <meta name="puzzle-type-filter">.
+export const DEFAULT_PUZZLE_TYPE = null;

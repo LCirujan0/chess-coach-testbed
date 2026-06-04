@@ -14,6 +14,10 @@ export const state = {
   severityFilter: 'all',
   triedFilter: 'all',               // 'all' | 'tried' | 'untried'
   motifFilter: 'all',               // 'all' | one of MOTIFS | 'untagged'
+  // Unified puzzle schema (phase 1a). null/'all' = no type restriction; a page
+  // sets this from <meta name="puzzle-type-filter"> to scope the pool to one
+  // source (e.g. 'mistake' keeps puzzle.html mistakes-only).
+  typeFilter: null,                 // null | 'all' | one of PUZZLE_TYPES
   // Spec 02 — "Drill this theme" focused session. When non-null, the queue is
   // overridden with up to 10 puzzles sharing the active motif; user advances
   // through them and returns to the normal queue when the drill ends.

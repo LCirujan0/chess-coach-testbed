@@ -122,7 +122,62 @@ if (stored.length) {
   state.motifFilter = 'all';
   state.currentCategory = 'all';
 }
-// Build the randomised play queue from the loaded puzzles.
+// ----------------------------------------------------------------------------
+// Unified puzzle schema (phase 1a) — load the static endgame + recognition
+// puzzle sets and merge them into state.puzzles. Additive: a page only sees
+// these if it does NOT pin a different type via <meta name="puzzle-type-filter">.
+// puzzle.html pins "mistake", so the merged entries are filtered out of its
+// queue and the core page stays mistakes-only.
+// ----------------------------------------------------------------------------
+async function loadStaticPuzzleSets() {
+  const existing = new Set(state.puzzles.map((p) => p && p.id).filter(Boolean));
+  // Endgame curriculum lessons (data/endgames.json → { lessons: [...] }).
+  try {
+    const res = await fetch('/data/endgames.json', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const arr = (data && Array.isArray(data.lessons)) ? data.lessons : [];
+      for (const item of arr) {
+        if (!item || !item.id || existing.has(item.id)) continue;
+        existing.add(item.id);
+        state.puzzles.push(item);
+      }
+    }
+  } catch (err) {
+    console.warn('loadStaticPuzzleSets: endgames.json fetch failed', err);
+  }
+  // Endgame recognition positions (data/endgame-recognition.json → { positions: [...] }).
+  // NOTE: these carry their puzzle-type in `puzzleType` ('recognition'); their
+  // `type` field holds the material signature (e.g. 'KPvK').
+  try {
+    const res = await fetch('/data/endgame-recognition.json', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const arr = (data && Array.isArray(data.positions)) ? data.positions : [];
+      for (const item of arr) {
+        if (!item || !item.id || existing.has(item.id)) continue;
+        existing.add(item.id);
+        state.puzzles.push(item);
+      }
+    }
+  } catch (err) {
+    console.warn('loadStaticPuzzleSets: endgame-recognition.json fetch failed', err);
+  }
+}
+
+// Page default puzzle-type filter. puzzle.html pins "mistake" (its critical
+// guard); pages with no meta leave typeFilter null (no type restriction).
+(function applyPageTypeFilter() {
+  const meta = document.querySelector('meta[name="puzzle-type-filter"]');
+  const val = meta && meta.getAttribute('content');
+  if (val) state.typeFilter = val;
+})();
+
+// Build the randomised play queue from the loaded puzzles. Phase 1a: merge the
+// static endgame + recognition sets first (no-op for puzzle.html's queue,
+// which is pinned to type "mistake"). Wrapped so a slow/failed fetch can't
+// block the initial board render below.
+await loadStaticPuzzleSets();
 rebuildQueue();
 
 // Reset restarts the same puzzle position without re-opening the CCTO gate

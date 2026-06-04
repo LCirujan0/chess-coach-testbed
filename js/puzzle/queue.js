@@ -47,6 +47,10 @@ export function buildQueue() {
   else if (state.triedFilter === 'untried') pool = pool.filter((p) => attemptsCount(p.id) === 0);
   if (state.motifFilter === 'untagged') pool = pool.filter((p) => !p.motif);
   else if (state.motifFilter && state.motifFilter !== 'all') pool = pool.filter((p) => p.motif === state.motifFilter);
+  // Unified puzzle schema (phase 1a) — filter by puzzle type. Recognition
+  // entries carry their puzzle-type in `puzzleType` (their `type` is the
+  // material signature), so check both fields.
+  if (state.typeFilter && state.typeFilter !== 'all') { pool = pool.filter((p) => (p.type || p.puzzleType) === state.typeFilter); }
   if (state.mode === 'drill') {
     return shuffleInPlace(pool);
   }
