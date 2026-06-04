@@ -78,13 +78,13 @@ export function renderSessionWrap(el, opts = {}) {
   const sinceMs = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
 
   const block = plan.blocks[activeIdx];
-  const noun = BLOCK_NOUN[block.type] || 'Item';
+  const noun = BLOCK_NOUN[block.id] || 'Item';
   const count = typeof block.count === 'number' ? block.count : (Array.isArray(block.ids) ? block.ids.length : 0);
   const done = Math.min(solvedInBlock(block, attempts, sinceMs), count);
   // "Mistake 3 of 8" -> the item currently being worked is done+1 (clamped).
   const cursor = Math.min(done + 1, Math.max(count, 1));
 
-  const nowText = block.title || (BLOCK_SHORT[block.type] || 'Block');
+  const nowText = block.title || (BLOCK_SHORT[block.id] || 'Block');
   const ofText = count ? (noun + ' ' + cursor + ' of ' + count + ' · Block ' + (activeIdx + 1) + ' of ' + plan.blocks.length) : ('Block ' + (activeIdx + 1) + ' of ' + plan.blocks.length);
   const mode = (block.mode === 'deep') ? 'Deep' : (block.mode === 'drill') ? 'Drill' : '';
 
@@ -101,7 +101,7 @@ export function renderSessionWrap(el, opts = {}) {
       else if (i === activeIdx && p === bDone) cls = 'cur';
       pips += '<span class="sw-pip ' + cls + '"></span>';
     }
-    const lbl = BLOCK_SHORT[b.type] || ('B' + (i + 1));
+    const lbl = BLOCK_SHORT[b.id] || ('B' + (i + 1));
     rail += '<div class="sw-seg"><div class="sw-pips">' + pips + '</div><div class="sw-seglabel">' + esc(lbl) + '</div></div>';
   });
 
@@ -117,4 +117,16 @@ export function renderSessionWrap(el, opts = {}) {
 
   el.classList.remove('hidden');
   return true;
+}
+
+// Re-render the persistent bar in place. Call after a session write-back so the
+// pips advance live as the player moves through a block (the bar element is
+// owned by the host shell and lives OUTSIDE the per-puzzle swap region, so it
+// is never unmounted mid-session). No-op outside a Today session.
+let _lastWrapOpts = {};
+export function refreshSessionWrap(opts) {
+  if (opts) _lastWrapOpts = opts;
+  const el = document.getElementById('session-wrap');
+  if (!el) return false;
+  return renderSessionWrap(el, _lastWrapOpts);
 }

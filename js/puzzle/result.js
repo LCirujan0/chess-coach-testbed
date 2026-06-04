@@ -15,6 +15,7 @@ import { startThinkingGate } from './gate.js';
 import { puzzleAccuracy, setAttemptComponent, renderCpBar } from './grade.js';
 import { bestMoveAnswerText } from './review.js';
 import { renderPending, clearPending } from './pending.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
 
 export function pickHeadline(grade, repeated, accuracy) {
   if (repeated && grade.tier === 'outside') return 'Same move as in your game, same mistake.';
@@ -382,6 +383,7 @@ export function resetPuzzleStateAndRender(opts) {
   // never shifts when a verdict later appears.
   renderCpBar();
   renderPending();
+  refreshSessionWrap(); // keep the persistent session bar in sync as items advance
   if (state.engineReady) {
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
     analyzePosition(state.chess.fen(), STOCKFISH_DEPTH).then(() => {

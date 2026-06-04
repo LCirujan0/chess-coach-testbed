@@ -16,6 +16,7 @@ import { showResult } from './result.js';
 import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex, revealAnswerOnBoard } from './review.js';
 import { renderPending } from './pending.js';
 import { fireCoachExplanation } from './coach.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
 
 export function gradeMove(userUci) {
   const userKey = userUci.slice(0, 4);
@@ -335,7 +336,7 @@ export function recordAttempt(grade) {
   // Today block, recompute `done` from the count of solved ids and persist.
   // Always derive from the truth (attempts store) rather than incrementing
   // so partial re-runs / retries don't double-count.
-  if (state.sessionMode) sessionModeWriteBack();
+  if (state.sessionMode) { sessionModeWriteBack(); refreshSessionWrap(); }
 }
 
 // Recompute the active block's `done` from solved attempts on its queueIds,
