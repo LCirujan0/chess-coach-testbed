@@ -12,8 +12,6 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
-<link rel="stylesheet" href="/css/screen.css">
-<link rel="stylesheet" href="/css/session-wrap.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,7 +52,7 @@
   .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
   @media (min-width: 880px) {
     body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-    .container { max-width:1100px; margin-left:0; margin-right:auto; }
+    .container { max-width:780px; }
     .tab-bar { display:none; }
     .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
     .nav-backdrop { display:none !important; }
@@ -72,7 +70,7 @@
   .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
 
   /* Board — canonical component (css/board.css, §22) */
-  /* .board-wrap layout + canonical board size now come from css/screen.css (v0.55). */
+  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
 
   /* Status + verdict */
   #status-line { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
@@ -114,18 +112,6 @@
   .nav-drawer-link.secondary:hover { background:var(--surface2); }
   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
-
-  /* ── Eval bar (white-advantage), v0.55b — lives in the board column beside
-        the board; updated from the engine eval after each move (async). ── */
-  .eval-wrap { display:flex; align-items:stretch; gap:12px; }
-  .eval-wrap .board-wrap { flex:1; min-width:0; }
-  .eval-bar{display:none !important}
-  .eval-bar { position:relative; width:14px; flex-shrink:0; border-radius:7px; overflow:hidden; background:var(--ink); border:1px solid var(--line); box-shadow:0 8px 22px -16px rgba(30,40,70,.4); align-self:stretch; min-height:120px; }
-  /* white fill grows from the bottom; the remaining top is black (the bar bg). */
-  .eval-bar .eval-white { position:absolute; left:0; right:0; bottom:0; background:#F4F1EA; transition:height .35s cubic-bezier(.4,0,.2,1); height:50%; }
-  .eval-bar .eval-mid { position:absolute; left:0; right:0; top:50%; height:1px; background:var(--accent); opacity:.7; }
-  .eval-label { font-family:"Spline Sans Mono",ui-monospace,monospace; font-size:11px; font-weight:500; color:var(--muted); text-align:center; margin-top:6px; min-height:15px; letter-spacing:.02em; }
-  @media (min-width:880px) { .eval-bar { width:18px; } }
 </style>
 </head>
 <body>
@@ -135,66 +121,43 @@
     <span class="page-title">Endgames</span>
   </div>
 
-  <!-- Canonical training screen (css/screen.css, v0.55): same board-left /
-       rail-right composition as puzzle.html. -->
-  <div class="layout-grid">
-
-    <!-- Persistent in-session wrapper (v0.55) — shows the Today block progress
-         only when deep-linked from a session; hidden otherwise. -->
-    <div class="session-wrap hidden" id="session-wrap"></div>
-
-    <!-- Head band: lesson card + status (left column / own row on desktop). -->
-    <div class="lg-head">
-      <div class="lesson-card" id="lesson-card">
-        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
-        <div id="lesson-title" class="lesson-title">—</div>
-        <div id="lesson-stm" class="lesson-stm">—</div>
-        <div class="lesson-meta-row">
-          <button id="show-technique-btn" class="technique-btn">Show technique</button>
-          <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
-        </div>
-        <div id="technique-text" class="technique-text hidden"></div>
-      </div>
-      <div id="status-line"></div>
+  <!-- lesson header -->
+  <div class="lesson-card" id="lesson-card">
+    <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
+    <div id="lesson-title" class="lesson-title">—</div>
+    <div id="lesson-stm" class="lesson-stm">—</div>
+    <div class="lesson-meta-row">
+      <button id="show-technique-btn" class="technique-btn">Show technique</button>
+      <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
     </div>
-
-    <!-- Board column: canonical board + controls. -->
-    <div class="lg-left">
-      <div class="eval-wrap">
-        <div class="eval-bar" id="eval-bar" aria-hidden="true">
-          <div class="eval-white" id="eval-white"></div>
-          <div class="eval-mid"></div>
-        </div>
-        <div class="board-wrap">
-          <div id="board" class="board"></div>
-          <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
-        </div>
-      </div>
-      <div class="eval-label" id="eval-label"></div>
-
-      <!-- controls -->
-      <div class="controls-row" id="controls-row">
-        <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
-        <button id="prev-btn" class="ctrl-btn">← Prev</button>
-        <button id="next-btn" class="ctrl-btn">Next →</button>
-      </div>
-    </div>
-
-    <!-- Rail column: verdict + why + lesson list. -->
-    <div class="lg-right">
-      <!-- verdict (shown after each lesson ends) -->
-      <div id="verdict-card" class="verdict-card hidden">
-        <div id="verdict-headline" class="verdict-headline"></div>
-        <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
-        <button id="why-btn" class="why-btn">Why?</button>
-        <div id="why-output" class="why-output hidden"></div>
-      </div>
-
-      <!-- lesson list -->
-      <div class="lesson-list-card" id="lesson-list"></div>
-    </div>
-
+    <div id="technique-text" class="technique-text hidden"></div>
   </div>
+
+  <!-- board -->
+  <div class="board-wrap">
+    <div id="board" class="board"></div>
+    <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div id="status-line"></div>
+
+  <!-- verdict (shown after each lesson ends) -->
+  <div id="verdict-card" class="verdict-card hidden">
+    <div id="verdict-headline" class="verdict-headline"></div>
+    <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+    <button id="why-btn" class="why-btn">Why?</button>
+    <div id="why-output" class="why-output hidden"></div>
+  </div>
+
+  <!-- controls -->
+  <div class="controls-row" id="controls-row">
+    <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
+    <button id="prev-btn" class="ctrl-btn">← Prev</button>
+    <button id="next-btn" class="ctrl-btn">Next →</button>
+  </div>
+
+  <!-- lesson list -->
+  <div class="lesson-list-card" id="lesson-list"></div>
 </div>
 
 <!-- Nav drawer -->
@@ -237,43 +200,31 @@ function surfaceError(msg) {
   if (sl) { sl.style.color = 'var(--bad)'; sl.style.fontStyle = 'normal'; sl.textContent = msg; }
 }
 window.addEventListener('error', (e) => surfaceError('JS error: ' + e.message));
-window.addEventListener('unhandledrejection', (e) => surfaceError('Error: ' + (e.reason && e.reason.message || e.reason)));
+window.addEventListener('unhandledrejection', (e) => surfaceError('Error: ' + e.reason));
 
 // ── Imports from js/puzzle/ ────────────────────────────────────────────────────
-// Chess.js: game logic, legal-move generation, FEN parsing (synchronous; the
-//   human move never waits on anything else).
+// Chess.js: game logic, legal-move generation, FEN parsing.
 // config.js: PIECE_IMG for Celtic piece set, board geometry constants.
 // engine.js: parseMultiPV + pvToSan + normalizeEval (pure UCI parsing utilities).
+//   NOTE — engine.js transitively imports dom.js (safe: only exports functions +
+//   registers the nav-drawer handlers at module level, both of which work fine
+//   here). state.js/gate.js/board.js are also imported transitively; all
+//   module-level code in that chain is function definitions + const declarations
+//   with no problematic DOM side effects.
 import { Chess } from './js/puzzle/lib.js';
 import { PIECE_IMG, PIECE_GLYPH, FILES_STD, RANKS_STD, FILES_FLIP, RANKS_FLIP } from './js/puzzle/config.js';
 import { parseMultiPV, pvToSan, normalizeEval } from './js/puzzle/engine.js';
-import { renderSessionWrap } from '/js/session-wrap.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SF_URL = '/engine/stockfish-17.1-lite-single-03e3232.js';
-// localStorage: unchanged key + unchanged record shape (attempts/cleanInARow/
-// mastered/lastResult/lastAt). v0.55b reuses it as-is — no new key.
 const STORAGE_KEY = 'chess-coach-endgames-v1';
-
-// Search budget. v0.55b ROOT-CAUSE FIX: the old code drove the engine at
-// `go depth 20`. A depth-20 single-threaded lite search in a basic mate floods
-// the main thread with thousands of `info` strings (each one is a worker->main
-// message that the await-handler scanned), so every reply stalled the tab for
-// seconds and the board looked frozen. We now match the proven puzzle surface
-// (depth 14) AND hard-cap each search with a movetime so a pathological
-// position can never run unbounded. Both bounds are honoured by Stockfish; the
-// first of the two to hit ends the search.
-const SF_DEPTH       = 14;     // analysis/reply depth (was 20)
-const SF_MOVETIME_MS = 1200;   // hard wall-clock cap per search
-
-// Win/draw/loss classification thresholds, in centipawns from the side-to-move
-// (trainee) point of view. Mate scores are normalised to +/-10000 upstream.
-const WINNING_CP   =  200;     // >= +2.0  => winning
-const LOSING_CP    = -200;     // <= -2.0  => losing
-// (between the two = roughly drawn / unclear)
-const DECISIVE_CP  =  600;     // >= +6.0  => win effectively converted
-const DRAW_HELD_MOVES = 16;    // hold a draw this many trainee moves => success
-const MAX_TRAINEE_MOVES = 40;  // absolute safety cap on a single exercise
+const SF_DEPTH = 20;             // full-strength depth for opponent moves + eval
+const WIN_PASS_CP   =  150;      // trainee eval must stay ≥ +1.5 pawns
+const WIN_FAIL_CP   =   50;      // dropping below +0.5 consecutive = losing the win
+const DRAW_PASS_CP  = -150;      // trainee eval must stay > −1.5 pawns
+const DECISIVE_CP   =  600;      // ≥ +6 = win secured for win-lessons
+const MAX_TRAINEE_MOVES = 20;    // cap lesson at 20 trainee moves
+const FAIL_CONSECUTIVE = 2;      // N consecutive below-threshold moves = fail
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const eg = {
@@ -282,25 +233,22 @@ const eg = {
   chess: null,
   orientation: null,       // { files, ranks }
   traineeColor: 'w',
-  usedTechnique: false,
-  evalHistory: [],         // {move, cp, cls} after each trainee move (trainee PoV)
-  worstCp: null,           // worst (lowest) trainee-PoV eval seen
-  worstMove: null,         // trainee move number at the worst eval
-  spoilMove: null,         // trainee move number when the result was spoiled
-  phase: 'idle',           // 'idle'|'playing'|'thinking'|'done'
+  usedTechnique: false,    // true if "Show technique" tapped this attempt
+  evalHistory: [],         // traineeEval after each trainee move (cp, from trainee PoV)
+  consecutiveFails: 0,     // consecutive moves below fail threshold
+  failMoveNum: null,       // trainee move number when fail was first detected
+  phase: 'idle',           // 'idle'|'loading'|'playing'|'thinking'|'done'
   traineeMovesPlayed: 0,
   selectedSquare: null,
   legalMovesFromSelected: [],
-  lastMove: null,
-  storage: {},
+  lastMove: null,          // { from, to }
+  storage: {},             // persisted mastery data  (chess-coach-endgames-v1)
   sfWorker: null,
   sfReady: false,
-  outcome: null,           // 'win'|'draw'|'loss'|null  (final classification)
-  passed: null,            // boolean
-  lastEvalCp: 0,           // last known trainee-PoV eval, for the bar
+  verdict: null,           // 'pass'|'fail'|null
 };
 
-// ── Storage helpers (key + shape unchanged) ────────────────────────────────────
+// ── Storage helpers ───────────────────────────────────────────────────────────
 function loadStorage() {
   try { eg.storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch { eg.storage = {}; }
 }
@@ -325,141 +273,55 @@ function saveResult(id, passed, clean) {
   saveStorage();
 }
 
-// ── Stockfish (Worker — all engine work is off the main thread) ─────────────────
-// Mirrors the puzzle surface's proven wiring. The human move is committed to the
-// board synchronously (chess.js only); the engine reply + eval are awaited and
-// the board updates again when they arrive. The click path NEVER waits on the
-// engine and NEVER busy-loops.
+// ── Stockfish ─────────────────────────────────────────────────────────────────
 function sfSend(msg) { eg.sfWorker.postMessage(msg); }
 
-// Wait for a line containing `matcher`. Mirrors the proven puzzle surface
-// (js/puzzle/engine.js sfWaitFor): the listener is attached synchronously in
-// the Promise executor, we accumulate EVERY message, and resolve on the matched
-// line (clearing the timeout + removing the listener). `onAttached` (optional)
-// fires immediately AFTER the listener is live so the caller can post `go` with
-// the listener guaranteed to be attached first — closing the race where a fast
-// depth-14/movetime-1200 `bestmove` arrives before the listener and is missed.
-function sfWaitForEG(matcher, timeoutMs = 60000, onAttached) {
+function sfWaitForEG(matcher, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
-    const messages = [];
+    const buf = [];
     const t = setTimeout(() => {
       eg.sfWorker.removeEventListener('message', handler);
       reject(new Error('SF timeout waiting for: ' + matcher));
     }, timeoutMs);
     function handler(e) {
       const msg = typeof e.data === 'string' ? e.data : '';
-      messages.push(msg);
-      if (msg.indexOf(matcher) !== -1) {
+      buf.push(msg);
+      if (msg.includes(matcher)) {
         clearTimeout(t);
         eg.sfWorker.removeEventListener('message', handler);
-        resolve({ matched: msg, all: messages });
+        resolve({ matched: msg, all: buf });
       }
     }
     eg.sfWorker.addEventListener('message', handler);
-    if (typeof onAttached === 'function') onAttached();
   });
 }
 
 async function initSF() {
-  if (eg.sfWorker) return;
   setStatus('Loading engine…');
   eg.sfWorker = new Worker(SF_URL);
-  await sfWaitForEG('uciok', 25000, function () { eg.sfWorker.postMessage('uci'); });
+  eg.sfWorker.postMessage('uci');
+  await sfWaitForEG('uciok');
   eg.sfWorker.postMessage('setoption name MultiPV value 1');
-  await sfWaitForEG('readyok', 15000, function () { eg.sfWorker.postMessage('isready'); });
+  eg.sfWorker.postMessage('isready');
+  await sfWaitForEG('readyok', 15000);
   eg.sfReady = true;
   setStatus('');
 }
 
-// Lazily boot + await the engine. The board is playable before this resolves;
-// the trainee's move lands instantly and the reply follows when ready. On
-// failure we surface a recoverable error rather than dropping the interaction.
-let egEnginePromise = null;
-async function ensureEngineReady() {
-  if (eg.sfReady) return true;
-  setStatus('Loading engine…');
-  try {
-    if (!egEnginePromise) egEnginePromise = initSF();
-    await egEnginePromise;
-    return eg.sfReady === true;
-  } catch (err) {
-    egEnginePromise = null;
-    surfaceError('Engine failed to load. Tap Retry to try again.');
-    return false;
-  }
-}
-
-// Analyse `fen` to depth SF_DEPTH (movetime-capped). Returns
-// { eval:{cp|mate}, pvUci:[...] } or null. Fully async (awaited Worker round-trip).
+// Returns { eval: {cp|mate}, pvUci: [uci,...], pvSan: [san,...] } or null.
 async function analyzeEG(fen) {
   sfSend('ucinewgame');
-  // The listener is attached inside sfWaitForEG BEFORE the `go` is posted (via
-  // the onAttached callback), so the bestmove can never arrive unobserved.
-  const { all } = await sfWaitForEG('bestmove', 60000, function () {
-    sfSend('position fen ' + fen);
-    sfSend('go depth ' + SF_DEPTH + ' movetime ' + SF_MOVETIME_MS);
-  });
+  sfSend('position fen ' + fen);
+  sfSend('go depth ' + SF_DEPTH);
+  const { all } = await sfWaitForEG('bestmove');
   const lines = parseMultiPV(all, 1);
   if (!lines.length) return null;
   const l = lines[0];
-  // Stockfish reports score from the SIDE-TO-MOVE's point of view. Capture the
-  // side to move of the analysed FEN so callers can convert to an absolute
-  // (white) perspective rather than guessing the turn from call-site position.
-  const stm = (fen.split(' ')[1] === 'b') ? 'b' : 'w';
-  return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves, stm };
-}
-
-// ── Eval bar ────────────────────────────────────────────────────────────────────
-// `cp` is from WHITE's point of view. The white fill height maps a clamped
-// +/-1000cp window onto 5%..95% so a decisive edge pins near the end without
-// fully hiding the other colour. Updates are CSS-transitioned, never blocking.
-function setEvalBar(whiteCp, label) {
-  const white = document.getElementById('eval-white');
-  const lbl = document.getElementById('eval-label');
-  if (white) {
-    const clamped = Math.max(-1000, Math.min(1000, whiteCp));
-    const pct = 50 + (clamped / 1000) * 45; // 5%..95%
-    white.style.height = pct.toFixed(1) + '%';
-  }
-  if (lbl) lbl.textContent = label || '';
-}
-function evalLabelFor(whiteCp, mate) {
-  if (mate !== undefined && mate !== null) return 'M' + Math.abs(mate);
-  const p = (whiteCp / 100);
-  const sign = p > 0 ? '+' : '';
-  return sign + p.toFixed(1);
-}
-// Convert a trainee-PoV eval object to a WHITE-PoV centipawn number for the bar.
-function whiteCpFromTrainee(evalObj) {
-  const traineeCp = normalizeEval(evalObj);
-  return eg.traineeColor === 'w' ? traineeCp : -traineeCp;
-}
-// Convert an engine eval (reported from the SIDE-TO-MOVE's PoV) into an
-// absolute WHITE-perspective centipawn value, using the side to move of the
-// analysed FEN. Positive => white is better. Mate scores are normalised to
-// +/-10000 by normalizeEval first, then sign-flipped the same way.
-function whiteCpFromEngine(evalObj, stm) {
-  const stmCp = normalizeEval(evalObj);
-  return stm === 'w' ? stmCp : -stmCp;
-}
-// Map a white-absolute centipawn value to the trainee's point of view.
-function traineeCpFromWhite(whiteCp) {
-  return eg.traineeColor === 'w' ? whiteCp : -whiteCp;
-}
-
-// ── Classification (trainee point of view) ──────────────────────────────────────
-function classify(cp) {
-  if (cp >= WINNING_CP) return 'win';
-  if (cp <= LOSING_CP) return 'loss';
-  return 'draw';
+  const san = pvToSan(fen, l.pvMoves);
+  return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves, pvSan: san };
 }
 
 // ── Board rendering ───────────────────────────────────────────────────────────
-// NOTE (v0.55b): the board click listener is bound EXACTLY ONCE (see init()),
-// delegated on the stable #board element. renderBoardEG only swaps children via
-// replaceChildren — it does NOT (re)bind any listener. The old code re-added a
-// click listener on every render (one `{once:true}` + one `onclick`), which
-// double-fired onSquareTap per tap and churned listeners; that is gone.
 function renderBoardEG() {
   const boardEl = document.getElementById('board');
   if (!eg.chess || !eg.orientation) { boardEl.replaceChildren(); return; }
@@ -489,6 +351,7 @@ function renderBoardEG() {
         img.draggable = false;
         sq.appendChild(img);
       }
+      // Legal-move markers
       const move = eg.legalMovesFromSelected.find((m) => m.to === square);
       if (move) {
         const isCapture = move.flags.includes('c') || move.flags.includes('e');
@@ -500,21 +363,22 @@ function renderBoardEG() {
     }
   }
   boardEl.replaceChildren(frag);
+  boardEl.addEventListener('click', onBoardClick, { once: true });
+  // Re-attach click after each render via delegation
+  boardEl.onclick = onBoardClick;
 }
 
 function onBoardClick(e) {
-  // Selection/commit only needs chess.js — never the engine. This handler
-  // returns synchronously; the (async) engine reply is kicked off via
-  // handleTraineeMove() but is NOT awaited here, so the click can't block.
   if (eg.phase !== 'playing') return;
   const sq = e.target.closest('.square');
   if (!sq) return;
   const square = sq.dataset.square;
-  if (square) onSquareTap(square);
+  if (!square) return;
+  onSquareTap(square);
 }
 
 function onSquareTap(square) {
-  if (eg.phase !== 'playing') return;
+  if (eg.phase !== 'playing' || !eg.sfReady) return;
   if (!eg.selectedSquare) {
     const piece = eg.chess.get(square);
     if (!piece || piece.color !== eg.chess.turn()) return;
@@ -535,77 +399,132 @@ function onSquareTap(square) {
   }
   const move = eg.legalMovesFromSelected.find((m) => m.to === square);
   if (move) {
+    // Handle promotion — auto-promote to queen
     const m = eg.chess.move({ from: move.from, to: move.to, promotion: 'q' });
     if (m) {
       eg.selectedSquare = null; eg.legalMovesFromSelected = [];
       eg.lastMove = { from: m.from, to: m.to };
       eg.phase = 'thinking';
-      renderBoardEG();          // human move shows INSTANTLY (synchronous)
-      handleTraineeMove();      // async; intentionally not awaited
+      renderBoardEG();
+      handleTraineeMove();
     }
   }
 }
 
-// ── Main move handler (free play; stop only on spoil/success) ────────────────────
+// ── Eval-trajectory grading ───────────────────────────────────────────────────
+// After the trainee's move, Stockfish analyzes from the OPPONENT'S perspective
+// (opponent is now to move). traineeEval = -normalizeEval(line.eval).
+// Positive = trainee is ahead, negative = trainee is losing.
+function traineeEvalFromLine(line) {
+  return -normalizeEval(line.eval);
+}
+
+// Check thresholds. Returns 'pass', 'fail', or null (continue).
+function checkThreshold(lesson, evalCp) {
+  if (lesson.result === 'win') {
+    if (evalCp < WIN_FAIL_CP) {
+      eg.consecutiveFails++;
+      if (eg.consecutiveFails >= FAIL_CONSECUTIVE) {
+        if (!eg.failMoveNum) eg.failMoveNum = eg.traineeMovesPlayed;
+        return 'fail';
+      }
+    } else {
+      eg.consecutiveFails = 0;
+    }
+    // Win secured: decisive eval or mate delivered
+    if (evalCp >= DECISIVE_CP) return 'pass';
+  } else { // draw
+    if (evalCp < DRAW_PASS_CP) {
+      eg.consecutiveFails++;
+      if (eg.consecutiveFails >= FAIL_CONSECUTIVE) {
+        if (!eg.failMoveNum) eg.failMoveNum = eg.traineeMovesPlayed;
+        return 'fail';
+      }
+    } else {
+      eg.consecutiveFails = 0;
+    }
+  }
+  return null;
+}
+
+// ── Main move handler ─────────────────────────────────────────────────────────
 async function handleTraineeMove() {
   eg.traineeMovesPlayed++;
   const lesson = eg.lessons[eg.idx];
-
-  // Trainee just moved: if that ended the game, resolve immediately.
-  if (eg.chess.isGameOver()) { resolveGameOver(lesson, 'trainee'); return; }
-
-  const ready = await ensureEngineReady();
-  if (!ready) { eg.phase = 'playing'; renderBoardEG(); return; }
   setStatus('Thinking…');
 
-  // 1) Evaluate the position AFTER the trainee's move. The engine is to move,
-  //    so the raw score is from the opponent's PoV. We convert via white-
-  //    absolute (see below) instead of a hard-coded negate.
+  // Analyse after trainee's move
   let line = await analyzeEG(eg.chess.fen());
-  if (!line) { setStatus('Engine error, tap Retry'); eg.phase = 'playing'; renderBoardEG(); return; }
-  // Engine score is from the side-to-move of the analysed FEN. Convert to an
-  // absolute WHITE perspective first, then map to the trainee. This is robust
-  // whoever is to move (after the trainee moves it is the opponent's turn, so a
-  // winning white position comes back negative from black's PoV).
-  let whiteCp = whiteCpFromEngine(line.eval, line.stm);
-  let traineeCp = traineeCpFromWhite(whiteCp);
-  recordEval(traineeCp);
-  setEvalBar(whiteCp, evalLabelFor(whiteCp, line.eval && line.eval.mate));
+  if (!line) { setStatus('Engine error — retry'); eg.phase = 'playing'; return; }
 
-  // 2) Spoil / success check from the trainee's PoV.
-  const stop = null;
-  if (stop) { finishExercise(lesson, stop.passed, stop.outcome); return; }
+  const evalCp = traineeEvalFromLine(line);
+  eg.evalHistory.push(evalCp);
 
-  // 3) Engine plays its reply (best move from the same search).
+  // Check for game over (checkmate / stalemate / draw by rule) after trainee's move
+  if (eg.chess.isGameOver()) {
+    if (eg.chess.isCheckmate()) {
+      // Trainee delivered checkmate
+      showVerdict(lesson, 'pass', 'Checkmate — clean finish.', true);
+    } else {
+      // Stalemate or draw — bad for win lessons, pass for draw lessons
+      const isDrawLesson = lesson.result === 'draw';
+      showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
+        isDrawLesson ? 'Draw secured.' : 'Stalemate or draw — win slipped.', isDrawLesson);
+    }
+    return;
+  }
+
+  // Check thresholds after trainee's move
+  const verdict = checkThreshold(lesson, evalCp);
+  if (verdict) { showVerdict(lesson, verdict, verdictDetail(lesson, verdict), verdict === 'pass'); return; }
+
+  // Check draw by continuation count
+  if (lesson.result === 'draw' && eg.traineeMovesPlayed >= MAX_TRAINEE_MOVES) {
+    showVerdict(lesson, 'pass', 'Held for ' + eg.traineeMovesPlayed + ' moves under engine pressure — draw secured.', true);
+    return;
+  }
+
+  // Cap
+  if (eg.traineeMovesPlayed >= MAX_TRAINEE_MOVES) {
+    const finalPass = lesson.result === 'win' ? evalCp >= WIN_PASS_CP : evalCp >= DRAW_PASS_CP;
+    showVerdict(lesson, finalPass ? 'pass' : 'fail', verdictDetail(lesson, finalPass ? 'pass' : 'fail'), finalPass);
+    return;
+  }
+
+  // Play engine's response (line[0] pvUci[0])
   const engineUci = line.pvUci && line.pvUci[0];
-  if (!engineUci) { finishExercise(lesson, lesson.result === 'win', lesson.result === 'win' ? 'win' : 'draw'); return; }
-  const em = eg.chess.move({ from: engineUci.slice(0,2), to: engineUci.slice(2,4), promotion: engineUci.slice(4,5) || undefined });
-  if (!em) { setStatus('Engine move error.'); eg.phase = 'playing'; renderBoardEG(); return; }
+  if (!engineUci) { setStatus('Engine has no move — position resolved.'); showVerdict(lesson, 'pass', 'Position resolved.', true); return; }
+
+  const from = engineUci.slice(0, 2);
+  const to   = engineUci.slice(2, 4);
+  const prom = engineUci.slice(4, 5) || undefined;
+  const em = eg.chess.move({ from, to, promotion: prom });
+  if (!em) { setStatus('Engine move error.'); eg.phase = 'playing'; return; }
   eg.lastMove = { from: em.from, to: em.to };
 
-  // Engine's move may end the game.
-  if (eg.chess.isGameOver()) { renderBoardEG(); resolveGameOver(lesson, 'engine'); return; }
+  // Check game over after engine's move
+  if (eg.chess.isGameOver()) {
+    if (eg.chess.isCheckmate()) {
+      // Engine checkmated trainee
+      showVerdict(lesson, 'fail', lesson.result === 'draw'
+        ? 'Checkmated — draw lost.'
+        : 'Checkmated — win turned into a loss.', false);
+    } else {
+      // Stalemate after engine move — draw
+      const isDrawLesson = lesson.result === 'draw';
+      showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
+        isDrawLesson ? 'Draw secured.' : 'Stalemate — win escaped.', isDrawLesson);
+    }
+    return;
+  }
 
-  // 4) Refresh the eval/bar now that it's the trainee's turn again. We still
-  //    convert via white-absolute so the perspective is derived from the FEN,
-  //    not assumed from the call site.
+  // Also analyze after engine's move to get a fresh trainee eval (from white's PoV now)
+  // Actually the engine's response eval is now from trainee's perspective directly
   line = await analyzeEG(eg.chess.fen());
   if (line) {
-    const whiteCpNow = whiteCpFromEngine(line.eval, line.stm);
-    eg.lastEvalCp = traineeCpFromWhite(whiteCpNow);
-    setEvalBar(whiteCpNow, evalLabelFor(whiteCpNow, line.eval && line.eval.mate));
-  }
-
-  // 5) Continue free play unless we've hit a sensible stop.
-  if (lesson.result === 'draw' && eg.traineeMovesPlayed >= DRAW_HELD_MOVES) {
-    finishExercise(lesson, true, 'draw'); return;
-  }
-  if (eg.traineeMovesPlayed >= MAX_TRAINEE_MOVES) {
-    const finalCp = eg.lastEvalCp != null ? eg.lastEvalCp : traineeCp;
-    const cls = classify(finalCp);
-    const passed = lesson.result === 'win' ? cls === 'win' : cls !== 'loss';
-    finishExercise(lesson, passed, cls === 'win' ? 'win' : cls === 'loss' ? 'loss' : 'draw');
-    return;
+    // After engine's move, it's trainee's turn; eval is from trainee's PoV directly
+    const afterEngineEval = normalizeEval(line.eval);
+    eg.evalHistory.push(afterEngineEval);
   }
 
   eg.phase = 'playing';
@@ -613,63 +532,27 @@ async function handleTraineeMove() {
   setStatus('');
 }
 
-// Record a trainee-PoV eval and track the worst dip (for the overall summary).
-function recordEval(cp) {
-  eg.lastEvalCp = cp;
-  eg.evalHistory.push({ move: eg.traineeMovesPlayed, cp, cls: classify(cp) });
-  if (eg.worstCp === null || cp < eg.worstCp) { eg.worstCp = cp; eg.worstMove = eg.traineeMovesPlayed; }
-}
-
-// Decide whether the exercise should STOP now, based on the lesson target and
-// the current trainee-PoV eval. Returns null to keep playing, else
-// { passed, outcome }. We only stop on a genuine spoil or a converted win.
-function evaluateStop(lesson, cp) {
-  // Require a valid engine eval before any stop decision. Without a finite cp we
-  // keep playing rather than misclassify a missing/zero eval as a spoil.
-  if (typeof cp !== 'number' || !Number.isFinite(cp)) return null;
-  const cls = classify(cp);
-  if (lesson.result === 'win') {
-    // Win converted decisively => success.
-    if (cp >= DECISIVE_CP) return { passed: true, outcome: 'win' };
-    // The win has slipped out of "winning" into a draw/loss => stop (spoiled).
-    if (cls !== 'win') { if (eg.spoilMove === null) eg.spoilMove = eg.traineeMovesPlayed; return { passed: false, outcome: cls }; }
-  } else { // draw
-    // The draw has slipped into a loss => stop (spoiled).
-    if (cls === 'loss') { if (eg.spoilMove === null) eg.spoilMove = eg.traineeMovesPlayed; return { passed: false, outcome: 'loss' }; }
+function verdictDetail(lesson, verdict) {
+  if (verdict === 'pass') {
+    return lesson.result === 'win' ? 'Won it — clean conversion.' : 'Drew it — held under pressure.';
   }
-  return null;
+  if (eg.failMoveNum) return 'Lost the win at move ' + eg.failMoveNum + '.';
+  return lesson.result === 'win' ? 'Win slipped — eval dropped too low.' : 'Draw lost — position became too bad.';
 }
 
-// Resolve a true game-over (mate / stalemate / draw by rule).
-function resolveGameOver(lesson, mover) {
-  if (eg.chess.isCheckmate()) {
-    // Side to move is checkmated. If the engine just moved, the TRAINEE is mated.
-    const traineeMated = (mover === 'engine');
-    if (traineeMated) finishExercise(lesson, false, 'loss');
-    else finishExercise(lesson, true, 'win'); // trainee delivered mate
-    return;
-  }
-  // Stalemate / insufficient material / repetition / 50-move => drawn.
-  finishExercise(lesson, lesson.result === 'draw', 'draw');
-}
-
-// ── Overall feedback (NOT move-by-move) ─────────────────────────────────────────
-function finishExercise(lesson, passed, outcome) {
+// ── Verdict + mastery ─────────────────────────────────────────────────────────
+function showVerdict(lesson, verdict, detail, passed) {
   eg.phase = 'done';
-  eg.passed = passed;
-  eg.outcome = outcome;
+  eg.verdict = verdict;
   const clean = passed && !eg.usedTechnique;
   saveResult(lesson.id, passed, clean);
 
-  const headline = verdictHeadline(lesson, passed, outcome);
-  const summary = buildSummary(lesson, passed, outcome);
-
   document.getElementById('verdict-card').classList.remove('hidden');
   const hl = document.getElementById('verdict-headline');
-  hl.className = 'verdict-headline ' + (passed ? 'pass' : 'fail');
-  hl.textContent = (passed ? '✓ ' : '✗ ') + headline;
-  document.getElementById('verdict-detail').textContent = summary
-    + (clean ? ' Clean, counts toward mastery.' : (passed && eg.usedTechnique ? ' Passed (technique shown, not clean).' : ''));
+  hl.className = 'verdict-headline ' + verdict;
+  hl.textContent = passed ? '✓ ' + verdictHeadline(lesson, true) : '✗ ' + verdictHeadline(lesson, false);
+  document.getElementById('verdict-detail').textContent = detail
+    + (clean ? ' Clean — counts toward mastery.' : passed && eg.usedTechnique ? ' Passed (technique shown — not clean).' : '');
   document.getElementById('why-btn').disabled = false;
   document.getElementById('retry-btn').disabled = false;
   renderBoardEG();
@@ -677,37 +560,15 @@ function finishExercise(lesson, passed, outcome) {
   setStatus('');
 }
 
-function verdictHeadline(lesson, passed, outcome) {
-  if (lesson.result === 'win') return passed ? 'Won it.' : (outcome === 'loss' ? 'Lost it.' : 'Win slipped to a draw.');
-  return passed ? 'Drew it.' : 'Draw lost.';
+function verdictHeadline(lesson, passed) {
+  if (passed) return lesson.result === 'win' ? 'Won it.' : 'Drew it.';
+  return lesson.result === 'win' ? 'Win slipped.' : 'Draw lost.';
 }
 
-// Deterministic OVERALL summary — one or two sentences about how it went, no
-// per-ply commentary and no spoiler (no future best move, no concrete squares).
-function buildSummary(lesson, passed, outcome) {
-  const n = eg.traineeMovesPlayed;
-  const worstP = eg.worstCp != null ? (eg.worstCp / 100) : null;
-  if (lesson.result === 'win') {
-    if (passed) {
-      if (worstP != null && worstP < (WINNING_CP / 100)) {
-        return 'You converted the win in ' + n + ' move' + (n === 1 ? '' : 's') + ', though the edge wobbled around move ' + eg.worstMove + ' before you brought it home.';
-      }
-      return 'Clean technique. You kept the advantage in hand and converted the win in ' + n + ' move' + (n === 1 ? '' : 's') + '.';
-    }
-    // Failed a win
-    const where = eg.spoilMove || eg.worstMove || n;
-    if (outcome === 'loss') return 'The winning position turned into a loss around move ' + where + '; the advantage was let go and the engine took over.';
-    return 'You held the edge early but it slipped around move ' + where + ' and the win drained away to a draw.';
-  }
-  // Draw lesson
-  if (passed) {
-    return 'You held the draw for ' + n + ' move' + (n === 1 ? '' : 's') + ' under engine pressure. The defensive setup stayed solid.';
-  }
-  const where = eg.spoilMove || eg.worstMove || n;
-  return 'The defence held for a while but cracked around move ' + where + ', and the position slipped into a loss.';
-}
-
-// ── "Why?" — overall, no-spoiler coach line (optional) ──────────────────────────
+// ── "Why?" LLM call ───────────────────────────────────────────────────────────
+// §12 note: the trainee has already played the position; no spoiler risk here.
+// We deliberately exclude engine eval numbers and next-move suggestions — the
+// explanation stays conceptual, grounded in keyIdea + verdict only.
 async function handleWhy() {
   const lesson = eg.lessons[eg.idx];
   const btn = document.getElementById('why-btn');
@@ -716,23 +577,21 @@ async function handleWhy() {
   btn.textContent = 'Thinking…';
   out.classList.add('hidden');
   const SYS = [
-    'You are a chess coach giving an OVERALL reflection on how a student played out an endgame they just finished.',
-    'Explain the principle behind the result, anchored on the key idea.',
+    'You are a chess coach explaining an endgame concept. The student just finished a drill.',
+    'Explain WHY this result happened, using the key idea as the anchor.',
     'HARD RULES:',
-    '- Do NOT give move-by-move commentary.',
-    '- Do NOT mention specific moves, squares, piece destinations, or eval numbers.',
-    '- Do NOT tell the student what to play next or reveal a solution line.',
-    '- Focus on the technique and pattern, not concrete moves.',
-    '- 2-3 sentences maximum. Plain language for a ~950-1500 rated player.',
+    '- Do NOT mention specific moves, squares, piece names, or eval numbers.',
+    '- Do NOT suggest what the student should play next.',
+    '- Focus on the principle and pattern, not the concrete moves.',
+    '- 2-3 sentences maximum.',
+    '- Plain language for a ~950-1500 rated player.',
   ].join('\n');
-  const resultLine = eg.passed
-    ? (lesson.result === 'win' ? 'They converted the win.' : 'They held the draw.')
-    : (lesson.result === 'win' ? 'The win slipped away.' : 'The draw was lost.');
   const userMsg = [
     'Lesson: ' + lesson.title,
     'Key idea: ' + lesson.keyIdea,
-    'Outcome: ' + resultLine,
-    'It took about ' + eg.traineeMovesPlayed + ' of the student’s moves.',
+    'Result: ' + (eg.verdict === 'pass'
+      ? (lesson.result === 'win' ? 'Won it — clean conversion.' : 'Drew it — held under pressure.')
+      : (eg.failMoveNum ? 'Lost the win at move ' + eg.failMoveNum + '.' : 'Draw lost.')),
   ].join('\n');
   try {
     const resp = await fetch('/api/coach', {
@@ -759,6 +618,7 @@ function loadLesson(idx) {
   eg.idx = Math.max(0, Math.min(idx, eg.lessons.length - 1));
   const lesson = eg.lessons[eg.idx];
 
+  // Reset attempt state
   eg.chess = new Chess(lesson.fen);
   eg.traineeColor = lesson.sideToMove;
   eg.orientation = lesson.sideToMove === 'w'
@@ -766,48 +626,46 @@ function loadLesson(idx) {
     : { files: FILES_FLIP, ranks: RANKS_FLIP };
   eg.usedTechnique = false;
   eg.evalHistory = [];
-  eg.worstCp = null;
-  eg.worstMove = null;
-  eg.spoilMove = null;
-  eg.outcome = null;
-  eg.passed = null;
-  eg.lastEvalCp = 0;
+  eg.consecutiveFails = 0;
+  eg.failMoveNum = null;
+  eg.verdict = null;
   eg.phase = 'playing';
   eg.traineeMovesPlayed = 0;
   eg.selectedSquare = null;
   eg.legalMovesFromSelected = [];
   eg.lastMove = null;
 
+  // Update lesson header
   document.getElementById('lesson-group-badge').textContent = lesson.group;
   document.getElementById('lesson-title').textContent = lesson.title;
   const stmLabel = (lesson.sideToMove === 'w' ? 'White' : 'Black') + ' to move · '
-    + (lesson.result === 'win' ? 'Play for the win' : 'Hold the draw');
+    + (lesson.result === 'win' ? 'Win' : 'Hold the draw');
   document.getElementById('lesson-stm').textContent = stmLabel;
   const advBadge = document.getElementById('advanced-badge');
   lesson.advanced ? advBadge.classList.remove('hidden') : advBadge.classList.add('hidden');
 
+  // Reset technique
   const techText = document.getElementById('technique-text');
   techText.classList.add('hidden');
   techText.textContent = '';
   document.getElementById('show-technique-btn').textContent = 'Show technique';
 
+  // Hide verdict
   document.getElementById('verdict-card').classList.add('hidden');
   document.getElementById('why-output').classList.add('hidden');
   document.getElementById('why-btn').textContent = 'Why?';
   document.getElementById('why-btn').disabled = false;
   document.getElementById('retry-btn').disabled = true;
 
-  // Neutral eval bar at the start; it fills in on the first analysis.
-  setEvalBar(0, '');
-
   renderBoardEG();
-  setStatus('');
+  setStatus(eg.sfReady ? '' : 'Loading engine…');
   updateLessonList();
 }
 
 // ── Lesson list ───────────────────────────────────────────────────────────────
 function updateLessonList() {
   const container = document.getElementById('lesson-list');
+  // Group lessons
   const groups = {};
   for (const l of eg.lessons) {
     if (!groups[l.group]) groups[l.group] = [];
@@ -835,9 +693,11 @@ function updateLessonList() {
       name.textContent = l.title;
       const pips = document.createElement('div');
       pips.className = 'mastery-pips';
+      // 2 pips; filled = clean passes; gold = mastered
       for (let i = 0; i < 2; i++) {
         const pip = document.createElement('span');
-        pip.className = 'pip' + (e.mastered ? ' mastered' : (e.cleanInARow > i ? ' filled' : ''));
+        pip.className = 'pip'
+          + (e.mastered ? ' mastered' : (e.cleanInARow > i ? ' filled' : ''));
         pips.appendChild(pip);
       }
       const res = document.createElement('div');
@@ -876,13 +736,20 @@ document.getElementById('show-technique-btn').addEventListener('click', () => {
     document.getElementById('show-technique-btn').textContent = 'Show technique';
   }
 });
-document.getElementById('retry-btn').addEventListener('click', () => { if (eg.lessons[eg.idx]) loadLesson(eg.idx); });
-document.getElementById('prev-btn').addEventListener('click', () => { if (eg.idx > 0) loadLesson(eg.idx - 1); });
-document.getElementById('next-btn').addEventListener('click', () => { if (eg.idx < eg.lessons.length - 1) loadLesson(eg.idx + 1); });
-document.getElementById('why-btn').addEventListener('click', handleWhy);
 
-// Board clicks: ONE delegated listener on the stable #board element, bound once.
-document.getElementById('board').addEventListener('click', onBoardClick);
+document.getElementById('retry-btn').addEventListener('click', () => {
+  if (eg.lessons[eg.idx]) loadLesson(eg.idx);
+});
+
+document.getElementById('prev-btn').addEventListener('click', () => {
+  if (eg.idx > 0) loadLesson(eg.idx - 1);
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  if (eg.idx < eg.lessons.length - 1) loadLesson(eg.idx + 1);
+});
+
+document.getElementById('why-btn').addEventListener('click', handleWhy);
 
 // ── Initialisation ────────────────────────────────────────────────────────────
 async function init() {
@@ -897,31 +764,14 @@ async function init() {
     return;
   }
   if (!eg.lessons.length) { surfaceError('No lessons found in endgames.json'); return; }
-  renderSessionWrap(document.getElementById('session-wrap'), { exitHref: '/session.html' });
   loadLesson(0);
-  // Board is playable immediately (selection needs only chess.js). Warm the
-  // engine in the background so the first reply is snappy, but never block play.
-  ensureEngineReady().then(async function () {
+  try {
+    await initSF();
     setStatus('');
     renderBoardEG();
-    // Show the true starting eval instead of a flat 50/50 (e.g. KQK reads as a
-    // decisive white edge). Non-blocking; guarded so a transient engine miss
-    // just leaves the neutral bar. Only paint if we're still on the same,
-    // un-started lesson (no trainee move yet) to avoid clobbering live play.
-    if (!eg.sfReady || !eg.chess) return;
-    const startFen = eg.chess.fen();
-    const movesAtStart = eg.traineeMovesPlayed;
-    try {
-      const line = await analyzeEG(startFen);
-      if (line && eg.chess && eg.chess.fen() === startFen && eg.traineeMovesPlayed === movesAtStart) {
-        // Convert from the analysed FEN's side-to-move into white-absolute, then map to trainee.
-        const whiteCpStart = whiteCpFromEngine(line.eval, line.stm);
-        eg.lastEvalCp = traineeCpFromWhite(whiteCpStart);
-        const mate = line.eval && line.eval.mate;
-        setEvalBar(whiteCpStart, evalLabelFor(whiteCpStart, mate));
-      }
-    } catch (_) { /* leave the neutral bar; play is unaffected */ }
-  });
+  } catch (err) {
+    surfaceError('Engine failed: ' + err.message);
+  }
 }
 
 init();
