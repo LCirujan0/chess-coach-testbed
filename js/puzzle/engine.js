@@ -160,3 +160,50 @@ export function evalAsHuman(evalObj) {
   if (evalObj.mate !== undefined) return `mate in ${evalObj.mate}`;
   return `${(evalObj.cp / 100).toFixed(2)} pawns`;
 }
+
+// ============================================================================
+// SECTION 7 — Lightweight engine helpers (Phase 1b)
+// These exports do NOT touch state.engineLines or any puzzle-page DOM.
+// They are safe to import from endgames.html and endgame-recognition.html.
+// ============================================================================
+
+/**
+ * initStockfishWorker(numPV)
+ * Creates the Stockfish web worker, sends uci/isready, sets the module-level
+ * `stockfish` variable. Does NOT touch any DOM or state.engineLines.
+ * Safe to call from pages that don't have the puzzle page's DOM.
+ */
+export async function initStockfishWorker(numPV = 1) {
+  stockfish = new Worker(SF_URL);
+  stockfish.postMessage('uci');
+  await sfWaitFor('uciok');
+  stockfish.postMessage(`setoption name MultiPV value ${numPV}`);
+  stockfish.postMessage('isready');
+  await sfWaitFor('readyok', 15000);
+}
+
+/**
+ * analyzePositionFast(fen, depth)
+ * Runs Stockfish at the given depth with MultiPV 1.
+ * Returns { uci, san, eval, pvUci, pvSan } or null on failure.
+ * Does NOT write to state.engineLines.
+ */
+export async function analyzePositionFast(fen, depth = 9) {
+  if (!stockfish) return null;
+  stockfish.postMessage('ucinewgame');
+  stockfish.postMessage('position fen ' + fen);
+  stockfish.postMessage(`go depth ${depth}`);
+  const { all } = await sfWaitFor('bestmove');
+  const parsed = parseMultiPV(all, 1);
+  if (!parsed.length) return null;
+  const line = parsed[0];
+  const evalObj = line.scoreType === 'mate' ? { mate: line.scoreVal } : { cp: line.scoreVal };
+  const pvSan = pvToSan(fen, line.pvMoves);
+  return {
+    uci: line.pvMoves[0] || '',
+    san: pvSan[0] || line.pvMoves[0] || '',
+    eval: evalObj,
+    pvUci: line.pvMoves,
+    pvSan,
+  };
+}

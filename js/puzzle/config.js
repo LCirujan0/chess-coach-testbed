@@ -137,3 +137,15 @@ export const PUZZLE_TYPE_LABELS = {
 // null = no type restriction (show everything in the pool). Pages opt into a
 // single type via <meta name="puzzle-type-filter">.
 export const DEFAULT_PUZZLE_TYPE = null;
+
+// ============================================================================
+// Play-out + classify constants (Phase 1b)
+// ============================================================================
+export const PLAYOUT_DEPTH         = 9;
+export const PLAYOUT_MOVE_CAP      = 50;
+export const PLAYOUT_WIN_FAIL_CP   = -50;   // trainee eval below this → consecutive fail
+export const PLAYOUT_WIN_PASS_CP   = 100;   // eval at move cap = pass for win lessons
+export const PLAYOUT_DECISIVE_CP   = 500;   // eval above this = decisive win → pass early
+export const PLAYOUT_FAIL_CONSECUTIVE = 2;  // consecutive bad evals → fail
+export const PLAYOUT_DRAW_PASS_CP  = -150;  // for draw lessons at cap: still holding = pass
+export const STORAGE_KEY_TAGS      = 'chess-coach-tags-v1';
