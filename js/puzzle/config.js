@@ -39,7 +39,8 @@ export const DECISIVE_CP = 500;
 // checked and does NOT compress a real ~250cp loss below the ceiling -- both
 // lines carry honest cp scores at the same decision point, so
 // cpLoss = bestCp - userCp is faithful; the sole bug was the ceiling value.
-export const MAX_CP_LOSS_FOR_SUCCESS = 100;
+export const MAX_CP_LOSS_PER_MOVE = 100;   // single-move budget; segment turns red above this
+export const MAX_CP_LOSS_TOTAL = 200;       // cumulative 3-move budget; exceeding this = fail
 
 // Wrong-move punishment: engine plays X plies after a wrong move so the player
 // sees the consequence on the board before the coach explains.
