@@ -4,7 +4,7 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.57a · unified puzzle schema + type filter (phase 1a) · 2026-06-04';
+export const APP_VERSION = 'v0.57 · unified puzzle architecture (phases 1a-3) · 2026-06-04';
 // Inject the stamp lazily once the DOM is parsed.
 queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
 
