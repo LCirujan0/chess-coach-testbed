@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="puzzle-type-filter" content="endgame">
 <title>KnightPath — Endgames</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/css/screen.css">
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
@@ -17,15 +19,46 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE; --ink:#1B1D22; --muted:#6E727B; --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1; --line:rgba(0,0,0,.10); --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F; --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px; --light-sq:#ECE3D2; --dark-sq:#B49A78; --hl-move:rgba(47,158,118,.26); --hl-sel:rgba(47,158,118,.36); --r-board:9px; }
+  :root {
+    --accent:#2F9E76; --accent-2:#5FB58F; --accent-soft:#E7F4EE;
+    --ink:#1B1D22; --muted:#6E727B;
+    --surface:#FFFFFF; --surface2:#F2F4F7; --surface3:#E9ECF1;
+    --line:rgba(0,0,0,.10);
+    --pos:#1F9D57; --warn:#C98A2E; --bad:#D2553F;
+    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-pill:20px;
+    --light-sq:#ECE3D2; --dark-sq:#B49A78;
+    --hl-move:rgba(47,158,118,.26); --hl-sel:rgba(47,158,118,.36);
+    --r-board:9px;
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
-  html, body { background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%); background-attachment:fixed; min-height:100vh; }
-  body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  html, body {
+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  body {
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--ink);
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
   .container { max-width:640px; margin:0 auto; }
   h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
-  .header-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50; background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:max(12px, env(safe-area-inset-top)) 0 12px 0; margin-top:calc(-1 * max(12px, env(safe-area-inset-top))); }
+
+  /* Header bar */
+  .header-bar {
+    display:flex; align-items:center; gap:12px; margin-bottom:14px;
+    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
+    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
+    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
+  }
+  .hamburger-btn {
+    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
+    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
+    transition:background .15s;
+  }
+  .hamburger-btn:hover { background:var(--surface2); }
   .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
-  .header-brand-mark { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
 
   /* Nav drawer */
   .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
@@ -58,7 +91,7 @@
     .nav-backdrop { display:none !important; }
   }
 
-  /* ── Endgame trainer ── */
+  /* Lesson card */
   .lesson-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 8px 22px -14px rgba(30,40,70,.3); }
   .lesson-group-badge { display:inline-flex; align-items:center; padding:3px 9px; background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; border-radius:var(--r-pill); margin-bottom:8px; }
   .lesson-title { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:18px; line-height:1.25; margin-bottom:5px; }
@@ -69,19 +102,15 @@
   .technique-text { margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; font-size:13px; line-height:1.5; color:var(--ink); }
   .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
 
-  /* Board — canonical component (css/board.css, §22) */
+  /* Board */
   .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
 
   /* Status + verdict */
-  #status-line { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
+  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
   .verdict-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
   .verdict-headline { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:16px; margin-bottom:8px; }
   .verdict-headline.pass { color:var(--pos); }
   .verdict-headline.fail { color:var(--bad); }
-  .why-btn { padding:8px 16px; background:var(--surface2); border:1px solid var(--line); border-radius:var(--r-btn); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .12s ease; margin-top:4px; }
-  .why-btn:hover:not(:disabled) { background:var(--surface3); }
-  .why-btn:disabled { opacity:.5; cursor:not-allowed; }
-  .why-output { margin-top:10px; padding:11px 13px; background:var(--surface2); border-radius:10px; font-size:13px; line-height:1.55; }
 
   /* Controls */
   .controls-row { display:flex; gap:8px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
@@ -117,11 +146,15 @@
 <body>
 <div class="container">
   <div class="header-bar">
-    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
+    <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
     <span class="page-title">Endgames</span>
   </div>
 
-  <!-- lesson header -->
+  <!-- Lesson header -->
   <div class="lesson-card" id="lesson-card">
     <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
     <div id="lesson-title" class="lesson-title">—</div>
@@ -133,30 +166,28 @@
     <div id="technique-text" class="technique-text hidden"></div>
   </div>
 
-  <!-- board -->
+  <!-- Board -->
   <div class="board-wrap">
     <div id="board" class="board"></div>
     <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
   </div>
 
-  <div id="status-line"></div>
+  <div id="status-text"></div>
 
-  <!-- verdict (shown after each lesson ends) -->
+  <!-- Verdict (shown after each lesson ends) -->
   <div id="verdict-card" class="verdict-card hidden">
     <div id="verdict-headline" class="verdict-headline"></div>
     <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
-    <button id="why-btn" class="why-btn">Why?</button>
-    <div id="why-output" class="why-output hidden"></div>
   </div>
 
-  <!-- controls -->
+  <!-- Controls -->
   <div class="controls-row" id="controls-row">
     <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
     <button id="prev-btn" class="ctrl-btn">← Prev</button>
     <button id="next-btn" class="ctrl-btn">Next →</button>
   </div>
 
-  <!-- lesson list -->
+  <!-- Lesson list -->
   <div class="lesson-list-card" id="lesson-list"></div>
 </div>
 
@@ -193,588 +224,7 @@
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
 
-<script type="module">
-// ── Error surface ──────────────────────────────────────────────────────────────
-function surfaceError(msg) {
-  var sl = document.getElementById('status-line');
-  if (sl) { sl.style.color = 'var(--bad)'; sl.style.fontStyle = 'normal'; sl.textContent = msg; }
-}
-window.addEventListener('error', (e) => surfaceError('JS error: ' + e.message));
-window.addEventListener('unhandledrejection', (e) => surfaceError('Error: ' + e.reason));
-
-// ── Imports from js/puzzle/ ────────────────────────────────────────────────────
-// Chess.js: game logic, legal-move generation, FEN parsing.
-// config.js: PIECE_IMG for Celtic piece set, board geometry constants.
-// engine.js: parseMultiPV + pvToSan + normalizeEval (pure UCI parsing utilities).
-//   NOTE — engine.js transitively imports dom.js (safe: only exports functions +
-//   registers the nav-drawer handlers at module level, both of which work fine
-//   here). state.js/gate.js/board.js are also imported transitively; all
-//   module-level code in that chain is function definitions + const declarations
-//   with no problematic DOM side effects.
-import { Chess } from './js/puzzle/lib.js';
-import { PIECE_IMG, PIECE_GLYPH, FILES_STD, RANKS_STD, FILES_FLIP, RANKS_FLIP } from './js/puzzle/config.js';
-import { parseMultiPV, pvToSan, normalizeEval } from './js/puzzle/engine.js';
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-const SF_URL = '/engine/stockfish-17.1-lite-single-03e3232.js';
-const STORAGE_KEY = 'chess-coach-endgames-v1';
-const SF_DEPTH = 20;             // full-strength depth for opponent moves + eval
-const WIN_PASS_CP   =  150;      // trainee eval must stay ≥ +1.5 pawns
-const WIN_FAIL_CP   =   50;      // dropping below +0.5 consecutive = losing the win
-const DRAW_PASS_CP  = -150;      // trainee eval must stay > −1.5 pawns
-const DECISIVE_CP   =  600;      // ≥ +6 = win secured for win-lessons
-const MAX_TRAINEE_MOVES = 20;    // cap lesson at 20 trainee moves
-const FAIL_CONSECUTIVE = 2;      // N consecutive below-threshold moves = fail
-
-// ── State ─────────────────────────────────────────────────────────────────────
-const eg = {
-  lessons: [],
-  idx: 0,
-  chess: null,
-  orientation: null,       // { files, ranks }
-  traineeColor: 'w',
-  usedTechnique: false,    // true if "Show technique" tapped this attempt
-  evalHistory: [],         // traineeEval after each trainee move (cp, from trainee PoV)
-  consecutiveFails: 0,     // consecutive moves below fail threshold
-  failMoveNum: null,       // trainee move number when fail was first detected
-  phase: 'idle',           // 'idle'|'loading'|'playing'|'thinking'|'done'
-  traineeMovesPlayed: 0,
-  selectedSquare: null,
-  legalMovesFromSelected: [],
-  lastMove: null,          // { from, to }
-  storage: {},             // persisted mastery data  (chess-coach-endgames-v1)
-  sfWorker: null,
-  sfReady: false,
-  verdict: null,           // 'pass'|'fail'|null
-};
-
-// ── Storage helpers ───────────────────────────────────────────────────────────
-function loadStorage() {
-  try { eg.storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch { eg.storage = {}; }
-}
-function saveStorage() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(eg.storage)); } catch {}
-}
-function getEntry(id) {
-  return eg.storage[id] || { attempts: 0, cleanInARow: 0, mastered: false, lastResult: null, lastAt: null };
-}
-function saveResult(id, passed, clean) {
-  const e = getEntry(id);
-  e.attempts++;
-  e.lastResult = passed ? 'pass' : 'fail';
-  e.lastAt = Date.now();
-  if (passed && clean) {
-    e.cleanInARow = (e.cleanInARow || 0) + 1;
-    if (e.cleanInARow >= 2) e.mastered = true;
-  } else {
-    e.cleanInARow = 0;
-  }
-  eg.storage[id] = e;
-  saveStorage();
-}
-
-// ── Stockfish ─────────────────────────────────────────────────────────────────
-function sfSend(msg) { eg.sfWorker.postMessage(msg); }
-
-function sfWaitForEG(matcher, timeoutMs = 30000) {
-  return new Promise((resolve, reject) => {
-    const buf = [];
-    const t = setTimeout(() => {
-      eg.sfWorker.removeEventListener('message', handler);
-      reject(new Error('SF timeout waiting for: ' + matcher));
-    }, timeoutMs);
-    function handler(e) {
-      const msg = typeof e.data === 'string' ? e.data : '';
-      buf.push(msg);
-      if (msg.includes(matcher)) {
-        clearTimeout(t);
-        eg.sfWorker.removeEventListener('message', handler);
-        resolve({ matched: msg, all: buf });
-      }
-    }
-    eg.sfWorker.addEventListener('message', handler);
-  });
-}
-
-async function initSF() {
-  setStatus('Loading engine…');
-  eg.sfWorker = new Worker(SF_URL);
-  eg.sfWorker.postMessage('uci');
-  await sfWaitForEG('uciok');
-  eg.sfWorker.postMessage('setoption name MultiPV value 1');
-  eg.sfWorker.postMessage('isready');
-  await sfWaitForEG('readyok', 15000);
-  eg.sfReady = true;
-  setStatus('');
-}
-
-// Returns { eval: {cp|mate}, pvUci: [uci,...], pvSan: [san,...] } or null.
-async function analyzeEG(fen) {
-  sfSend('ucinewgame');
-  sfSend('position fen ' + fen);
-  sfSend('go depth ' + SF_DEPTH);
-  const { all } = await sfWaitForEG('bestmove');
-  const lines = parseMultiPV(all, 1);
-  if (!lines.length) return null;
-  const l = lines[0];
-  const san = pvToSan(fen, l.pvMoves);
-  return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves, pvSan: san };
-}
-
-// ── Board rendering ───────────────────────────────────────────────────────────
-function renderBoardEG() {
-  const boardEl = document.getElementById('board');
-  if (!eg.chess || !eg.orientation) { boardEl.replaceChildren(); return; }
-  const { files, ranks } = eg.orientation;
-  const locked = (eg.phase !== 'playing');
-  const board = eg.chess.board();
-  const frag = document.createDocumentFragment();
-  for (let r = 0; r < 8; r++) {
-    for (let f = 0; f < 8; f++) {
-      const square = files[f] + ranks[r];
-      const stdRank = RANKS_STD.indexOf(ranks[r]);
-      const stdFile = FILES_STD.indexOf(files[f]);
-      const piece = board[stdRank][stdFile];
-      const sq = document.createElement('div');
-      sq.className = 'square ' + ((stdRank + stdFile) % 2 === 0 ? 'light' : 'dark');
-      if (locked) sq.classList.add('locked');
-      if (eg.selectedSquare === square) sq.classList.add('selected');
-      if (eg.lastMove && (eg.lastMove.from === square || eg.lastMove.to === square)) sq.classList.add('last-move');
-      sq.dataset.square = square;
-      if (r === 7) { const lbl = document.createElement('span'); lbl.className = 'coord file'; lbl.textContent = files[f]; sq.appendChild(lbl); }
-      if (f === 0) { const lbl = document.createElement('span'); lbl.className = 'coord rank'; lbl.textContent = ranks[r]; sq.appendChild(lbl); }
-      if (piece) {
-        const img = document.createElement('img');
-        img.className = 'pc-img';
-        img.src = PIECE_IMG(piece.color, piece.type);
-        img.alt = PIECE_GLYPH[piece.type] || (piece.color + piece.type);
-        img.draggable = false;
-        sq.appendChild(img);
-      }
-      // Legal-move markers
-      const move = eg.legalMovesFromSelected.find((m) => m.to === square);
-      if (move) {
-        const isCapture = move.flags.includes('c') || move.flags.includes('e');
-        const marker = document.createElement('span');
-        marker.className = isCapture ? 'legal-ring' : 'legal-dot';
-        sq.appendChild(marker);
-      }
-      frag.appendChild(sq);
-    }
-  }
-  boardEl.replaceChildren(frag);
-  boardEl.addEventListener('click', onBoardClick, { once: true });
-  // Re-attach click after each render via delegation
-  boardEl.onclick = onBoardClick;
-}
-
-function onBoardClick(e) {
-  if (eg.phase !== 'playing') return;
-  const sq = e.target.closest('.square');
-  if (!sq) return;
-  const square = sq.dataset.square;
-  if (!square) return;
-  onSquareTap(square);
-}
-
-function onSquareTap(square) {
-  if (eg.phase !== 'playing' || !eg.sfReady) return;
-  if (!eg.selectedSquare) {
-    const piece = eg.chess.get(square);
-    if (!piece || piece.color !== eg.chess.turn()) return;
-    eg.selectedSquare = square;
-    eg.legalMovesFromSelected = eg.chess.moves({ square, verbose: true });
-    renderBoardEG();
-    return;
-  }
-  if (square === eg.selectedSquare) {
-    eg.selectedSquare = null; eg.legalMovesFromSelected = []; renderBoardEG(); return;
-  }
-  const here = eg.chess.get(square);
-  if (here && here.color === eg.chess.turn()) {
-    eg.selectedSquare = square;
-    eg.legalMovesFromSelected = eg.chess.moves({ square, verbose: true });
-    renderBoardEG();
-    return;
-  }
-  const move = eg.legalMovesFromSelected.find((m) => m.to === square);
-  if (move) {
-    // Handle promotion — auto-promote to queen
-    const m = eg.chess.move({ from: move.from, to: move.to, promotion: 'q' });
-    if (m) {
-      eg.selectedSquare = null; eg.legalMovesFromSelected = [];
-      eg.lastMove = { from: m.from, to: m.to };
-      eg.phase = 'thinking';
-      renderBoardEG();
-      handleTraineeMove();
-    }
-  }
-}
-
-// ── Eval-trajectory grading ───────────────────────────────────────────────────
-// After the trainee's move, Stockfish analyzes from the OPPONENT'S perspective
-// (opponent is now to move). traineeEval = -normalizeEval(line.eval).
-// Positive = trainee is ahead, negative = trainee is losing.
-function traineeEvalFromLine(line) {
-  return -normalizeEval(line.eval);
-}
-
-// Check thresholds. Returns 'pass', 'fail', or null (continue).
-function checkThreshold(lesson, evalCp) {
-  if (lesson.result === 'win') {
-    if (evalCp < WIN_FAIL_CP) {
-      eg.consecutiveFails++;
-      if (eg.consecutiveFails >= FAIL_CONSECUTIVE) {
-        if (!eg.failMoveNum) eg.failMoveNum = eg.traineeMovesPlayed;
-        return 'fail';
-      }
-    } else {
-      eg.consecutiveFails = 0;
-    }
-    // Win secured: decisive eval or mate delivered
-    if (evalCp >= DECISIVE_CP) return 'pass';
-  } else { // draw
-    if (evalCp < DRAW_PASS_CP) {
-      eg.consecutiveFails++;
-      if (eg.consecutiveFails >= FAIL_CONSECUTIVE) {
-        if (!eg.failMoveNum) eg.failMoveNum = eg.traineeMovesPlayed;
-        return 'fail';
-      }
-    } else {
-      eg.consecutiveFails = 0;
-    }
-  }
-  return null;
-}
-
-// ── Main move handler ─────────────────────────────────────────────────────────
-async function handleTraineeMove() {
-  eg.traineeMovesPlayed++;
-  const lesson = eg.lessons[eg.idx];
-  setStatus('Thinking…');
-
-  // Analyse after trainee's move
-  let line = await analyzeEG(eg.chess.fen());
-  if (!line) { setStatus('Engine error — retry'); eg.phase = 'playing'; return; }
-
-  const evalCp = traineeEvalFromLine(line);
-  eg.evalHistory.push(evalCp);
-
-  // Check for game over (checkmate / stalemate / draw by rule) after trainee's move
-  if (eg.chess.isGameOver()) {
-    if (eg.chess.isCheckmate()) {
-      // Trainee delivered checkmate
-      showVerdict(lesson, 'pass', 'Checkmate — clean finish.', true);
-    } else {
-      // Stalemate or draw — bad for win lessons, pass for draw lessons
-      const isDrawLesson = lesson.result === 'draw';
-      showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
-        isDrawLesson ? 'Draw secured.' : 'Stalemate or draw — win slipped.', isDrawLesson);
-    }
-    return;
-  }
-
-  // Check thresholds after trainee's move
-  const verdict = checkThreshold(lesson, evalCp);
-  if (verdict) { showVerdict(lesson, verdict, verdictDetail(lesson, verdict), verdict === 'pass'); return; }
-
-  // Check draw by continuation count
-  if (lesson.result === 'draw' && eg.traineeMovesPlayed >= MAX_TRAINEE_MOVES) {
-    showVerdict(lesson, 'pass', 'Held for ' + eg.traineeMovesPlayed + ' moves under engine pressure — draw secured.', true);
-    return;
-  }
-
-  // Cap
-  if (eg.traineeMovesPlayed >= MAX_TRAINEE_MOVES) {
-    const finalPass = lesson.result === 'win' ? evalCp >= WIN_PASS_CP : evalCp >= DRAW_PASS_CP;
-    showVerdict(lesson, finalPass ? 'pass' : 'fail', verdictDetail(lesson, finalPass ? 'pass' : 'fail'), finalPass);
-    return;
-  }
-
-  // Play engine's response (line[0] pvUci[0])
-  const engineUci = line.pvUci && line.pvUci[0];
-  if (!engineUci) { setStatus('Engine has no move — position resolved.'); showVerdict(lesson, 'pass', 'Position resolved.', true); return; }
-
-  const from = engineUci.slice(0, 2);
-  const to   = engineUci.slice(2, 4);
-  const prom = engineUci.slice(4, 5) || undefined;
-  const em = eg.chess.move({ from, to, promotion: prom });
-  if (!em) { setStatus('Engine move error.'); eg.phase = 'playing'; return; }
-  eg.lastMove = { from: em.from, to: em.to };
-
-  // Check game over after engine's move
-  if (eg.chess.isGameOver()) {
-    if (eg.chess.isCheckmate()) {
-      // Engine checkmated trainee
-      showVerdict(lesson, 'fail', lesson.result === 'draw'
-        ? 'Checkmated — draw lost.'
-        : 'Checkmated — win turned into a loss.', false);
-    } else {
-      // Stalemate after engine move — draw
-      const isDrawLesson = lesson.result === 'draw';
-      showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
-        isDrawLesson ? 'Draw secured.' : 'Stalemate — win escaped.', isDrawLesson);
-    }
-    return;
-  }
-
-  // Also analyze after engine's move to get a fresh trainee eval (from white's PoV now)
-  // Actually the engine's response eval is now from trainee's perspective directly
-  line = await analyzeEG(eg.chess.fen());
-  if (line) {
-    // After engine's move, it's trainee's turn; eval is from trainee's PoV directly
-    const afterEngineEval = normalizeEval(line.eval);
-    eg.evalHistory.push(afterEngineEval);
-  }
-
-  eg.phase = 'playing';
-  renderBoardEG();
-  setStatus('');
-}
-
-function verdictDetail(lesson, verdict) {
-  if (verdict === 'pass') {
-    return lesson.result === 'win' ? 'Won it — clean conversion.' : 'Drew it — held under pressure.';
-  }
-  if (eg.failMoveNum) return 'Lost the win at move ' + eg.failMoveNum + '.';
-  return lesson.result === 'win' ? 'Win slipped — eval dropped too low.' : 'Draw lost — position became too bad.';
-}
-
-// ── Verdict + mastery ─────────────────────────────────────────────────────────
-function showVerdict(lesson, verdict, detail, passed) {
-  eg.phase = 'done';
-  eg.verdict = verdict;
-  const clean = passed && !eg.usedTechnique;
-  saveResult(lesson.id, passed, clean);
-
-  document.getElementById('verdict-card').classList.remove('hidden');
-  const hl = document.getElementById('verdict-headline');
-  hl.className = 'verdict-headline ' + verdict;
-  hl.textContent = passed ? '✓ ' + verdictHeadline(lesson, true) : '✗ ' + verdictHeadline(lesson, false);
-  document.getElementById('verdict-detail').textContent = detail
-    + (clean ? ' Clean — counts toward mastery.' : passed && eg.usedTechnique ? ' Passed (technique shown — not clean).' : '');
-  document.getElementById('why-btn').disabled = false;
-  document.getElementById('retry-btn').disabled = false;
-  renderBoardEG();
-  updateLessonList();
-  setStatus('');
-}
-
-function verdictHeadline(lesson, passed) {
-  if (passed) return lesson.result === 'win' ? 'Won it.' : 'Drew it.';
-  return lesson.result === 'win' ? 'Win slipped.' : 'Draw lost.';
-}
-
-// ── "Why?" LLM call ───────────────────────────────────────────────────────────
-// §12 note: the trainee has already played the position; no spoiler risk here.
-// We deliberately exclude engine eval numbers and next-move suggestions — the
-// explanation stays conceptual, grounded in keyIdea + verdict only.
-async function handleWhy() {
-  const lesson = eg.lessons[eg.idx];
-  const btn = document.getElementById('why-btn');
-  const out = document.getElementById('why-output');
-  btn.disabled = true;
-  btn.textContent = 'Thinking…';
-  out.classList.add('hidden');
-  const SYS = [
-    'You are a chess coach explaining an endgame concept. The student just finished a drill.',
-    'Explain WHY this result happened, using the key idea as the anchor.',
-    'HARD RULES:',
-    '- Do NOT mention specific moves, squares, piece names, or eval numbers.',
-    '- Do NOT suggest what the student should play next.',
-    '- Focus on the principle and pattern, not the concrete moves.',
-    '- 2-3 sentences maximum.',
-    '- Plain language for a ~950-1500 rated player.',
-  ].join('\n');
-  const userMsg = [
-    'Lesson: ' + lesson.title,
-    'Key idea: ' + lesson.keyIdea,
-    'Result: ' + (eg.verdict === 'pass'
-      ? (lesson.result === 'win' ? 'Won it — clean conversion.' : 'Drew it — held under pressure.')
-      : (eg.failMoveNum ? 'Lost the win at move ' + eg.failMoveNum + '.' : 'Draw lost.')),
-  ].join('\n');
-  try {
-    const resp = await fetch('/api/coach', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 200, system: SYS, messages: [{ role: 'user', content: userMsg }] }),
-    });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const text = (data.content && data.content[0] && data.content[0].text) || '(no explanation)';
-    out.textContent = text.trim();
-    out.classList.remove('hidden');
-    btn.textContent = 'Got it';
-  } catch (err) {
-    out.textContent = 'Could not load explanation: ' + err.message;
-    out.classList.remove('hidden');
-    btn.textContent = 'Why?';
-    btn.disabled = false;
-  }
-}
-
-// ── Lesson loading ────────────────────────────────────────────────────────────
-function loadLesson(idx) {
-  if (!eg.lessons.length) return;
-  eg.idx = Math.max(0, Math.min(idx, eg.lessons.length - 1));
-  const lesson = eg.lessons[eg.idx];
-
-  // Reset attempt state
-  eg.chess = new Chess(lesson.fen);
-  eg.traineeColor = lesson.sideToMove;
-  eg.orientation = lesson.sideToMove === 'w'
-    ? { files: FILES_STD, ranks: RANKS_STD }
-    : { files: FILES_FLIP, ranks: RANKS_FLIP };
-  eg.usedTechnique = false;
-  eg.evalHistory = [];
-  eg.consecutiveFails = 0;
-  eg.failMoveNum = null;
-  eg.verdict = null;
-  eg.phase = 'playing';
-  eg.traineeMovesPlayed = 0;
-  eg.selectedSquare = null;
-  eg.legalMovesFromSelected = [];
-  eg.lastMove = null;
-
-  // Update lesson header
-  document.getElementById('lesson-group-badge').textContent = lesson.group;
-  document.getElementById('lesson-title').textContent = lesson.title;
-  const stmLabel = (lesson.sideToMove === 'w' ? 'White' : 'Black') + ' to move · '
-    + (lesson.result === 'win' ? 'Win' : 'Hold the draw');
-  document.getElementById('lesson-stm').textContent = stmLabel;
-  const advBadge = document.getElementById('advanced-badge');
-  lesson.advanced ? advBadge.classList.remove('hidden') : advBadge.classList.add('hidden');
-
-  // Reset technique
-  const techText = document.getElementById('technique-text');
-  techText.classList.add('hidden');
-  techText.textContent = '';
-  document.getElementById('show-technique-btn').textContent = 'Show technique';
-
-  // Hide verdict
-  document.getElementById('verdict-card').classList.add('hidden');
-  document.getElementById('why-output').classList.add('hidden');
-  document.getElementById('why-btn').textContent = 'Why?';
-  document.getElementById('why-btn').disabled = false;
-  document.getElementById('retry-btn').disabled = true;
-
-  renderBoardEG();
-  setStatus(eg.sfReady ? '' : 'Loading engine…');
-  updateLessonList();
-}
-
-// ── Lesson list ───────────────────────────────────────────────────────────────
-function updateLessonList() {
-  const container = document.getElementById('lesson-list');
-  // Group lessons
-  const groups = {};
-  for (const l of eg.lessons) {
-    if (!groups[l.group]) groups[l.group] = [];
-    groups[l.group].push(l);
-  }
-  container.innerHTML = '';
-  const hdr = document.createElement('div');
-  hdr.className = 'lesson-list-header';
-  hdr.textContent = 'All lessons';
-  container.appendChild(hdr);
-  for (const [grpName, items] of Object.entries(groups)) {
-    const grpEl = document.createElement('div');
-    grpEl.className = 'lesson-list-group';
-    const grpLbl = document.createElement('div');
-    grpLbl.className = 'lesson-list-group-label';
-    grpLbl.textContent = grpName;
-    grpEl.appendChild(grpLbl);
-    for (const l of items) {
-      const e = getEntry(l.id);
-      const item = document.createElement('div');
-      item.className = 'lesson-list-item' + (eg.lessons[eg.idx] && eg.lessons[eg.idx].id === l.id ? ' active' : '');
-      item.addEventListener('click', () => loadLesson(eg.lessons.indexOf(l)));
-      const name = document.createElement('div');
-      name.className = 'lesson-list-name';
-      name.textContent = l.title;
-      const pips = document.createElement('div');
-      pips.className = 'mastery-pips';
-      // 2 pips; filled = clean passes; gold = mastered
-      for (let i = 0; i < 2; i++) {
-        const pip = document.createElement('span');
-        pip.className = 'pip'
-          + (e.mastered ? ' mastered' : (e.cleanInARow > i ? ' filled' : ''));
-        pips.appendChild(pip);
-      }
-      const res = document.createElement('div');
-      res.className = 'lesson-list-result';
-      res.textContent = e.mastered ? '★ Mastered' : (e.lastResult ? (e.lastResult === 'pass' ? '✓ Pass' : '✗ Fail') : '');
-      item.appendChild(name);
-      item.appendChild(pips);
-      item.appendChild(res);
-      grpEl.appendChild(item);
-    }
-    container.appendChild(grpEl);
-  }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function setStatus(text) {
-  const el = document.getElementById('status-line');
-  if (!el) return;
-  el.style.color = '';
-  el.style.fontStyle = text ? 'italic' : '';
-  el.textContent = text;
-}
-
-// ── Wiring ────────────────────────────────────────────────────────────────────
-document.getElementById('show-technique-btn').addEventListener('click', () => {
-  const techText = document.getElementById('technique-text');
-  const lesson = eg.lessons[eg.idx];
-  if (!lesson) return;
-  if (techText.classList.contains('hidden')) {
-    techText.textContent = lesson.keyIdea;
-    techText.classList.remove('hidden');
-    document.getElementById('show-technique-btn').textContent = 'Hide technique';
-    eg.usedTechnique = true;
-  } else {
-    techText.classList.add('hidden');
-    document.getElementById('show-technique-btn').textContent = 'Show technique';
-  }
-});
-
-document.getElementById('retry-btn').addEventListener('click', () => {
-  if (eg.lessons[eg.idx]) loadLesson(eg.idx);
-});
-
-document.getElementById('prev-btn').addEventListener('click', () => {
-  if (eg.idx > 0) loadLesson(eg.idx - 1);
-});
-
-document.getElementById('next-btn').addEventListener('click', () => {
-  if (eg.idx < eg.lessons.length - 1) loadLesson(eg.idx + 1);
-});
-
-document.getElementById('why-btn').addEventListener('click', handleWhy);
-
-// ── Initialisation ────────────────────────────────────────────────────────────
-async function init() {
-  loadStorage();
-  setStatus('Loading lessons…');
-  try {
-    const resp = await fetch('/data/endgames.json');
-    const data = await resp.json();
-    eg.lessons = data.lessons || [];
-  } catch (err) {
-    surfaceError('Failed to load lessons: ' + err.message);
-    return;
-  }
-  if (!eg.lessons.length) { surfaceError('No lessons found in endgames.json'); return; }
-  loadLesson(0);
-  try {
-    await initSF();
-    setStatus('');
-    renderBoardEG();
-  } catch (err) {
-    surfaceError('Engine failed: ' + err.message);
-  }
-}
-
-init();
-</script>
+<script type="module" src="/js/puzzle/boot.js"></script>
+<script type="module" src="/js/puzzle/playout.js"></script>
 </body>
 </html>
