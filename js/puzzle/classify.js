@@ -250,6 +250,7 @@ async function handlePlayOutMove() {
     return;
   }
 
+  cl.phase = 'playout';
   renderBoard(true);
   setStatus('');
 }

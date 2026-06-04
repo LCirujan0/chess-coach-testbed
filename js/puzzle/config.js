@@ -146,7 +146,7 @@ export const PLAYOUT_DEPTH         = 9;
 export const PLAYOUT_MOVE_CAP      = 50;
 export const PLAYOUT_WIN_FAIL_CP   = -50;   // trainee eval below this → consecutive fail
 export const PLAYOUT_WIN_PASS_CP   = 100;   // eval at move cap = pass for win lessons
-export const PLAYOUT_DECISIVE_CP   = 500;   // eval above this = decisive win → pass early
+export const PLAYOUT_DECISIVE_CP = 9999;   // only early-pass on forced-mate (normalizeEval mate=10000); 500 fired on move 1 in any winning endgame
 export const PLAYOUT_FAIL_CONSECUTIVE = 2;  // consecutive bad evals → fail
 export const PLAYOUT_DRAW_PASS_CP  = -150;  // for draw lessons at cap: still holding = pass
 export const STORAGE_KEY_TAGS      = 'chess-coach-tags-v1';
