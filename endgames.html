@@ -401,7 +401,11 @@ async function analyzeEG(fen) {
   const lines = parseMultiPV(all, 1);
   if (!lines.length) return null;
   const l = lines[0];
-  return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves };
+  // Stockfish reports score from the SIDE-TO-MOVE's point of view. Capture the
+  // side to move of the analysed FEN so callers can convert to an absolute
+  // (white) perspective rather than guessing the turn from call-site position.
+  const stm = (fen.split(' ')[1] === 'b') ? 'b' : 'w';
+  return { eval: l.scoreType === 'mate' ? { mate: l.scoreVal } : { cp: l.scoreVal }, pvUci: l.pvMoves, stm };
 }
 
 // ── Eval bar ────────────────────────────────────────────────────────────────────
@@ -428,6 +432,18 @@ function evalLabelFor(whiteCp, mate) {
 function whiteCpFromTrainee(evalObj) {
   const traineeCp = normalizeEval(evalObj);
   return eg.traineeColor === 'w' ? traineeCp : -traineeCp;
+}
+// Convert an engine eval (reported from the SIDE-TO-MOVE's PoV) into an
+// absolute WHITE-perspective centipawn value, using the side to move of the
+// analysed FEN. Positive => white is better. Mate scores are normalised to
+// +/-10000 by normalizeEval first, then sign-flipped the same way.
+function whiteCpFromEngine(evalObj, stm) {
+  const stmCp = normalizeEval(evalObj);
+  return stm === 'w' ? stmCp : -stmCp;
+}
+// Map a white-absolute centipawn value to the trainee's point of view.
+function traineeCpFromWhite(whiteCp) {
+  return eg.traineeColor === 'w' ? whiteCp : -whiteCp;
 }
 
 // ── Classification (trainee point of view) ──────────────────────────────────────
@@ -541,14 +557,19 @@ async function handleTraineeMove() {
   if (!ready) { eg.phase = 'playing'; renderBoardEG(); return; }
   setStatus('Thinking…');
 
-  // 1) Evaluate the position AFTER the trainee's move. The engine is to move
-  //    (opponent's turn), so the score is from the OPPONENT's PoV; negate it to
-  //    get the trainee's PoV.
+  // 1) Evaluate the position AFTER the trainee's move. The engine is to move,
+  //    so the raw score is from the opponent's PoV. We convert via white-
+  //    absolute (see below) instead of a hard-coded negate.
   let line = await analyzeEG(eg.chess.fen());
   if (!line) { setStatus('Engine error, tap Retry'); eg.phase = 'playing'; renderBoardEG(); return; }
-  const traineeCp = -normalizeEval(line.eval);
+  // Engine score is from the side-to-move of the analysed FEN. Convert to an
+  // absolute WHITE perspective first, then map to the trainee. This is robust
+  // whoever is to move (after the trainee moves it is the opponent's turn, so a
+  // winning white position comes back negative from black's PoV).
+  let whiteCp = whiteCpFromEngine(line.eval, line.stm);
+  let traineeCp = traineeCpFromWhite(whiteCp);
   recordEval(traineeCp);
-  setEvalBar(whiteCpFromTrainee({ cp: traineeCp }), evalLabelFor(eg.traineeColor === 'w' ? traineeCp : -traineeCp));
+  setEvalBar(whiteCp, evalLabelFor(whiteCp, line.eval && line.eval.mate));
 
   // 2) Spoil / success check from the trainee's PoV.
   const stop = evaluateStop(lesson, traineeCp);
@@ -564,13 +585,14 @@ async function handleTraineeMove() {
   // Engine's move may end the game.
   if (eg.chess.isGameOver()) { renderBoardEG(); resolveGameOver(lesson, 'engine'); return; }
 
-  // 4) Refresh the eval/bar now that it's the trainee's turn again (score is
-  //    already from the trainee's PoV here).
+  // 4) Refresh the eval/bar now that it's the trainee's turn again. We still
+  //    convert via white-absolute so the perspective is derived from the FEN,
+  //    not assumed from the call site.
   line = await analyzeEG(eg.chess.fen());
   if (line) {
-    const cpNow = normalizeEval(line.eval);
-    eg.lastEvalCp = cpNow;
-    setEvalBar(whiteCpFromTrainee({ cp: cpNow }), evalLabelFor(eg.traineeColor === 'w' ? cpNow : -cpNow));
+    const whiteCpNow = whiteCpFromEngine(line.eval, line.stm);
+    eg.lastEvalCp = traineeCpFromWhite(whiteCpNow);
+    setEvalBar(whiteCpNow, evalLabelFor(whiteCpNow, line.eval && line.eval.mate));
   }
 
   // 5) Continue free play unless we've hit a sensible stop.
@@ -891,10 +913,11 @@ async function init() {
     try {
       const line = await analyzeEG(startFen);
       if (line && eg.chess && eg.chess.fen() === startFen && eg.traineeMovesPlayed === movesAtStart) {
-        const traineeCp = normalizeEval(line.eval);   // side-to-move = trainee at start
-        eg.lastEvalCp = traineeCp;
+        // Convert from the analysed FEN's side-to-move into white-absolute, then map to trainee.
+        const whiteCpStart = whiteCpFromEngine(line.eval, line.stm);
+        eg.lastEvalCp = traineeCpFromWhite(whiteCpStart);
         const mate = line.eval && line.eval.mate;
-        setEvalBar(whiteCpFromTrainee({ cp: traineeCp }), evalLabelFor(eg.traineeColor === 'w' ? traineeCp : -traineeCp, mate));
+        setEvalBar(whiteCpStart, evalLabelFor(whiteCpStart, mate));
       }
     } catch (_) { /* leave the neutral bar; play is unaffected */ }
   });
