@@ -172,162 +172,75 @@
 </head>
 <body>
 <div class="container">
-  <div class="header-bar">
-    <img src="/brand-icons/knight-mark.png" width="24" height="24" alt="KnightPath" class="header-brand-mark">
-    <span class="page-title">Roadmap</span>
-  </div>
-
-  <div class="eyebrow">The work toward 1500</div>
+  <div class="eyebrow">Where KnightPath is headed</div>
   <h1>Roadmap</h1>
-  <p class="lede">Five user journeys ordered by what closes the daily training loop first. Each loop has steps that already happened, are happening, or come next. The full per-feature spec list still lives in <code>docs/super-app-roadmap.md</code> + <code>engineering/handoffs.md</code>; this page is the human one.</p>
+  <p class="lede">KnightPath turns your own games into a daily training habit: it finds your real mistakes, sets them as puzzles, and coaches you through them without giving the answer away. Here is what works today, what we are building, and what is coming.</p>
 
   <div class="shipped-strip">
-    <span class="key">Foundation in place</span>
+    <span class="key">Working today</span>
     <ul>
-      <li>Core puzzle loop: ingest Chess.com games → Stockfish-grounded mistakes → no-spoiler coach with reveal-mode after 3 fails (v0.1 + v0.10–v0.12)</li>
-      <li>Coach calibrated to your live Chess.com rapid rating (v0.10 — Engineering Spec 01)</li>
-      <li>Daylight visual system, 5-surface nav, mobile + desktop layouts (v0.2)</li>
-      <li>Insights surface with rating trajectory, component tiers, per-theme breakdown, mistake heatmap (v0.3 — Engineering Spec 04)</li>
+      <li>Bring in your Chess.com games and turn your real mistakes into puzzles to solve</li>
+      <li>A coach that guides you toward the move without spoiling the answer</li>
+      <li>One consistent training screen for every kind of exercise</li>
+      <li>Progress insights: your strengths and weak spots, an estimated rating, and a practice heatmap</li>
+      <li>A daily session to work through</li>
     </ul>
   </div>
 
-  <!-- US-16 (v0.55a) — the active delivery backlog. The Loops below are the
-       strategic arc; these Runs are the concrete near-term work currently in
-       flight, kept in step with docs/backlog.md. -->
+  <div class="loop">
+    <div class="loop-head">
+      <span class="loop-num">Live now</span>
+      <span class="loop-title">Train on your own games, with a coach by your side</span>
+      <span class="loop-pill">Available</span>
+    </div>
+    <div class="loop-why">Everything you need to practise is already here. KnightPath learns from the games you actually play and turns them into focused practice.</div>
+    <ul class="loop-steps">
+      <li class="done"><span class="step-mark">✓</span><div>Bring in your Chess.com games and turn your real mistakes into puzzles, so you practise the positions you actually got wrong.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>A coach that nudges you toward the right idea with questions and hints, and never just hands you the move.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>One consistent training screen for every exercise type — mistake puzzles, playing an endgame out against the computer, and judging whether a position is winning, drawn or losing.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Progress insights that show where you are strong and where you leak points by phase of the game, plus an estimated rating and a heatmap of your practice.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>A daily session, so there is always something to work through.</div></li>
+    </ul>
+  </div>
+
   <div class="loop now">
     <div class="loop-head">
-      <span class="loop-num">Run 1</span>
-      <span class="loop-title">Canonical training screen + session wrapper</span>
+      <span class="loop-num">Building now</span>
+      <span class="loop-title">A daily session that flows from one exercise to the next</span>
       <span class="loop-pill">In progress</span>
     </div>
-    <div class="loop-why">One shared training screen (<code>css/screen.css</code>) for puzzles, endgames and recognition, plus a persistent in-session wrapper so Today block progress stays visible wherever a block deep-links.</div>
+    <div class="loop-why">Right now your daily practice can feel like separate stops. We are stitching it into a single, smooth session that carries you from one exercise to the next.</div>
     <ul class="loop-steps">
-      <li class="done"><span class="step-mark">✓</span><div>Extract the puzzle layout into <code>css/screen.css</code>; endgames + recognition adopt it.<span class="step-meta">v0.55</span></div></li>
-      <li class="now"><span class="step-mark">→</span><div>Close the desktop regressions from the extraction (puzzle desktop nav, recognition board size + rail, session-wrapper direct-access chrome, puzzle feedback polish).<span class="step-meta">v0.55a · this run</span></div></li>
-      <li><span class="step-mark">·</span><div>Persistent in-session wrapper driven off the existing session plan; no new storage key.<span class="step-meta">js/session-wrap.js · shown only inside a Today block</span></div></li>
+      <li class="now"><span class="step-mark">→</span><div>One session that moves you through every kind of exercise in the same place, so you never have to jump between screens.</div></li>
+      <li class="now"><span class="step-mark">→</span><div>A progress bar that stays with you, with your results tracked as you go.</div></li>
     </ul>
   </div>
 
   <div class="loop next">
     <div class="loop-head">
-      <span class="loop-num">Run 2</span>
-      <span class="loop-title">Today driven by Insights</span>
+      <span class="loop-num">Coming next</span>
+      <span class="loop-title">Practice that targets your weak spots, guided by your coach</span>
       <span class="loop-pill">Next</span>
     </div>
-    <div class="loop-why">The daily session stops being a flat queue and becomes a diagnosis: target the weakest areas first, cover everything over time, and mix in previous days so nothing is dropped.</div>
+    <div class="loop-why">Once the daily session flows, we want it to be smarter about what it gives you — and the coach to play a bigger role in steering your practice.</div>
     <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Weakest-first ordering — Today pulls the blocks that target your lowest-signal components first.</div></li>
-      <li><span class="step-mark">·</span><div>Full coverage — every weak area is reached on a rolling basis, not just the single worst.</div></li>
-      <li><span class="step-mark">·</span><div>Previous-days mixing — unfinished or older items fold back into today's plan.</div></li>
-    </ul>
-  </div>
-
-  <div class="loop">
-    <div class="loop-head">
-      <span class="loop-num">Run 3</span>
-      <span class="loop-title">Close Loop 2 — coach as conductor</span>
-      <span class="loop-pill">Queued</span>
-    </div>
-    <div class="loop-why">Finish the conductor slice: the coach narrates your games, prescribes the next step, and recognition writes its results back into the diagnosis.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Post-game narration — walk an ingested game move-by-move with the coach naming the leaks.</div></li>
-      <li><span class="step-mark">·</span><div>Coach's pick — one ranked next-step on the Practice hub from the deterministic diagnosis.</div></li>
-      <li><span class="step-mark">·</span><div>Recognition write-back — recognition results feed the per-component signal.</div></li>
-    </ul>
-  </div>
-
-  <div class="loop">
-    <div class="loop-head">
-      <span class="loop-num">Also queued</span>
-      <span class="loop-title">Standalone items</span>
-      <span class="loop-pill">Queued</span>
-    </div>
-    <div class="loop-why">Discrete pieces that sit alongside the runs above.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Endgame technique — playable redesign (separate run).</div></li>
-      <li><span class="step-mark">·</span><div>Recognition feedback correctness — fix the verdict classification (separate run).</div></li>
-      <li><span class="step-mark">·</span><div>Chess.com rating extraction — robust pull of the live rapid rating.</div></li>
-      <li><span class="step-mark">·</span><div>type.css dedup — collapse per-page type rules into the shared <code>css/type.css</code>.</div></li>
-    </ul>
-  </div>
-
-  <div class="loop now">
-    <div class="loop-head">
-      <span class="loop-num">Loop 01</span>
-      <span class="loop-title">Close the daily training loop</span>
-      <span class="loop-pill">Now</span>
-    </div>
-    <div class="loop-why">Today the loop is <strong>ingest → solve → next puzzle</strong>. To make it sticky we need the loop to <strong>diagnose what you're weak at, target the puzzles, and let you see the lift</strong>. The Insights surface is in but its signal is approximate until two small captures + a motif classifier land.</div>
-    <ul class="loop-steps">
-      <li class="done"><span class="step-mark">✓</span><div>Insights surface live — rating + trajectory, component tiers, per-theme breakdown, mistake heatmap.<span class="step-meta">v1.0 · Spec 04 v1</span></div></li>
-      <li class="now"><span class="step-mark">→</span><div>Capture per-attempt component, mode, and gateCompleted at solve time.<span class="step-meta">Unlocks: high-fidelity component tiers · true thinking-streak · ~half-day · Spec 04 §"Required captures"</span></div></li>
-      <li><span class="step-mark">·</span><div>Motif tag every ingested mistake (fixed 17-tag vocabulary, one grounded Claude call each).<span class="step-meta">Unlocks: motif filter on Puzzles · "Drill this theme" 10-puzzle queue · the Insights "by motif" breakdown · ~1 day · Spec 02 · ~$0.0026/mistake</span></div></li>
-      <li><span class="step-mark">·</span><div>Persist a per-game scorecard at ingest (phase ACPL, eval trajectory, conversion, ECO).<span class="step-meta">Unlocks: real attribute scoring · the substrate everything else reads · ~half-day, ~0 extra engine cost · Spec 06</span></div></li>
-    </ul>
-  </div>
-
-  <div class="loop next">
-    <div class="loop-head">
-      <span class="loop-num">Loop 02</span>
-      <span class="loop-title">Coach as conductor</span>
-      <span class="loop-pill">Next</span>
-    </div>
-    <div class="loop-why">One coach reads your games, names what's leaking, prescribes a daily session, and re-aims as you improve. Deterministic ranking in code (zero tokens, auditable) + one small LLM call to narrate. Ships in two slices: the per-game story for Game Review, and the daily "Coach's pick" on the Practice hub.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Game Review surface — tap an ingested game, walk through it move-by-move with the coach narrating mistakes; "Drill this motif" CTA into Puzzles.<span class="step-meta">~2 days · Spec 05 game-narrative slice · depends on Loop 01 motif tags</span></div></li>
-      <li><span class="step-mark">·</span><div>Daily "Coach's pick" on the Practice hub — one ranked next-step from the deterministic diagnosis, narrated by the coach.<span class="step-meta">Spec 05 daily slice · design in design-explorations/practice-system.html</span></div></li>
-      <li><span class="step-mark">·</span><div>Re-aim as you improve — the ranking is pure recompute, so lifting one component automatically reorders the priorities.<span class="step-meta">No extra build; falls out of the conductor logic</span></div></li>
-    </ul>
-  </div>
-
-  <div class="loop">
-    <div class="loop-head">
-      <span class="loop-num">Loop 03</span>
-      <span class="loop-title">Deepen the four pillars</span>
-      <span class="loop-pill">Queued</span>
-    </div>
-    <div class="loop-why">Tactics already get real signal from your own games. The other three pillars — calculation, endgames, openings — need a curated source because your own games either avoid the topic (openings you don't play) or surface clean examples too rarely (endgames). Each pillar plugs into the one Themed Practice surface, not a side mode.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Endgame trainer — 30 curated positions (basic mates / pawn / rook / minor / mixed). Play vs Stockfish, mastery = 2 clean wins in a row.<span class="step-meta">~2 days · curriculum drafted in docs/chess-knowledge.md · dataset job next</span></div></li>
-      <li><span class="step-mark">·</span><div>Visualisation training (Mode B) — see → hide → list moves → question → replay. Six levels.<span class="step-meta">~1–2 days · the calculation pillar your own games can't reach</span></div></li>
-      <li><span class="step-mark">·</span><div>Vienna opening repertoire — top ~100 lines from Lichess Masters DB, drill mode + per-node SRS.<span class="step-meta">~2 days · external data acquisition is the long pole · stays research until item 5 ships</span></div></li>
-    </ul>
-  </div>
-
-  <div class="loop">
-    <div class="loop-head">
-      <span class="loop-num">Loop 04</span>
-      <span class="loop-title">Supply — promote when your own games run thin</span>
-      <span class="loop-pill">On demand</span>
-    </div>
-    <div class="loop-why">Your own-game puzzles are personalised but finite. When the queue starts repeating, you'll want supply that's rated and unlimited. The dataset is already prepared and waiting on the bench.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>10,500-puzzle Lichess pack (validated, balanced 14 motifs × 750, bundled, offline). Adds a "Mine | Lichess" source toggle, line-based grading, zero tokens per Lichess puzzle.<span class="step-meta">~1 day from cold · dataset at engineering/data/lichess-puzzles.json · Spec 03</span></div></li>
-    </ul>
-  </div>
-
-  <div class="loop">
-    <div class="loop-head">
-      <span class="loop-num">Loop 05</span>
-      <span class="loop-title">First impression — the 60-second aha</span>
-      <span class="loop-pill">Designed</span>
-    </div>
-    <div class="loop-why">If the app ever leaves the testbed, the first run matters more than any feature. Stream the coach's narration as it finds your mistakes; surface the cleanest, most teachable position first (not just the first one found); contrast reveal + "your three biggest leaks" → Start today's session.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Streaming onboarding from Chess.com username → first aha position in ~60s, with a coach typing indicator instead of a spinner.<span class="step-meta">Design ready in design-explorations/onboarding-aha.html · build when scope shifts toward public</span></div></li>
+      <li><span class="step-mark">·</span><div>A daily plan that aims at your specific weak spots first, while still keeping the rest of your game sharp.</div></li>
+      <li><span class="step-mark">·</span><div>The coach reviews a game and tells you how you played, with a one-tap "drill this" to practise any mistake it points out.</div></li>
+      <li><span class="step-mark">·</span><div>Your "winning, drawn or losing" results feed into your insights, so they shape what you practise next.</div></li>
     </ul>
   </div>
 
   <div class="loop parked">
     <div class="loop-head">
-      <span class="loop-num">Loop 06</span>
-      <span class="loop-title">Make it portable</span>
-      <span class="loop-pill">Parked</span>
+      <span class="loop-num">Later</span>
+      <span class="loop-title">Exploring</span>
+      <span class="loop-pill">Exploring</span>
     </div>
-    <div class="loop-why">Stays parked while it's a single-user app. The hinge: if we point this at anyone else, both items move up immediately because shared localStorage stops being acceptable.</div>
+    <div class="loop-why">Ideas we are interested in for further down the road. These are not scheduled yet.</div>
     <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Auth (Supabase) — email + password, JWT, per-user data in Postgres with RLS, localStorage → Postgres migration on first sign-in.<span class="step-meta">~3–5 days · required before sharing the URL</span></div></li>
-      <li><span class="step-mark">·</span><div>Persistent coach memory tied to user_id — top-3 next-things every 50 puzzles, surfaced on the Today screen.<span class="step-meta">~1 day once auth is in</span></div></li>
+      <li><span class="step-mark">·</span><div>Board-vision and visualisation training, to sharpen how far ahead you can calculate.</div></li>
+      <li><span class="step-mark">·</span><div>An openings trainer to build and rehearse a repertoire.</div></li>
+      <li><span class="step-mark">·</span><div>A bigger puzzle library for when your own games run thin.</div></li>
     </ul>
   </div>
 </div>
