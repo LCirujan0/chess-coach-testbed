@@ -23,8 +23,22 @@ import {
 } from './config.js';
 import { state } from './state.js';
 import { initStockfishWorker, analyzePositionFast, normalizeEval, orientationFor } from './engine.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
+import { onItemResolved } from './resolved.js';
 
 // ── Classify local state ───────────────────────────────────────────────────
+// Session mode: when launched from a Today session via
+// ?session=today&block=recognition, the recognition drill renders the
+// persistent session-wrap bar and routes every classify result through the
+// shared onItemResolved callback so attempt + result counting matches the
+// mistake type (Spec 21 — recognition folded into the one session host).
+const SESS = (() => {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    return p.get('session') === 'today' && p.get('block') === 'recognition';
+  } catch { return false; }
+})();
+
 const cl = {
   positions: [],       // recognition positions from state.puzzles
   idx: 0,
@@ -65,6 +79,22 @@ function recordResult(pos, correct) {
   }
   saveJson(STORAGE_KEY, storage);
   updateScorePill();
+
+  // Spec 21 — when running inside a Today session, route the result through the
+  // single onItemResolved callback so the persistent bar + session counts pick
+  // up this attempt and its outcome (the same path the mistake type uses). The
+  // callback writes the per-position `seen` marker into the recognition store
+  // and recomputes the block's done/correct.
+  if (SESS) {
+    onItemResolved({
+      type: 'recognition',
+      refId: pos.id || pos.fen,
+      outcome: correct ? 'correct' : 'incorrect',
+      accuracy: null,
+      clean: null,
+      chosen: null,
+    });
+  }
 }
 
 function updateScorePill() {
@@ -368,13 +398,15 @@ function onClassify(userVerdict) {
     }
   }
 
-  // Show next button
+  // Show next button. In a Today session the last item returns to the session
+  // screen (so the transition/summary beat fires); standalone wraps to the top.
   const nextArea = document.getElementById('next-area');
   if (nextArea) {
     const isLast = cl.idx >= cl.positions.length - 1;
-    nextArea.innerHTML = '<button class="btn primary" id="next-btn" style="margin-top:8px;">'
-      + (isLast ? 'Start over' : 'Next position →') + '</button>';
+    const label = isLast ? (SESS ? 'Finish block →' : 'Start over') : 'Next position →';
+    nextArea.innerHTML = '<button class="btn primary" id="next-btn" style="margin-top:8px;">' + label + '</button>';
     document.getElementById('next-btn').addEventListener('click', () => {
+      if (isLast && SESS) { window.location.href = '/session.html'; return; }
       loadPosition(isLast ? 0 : cl.idx + 1);
     });
   }
@@ -470,18 +502,18 @@ async function boot() {
   // Wait a tick for boot.js async puzzle load
   await new Promise((res) => setTimeout(res, 0));
 
-  // Load positions from state.puzzles (merged by Phase 1a)
-  cl.positions = state.puzzles.filter(
+  // Load the recognition pool from state.puzzles (merged by Phase 1a).
+  let pool = state.puzzles.filter(
     (p) => p && (p.puzzleType === 'recognition' || p.type === 'recognition')
   );
 
   // Fallback: direct fetch
-  if (!cl.positions.length) {
+  if (!pool.length) {
     try {
       const res = await fetch('/data/endgame-recognition.json');
       if (res.ok) {
         const data = await res.json();
-        cl.positions = (data && Array.isArray(data.positions)) ? data.positions : [];
+        pool = (data && Array.isArray(data.positions)) ? data.positions : [];
       }
     } catch (err) {
       const root = document.getElementById('board');
@@ -490,19 +522,41 @@ async function boot() {
     }
   }
 
-  if (!cl.positions.length) {
+  if (!pool.length) {
     setStatus('No recognition positions found.');
     return;
   }
 
-  // Shuffle
-  for (let i = cl.positions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cl.positions[i], cl.positions[j]] = [cl.positions[j], cl.positions[i]];
+  if (SESS) {
+    // Session mode — scope to this block's ids in plan order (the persistent
+    // bar counts these), and render the bar. The exit chip returns to the
+    // session screen so the wrapper stays consistent with the mistake type.
+    const blockIds = sessionBlockIds();
+    const byId = new Map(pool.map((x) => [x.id || x.fen, x]));
+    const scoped = blockIds.map((id) => byId.get(id)).filter(Boolean);
+    cl.positions = scoped.length ? scoped : pool;
+    refreshSessionWrap({ exitHref: '/session.html' });
+  } else {
+    // Standalone — full bank, shuffled.
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    cl.positions = pool;
   }
 
   updateScorePill();
   loadPosition(0);
+}
+
+// Read the recognition block's ids from the session plan (Spec 21 §1.1).
+function sessionBlockIds() {
+  try {
+    const plan = JSON.parse(localStorage.getItem('chess-coach-session-v1') || 'null');
+    if (!plan || !Array.isArray(plan.blocks)) return [];
+    const b = plan.blocks.find((x) => x && x.id === 'recognition');
+    return (b && Array.isArray(b.ids)) ? b.ids.slice() : [];
+  } catch { return []; }
 }
 
 boot();

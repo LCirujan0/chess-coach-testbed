@@ -244,7 +244,8 @@
     mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
     review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
     endgame:  '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
-    vision:   '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'
+    vision:   '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>'
   };
 
   // ---- load stores ----
@@ -322,10 +323,47 @@
   // Block 2 — Review due: earlier misses to retry (no SRS box yet; honest proxy).
   var b2ids = unsolvedTried.filter(function (m) { return b1ids.indexOf(m.id) === -1; }).slice(0, 5).map(function (m) { return m.id; });
 
+  // Block 3 — Endgame recognition (Spec 21 — folded into the session host).
+  // Gated behind a recognition-focus flag so it's only queued when relevant;
+  // ids are the recognition bank's stable rec-<n> ids (data/endgame-recognition
+  // .json, 1,001 positions: rec-0..rec-1000). Least-recently-seen first using
+  // the recognition store's `seen` markers, capped small to keep a daily
+  // session light. No fetch needed — the id space is fixed and contiguous.
+  var RECOG_BANK_SIZE = 1001;     // data/endgame-recognition.json position count
+  var RECOG_BLOCK_CAP = 4;        // positions per daily recognition block
+  var recognitionStore = {};
+  try { recognitionStore = JSON.parse(localStorage.getItem('chess-coach-recognition-v1') || '{}') || {}; } catch (e) {}
+  var recogSeen = recognitionStore.seen || {};
+  // recognition focus: surface a block when the player has a recognition
+  // weakness (overall recognition accuracy < 70% with >= 6 attempts) OR has
+  // never tried it (so the daily loop introduces it). O5 interim gate.
+  function recognitionAccuracy() {
+    var bt = recognitionStore.byType || {};
+    var seen = 0, correct = 0;
+    Object.keys(bt).forEach(function (k) { seen += (bt[k].seen || 0); correct += (bt[k].correct || 0); });
+    return { seen: seen, pct: seen ? Math.round(correct / seen * 100) : null };
+  }
+  var recAcc = recognitionAccuracy();
+  var recognitionInFocus = (recAcc.seen === 0) || (recAcc.seen >= 6 && recAcc.pct != null && recAcc.pct < 70);
+  var b3ids = [];
+  if (recognitionInFocus) {
+    var allRecIds = [];
+    for (var ri = 0; ri < RECOG_BANK_SIZE; ri++) allRecIds.push('rec-' + ri);
+    // least-recently-seen first (unseen sort before seen; seen by oldest at).
+    allRecIds.sort(function (a, b) {
+      var ra = recogSeen[a], rb = recogSeen[b];
+      var ta = (ra && typeof ra === 'object') ? ra.at : (typeof ra === 'number' ? ra : -1);
+      var tb = (rb && typeof rb === 'object') ? rb.at : (typeof rb === 'number' ? rb : -1);
+      return ta - tb;
+    });
+    b3ids = allRecIds.slice(0, RECOG_BLOCK_CAP);
+  }
+
   // LIVE blocks only (built types). Empty ones are dropped (never an empty row).
   var blocks = [];
   if (b1ids.length) blocks.push({ id: 'mistakes', title: 'Recent mistakes', sub: 'From your last ' + nGames + ' game' + (nGames === 1 ? '' : 's'), count: b1ids.length, mode: 'drill', done: 0, ids: b1ids });
   if (b2ids.length) blocks.push({ id: 'review', title: 'Review due', sub: 'Earlier misses to retry', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
+  if (b3ids.length) blocks.push({ id: 'recognition', title: 'Endgame recognition', sub: 'Winning, drawn, or losing?', count: b3ids.length, mode: 'drill', done: 0, ids: b3ids });
 
   // LOCKED "coming soon" rows — shown on the plan, never sequenced/counted.
   // Endgame is now live (spec 07 + 08); only Board vision remains locked.
