@@ -46,13 +46,21 @@ function loadPlan() {
 // type per block: recognition uses the `seen:{ [id]: {at,correct} }` markers
 // kept inside chess-coach-recognition-v1; everything else uses the attempts
 // ledger's lastAt (written on every attempt). Spec 21 §1.4/§1.5.
-function blockType(block) { return block && block.id === 'recognition' ? 'recognition' : 'mistake'; }
+function blockType(block) {
+  if (block && block.id === 'recognition') return 'recognition';
+  if (block && block.id === 'endgames') return 'endgame';
+  return 'mistake';
+}
 
 function itemResolved(type, id, stores, sinceMs) {
   if (type === 'recognition') {
     const rec = stores.recognition.seen && stores.recognition.seen[id];
     if (rec && typeof rec === 'object') return rec.at >= sinceMs;
     return typeof rec === 'number' && rec >= sinceMs; // back-compat bare ts
+  }
+  if (type === 'endgame') {
+    const e = stores.endgames[id];
+    return !!(e && typeof e.lastAt === 'number' && e.lastAt >= sinceMs);
   }
   const a = stores.attempts[id];
   return !!(a && (Date.parse(a.lastAt) || 0) >= sinceMs);
@@ -61,6 +69,10 @@ function itemCorrect(type, id, stores, sinceMs) {
   if (type === 'recognition') {
     const rec = stores.recognition.seen && stores.recognition.seen[id];
     return !!(rec && typeof rec === 'object' && rec.correct === true && rec.at >= sinceMs);
+  }
+  if (type === 'endgame') {
+    const e = stores.endgames[id];
+    return !!(e && e.lastResult === 'pass' && typeof e.lastAt === 'number' && e.lastAt >= sinceMs);
   }
   const a = stores.attempts[id];
   return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
@@ -106,9 +118,11 @@ export function renderSessionWrap(el, opts = {}) {
   const stores = {
     attempts: {},
     recognition: {},
+    endgames: {},
   };
   try { stores.attempts = JSON.parse(localStorage.getItem('chess-coach-attempts-v1') || '{}') || {}; } catch {}
   try { stores.recognition = JSON.parse(localStorage.getItem('chess-coach-recognition-v1') || '{}') || {}; } catch {}
+  try { stores.endgames = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {}; } catch {}
   if (!stores.recognition.seen) stores.recognition.seen = {};
   const sinceMs = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
 

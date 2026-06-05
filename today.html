@@ -359,11 +359,40 @@
     b3ids = allRecIds.slice(0, RECOG_BLOCK_CAP);
   }
 
+  // Block 4 — Endgame play-out (Spec 21 — folded into the session host).
+  // Gated behind the existing endgame-focus flag (focusData.attribute ===
+  // 'endgame_technique'): only queued when endgame technique is today's biggest
+  // leak. ids are the 20 canonical endgame-lesson ids (data/endgames.json),
+  // least-mastered / least-recently-played first using the eg-results store
+  // (chess-coach-eg-results-v1, written by playout.js). Capped small to keep a
+  // daily session light. No fetch — the id space is fixed.
+  var ENDGAME_LESSON_IDS = ['kq','kr','2b','bn','2r','opp','rookpawn','square','outside','distopp','lucena','philidor','vancura','behindpasser','kpvr','ocb0','ocbwin','wrongb','connected','qvr'];
+  var ENDGAME_BLOCK_CAP = 4;        // lessons per daily endgame block
+  var endgameStore = {};
+  try { endgameStore = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {}; } catch (e) {}
+  var endgameInFocus = !!(focusData && focusData.attribute === 'endgame_technique');
+  var b4ids = [];
+  if (endgameInFocus) {
+    var egRank = ENDGAME_LESSON_IDS.slice();
+    // unmastered before mastered; within each, least-recently-played first
+    // (never-played = -1 sorts first), so a daily block surfaces the weakest.
+    egRank.sort(function (a, b) {
+      var ea = endgameStore[a] || {}, eb = endgameStore[b] || {};
+      var ma = ea.mastered ? 1 : 0, mb = eb.mastered ? 1 : 0;
+      if (ma !== mb) return ma - mb;
+      var ta = (typeof ea.lastAt === 'number') ? ea.lastAt : -1;
+      var tb = (typeof eb.lastAt === 'number') ? eb.lastAt : -1;
+      return ta - tb;
+    });
+    b4ids = egRank.slice(0, ENDGAME_BLOCK_CAP);
+  }
+
   // LIVE blocks only (built types). Empty ones are dropped (never an empty row).
   var blocks = [];
   if (b1ids.length) blocks.push({ id: 'mistakes', title: 'Recent mistakes', sub: 'From your last ' + nGames + ' game' + (nGames === 1 ? '' : 's'), count: b1ids.length, mode: 'drill', done: 0, ids: b1ids });
   if (b2ids.length) blocks.push({ id: 'review', title: 'Review due', sub: 'Earlier misses to retry', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
   if (b3ids.length) blocks.push({ id: 'recognition', title: 'Endgame recognition', sub: 'Winning, drawn, or losing?', count: b3ids.length, mode: 'drill', done: 0, ids: b3ids });
+  if (b4ids.length) blocks.push({ id: 'endgames', title: 'Endgame play-out', sub: 'Convert the win, hold the draw', count: b4ids.length, mode: 'drill', done: 0, ids: b4ids });
 
   // LOCKED "coming soon" rows — shown on the plan, never sequenced/counted.
   // Endgame is now live (spec 07 + 08); only Board vision remains locked.
@@ -371,8 +400,7 @@
     { id: 'vision', title: 'Board vision', sub: 'Visualisation · calculation' }
   ];
 
-  // Is endgame technique the top focus attribute? If so, surface it in the session card.
-  var endgameInFocus = !!(focusData && focusData.attribute === 'endgame_technique');
+  // endgameInFocus is computed above (block assembly) and reused here.
 
   var totalReps = blocks.reduce(function (s, b) { return s + b.count; }, 0);
   var estMin = Math.max(8, Math.round(totalReps * 1.1));
@@ -468,14 +496,17 @@
       coming.map(lockedRow).join('') + '</div>';
   }
   function sessionCardHtml() {
+    // Spec 21 — endgame play-out + recognition are now SEQUENCED session blocks
+    // (built above into `blocks` when in focus), rendered as proper block rows
+    // here. The old non-sequenced full-page endgame links in the session card
+    // are dropped to avoid a duplicate entry; standalone access stays available
+    // via the nav + the optional extra section (shown when endgame is not the
+    // focus).
     var rows = blocks.map(liveBlockRow).join('');
-    // If endgame is today’s focus, add endgame drill rows to the session card.
-    var endgameRows = endgameInFocus ? endgameBlocksHtml() : '';
     return '<div class="session"><div class="sh"><span class="t">Today’s session</span>' +
       '<span class="m">~' + estMin + ' min · ' + blocks.length + ' block' + (blocks.length === 1 ? '' : 's') + '</span></div>' +
       planTodaySentence() +
       rows +
-      endgameRows +
       '<a class="btn primary" href="/session.html" style="margin-top:14px;">Start session · ' + totalReps + ' puzzle' + (totalReps === 1 ? '' : 's') + '</a>' +
       comingHtml() + '</div>';
   }

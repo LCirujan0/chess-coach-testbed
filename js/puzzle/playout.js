@@ -22,6 +22,23 @@ import {
 } from './config.js';
 import { state } from './state.js';
 import { initStockfishWorker, analyzePositionFast, normalizeEval, orientationFor } from './engine.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
+import { onItemResolved } from './resolved.js';
+
+// ── Session mode (Spec 21 — endgame play-out folded into the session host) ──
+// When launched from a Today session via ?session=today&block=endgames, the
+// play-out trainer renders the persistent session-wrap bar, scopes its lessons
+// to this block's ids (in plan order), and routes every play-out result
+// through the shared onItemResolved callback so attempt + result counting
+// matches the mistake + recognition types. Mirrors classify.js's recognition
+// fold. Engine + worker are unchanged (the shared depth-9 worker via
+// initStockfishWorker — NO new Worker).
+const SESS = (() => {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    return q.get('session') === 'today' && q.get('block') === 'endgames';
+  } catch { return false; }
+})();
 
 // ── Play-out local state ───────────────────────────────────────────────────
 const po = {
@@ -72,6 +89,34 @@ function setStatus(text) {
 }
 
 function $ (id) { return document.getElementById(id); }
+
+// ── Coarse pawns eval bar (Spec 21 §2.1 endgame interim — §31). Shows the
+// trainee-perspective eval as one-decimal pawns ("+3.4"). No-spoiler: the bar
+// shows only the running eval magnitude, never the engine's move or line.
+// `cp` is the trainee-perspective centipawn eval (mate clamped by normalizeEval
+// to +-10000). Bar fill grows from centre; capped at +-6 pawns for display.
+function updateEvalBar(cp) {
+  const bar = $('eval-bar');
+  if (!bar) return;
+  const pawns = Math.max(-50, Math.min(50, (cp || 0) / 100));
+  const shown = Math.max(-6, Math.min(6, pawns));
+  const fill = $('eval-bar-fill');
+  if (fill) {
+    const pct = Math.min(50, Math.abs(shown) / 6 * 50); // 0..50% of the track
+    if (shown >= 0) { fill.style.left = '50%'; fill.style.width = pct + '%'; fill.classList.remove('neg'); }
+    else { fill.style.left = (50 - pct) + '%'; fill.style.width = pct + '%'; fill.classList.add('neg'); }
+  }
+  const num = $('eval-bar-num');
+  if (num) {
+    const v = pawns;
+    num.textContent = (v >= 0 ? '+' : '') + v.toFixed(1);
+  }
+  bar.classList.remove('hidden');
+}
+function resetEvalBar() {
+  const bar = $('eval-bar');
+  if (bar) bar.classList.add('hidden');
+}
 
 // ── Board rendering ────────────────────────────────────────────────────────
 function renderBoard() {
@@ -208,6 +253,7 @@ async function handlePlayOutMove() {
   // traineeEval: opponent's eval negated = trainee's eval
   const evalCp = -normalizeEval(line.eval);
   po.evalHistory.push(evalCp);
+  updateEvalBar(evalCp);
 
   // Game over after trainee move?
   if (state.chess.isGameOver()) {
@@ -266,6 +312,7 @@ async function handlePlayOutMove() {
   if (afterLine) {
     const afterEval = normalizeEval(afterLine.eval);
     po.evalHistory.push(afterEval);
+    updateEvalBar(afterEval);
   }
 
   po.phase = 'playing';
@@ -287,6 +334,23 @@ function showVerdict(lesson, verdict, detail) {
   const passed = verdict === 'pass';
   const clean = passed && !po.usedTechnique;
   saveResult(lesson.id, passed, clean);
+
+  // Spec 21 — in a Today session, route the result through the single
+  // onItemResolved callback so the persistent bar + session counts pick up this
+  // attempt (done) and its outcome (correct = pass). saveResult() above has
+  // already stamped lastAt/lastResult in chess-coach-eg-results-v1, which the
+  // resolved-this-session recompute reads — so this only triggers the bar
+  // refresh + block done/correct recompute (no extra domain write).
+  if (SESS) {
+    onItemResolved({
+      type: 'endgame',
+      refId: lesson.id,
+      outcome: passed ? 'pass' : 'fail',
+      accuracy: null,
+      clean: clean,
+      chosen: null,
+    });
+  }
 
   const vc = $('verdict-card');
   if (vc) vc.classList.remove('hidden');
@@ -369,6 +433,7 @@ function loadLesson(idx) {
   if (vc) vc.classList.add('hidden');
   const retryBtn = $('retry-btn');
   if (retryBtn) retryBtn.disabled = true;
+  resetEvalBar();
 
   renderBoard();
   setStatus(po.sfReady ? '' : 'Loading engine…');
@@ -455,8 +520,11 @@ async function boot() {
 
   const nextBtn = $('next-btn');
   if (nextBtn) nextBtn.addEventListener('click', () => {
-    if (po.idx < po.lessons.length - 1) loadLesson(po.idx + 1);
-    else loadLesson(0); // wrap
+    if (po.idx < po.lessons.length - 1) { loadLesson(po.idx + 1); return; }
+    // Last lesson. In a Today session, return to the session screen so the
+    // transition/summary beat fires; standalone wraps to the top.
+    if (SESS) { window.location.href = '/session.html'; return; }
+    loadLesson(0); // wrap
   });
 
   const techBtn = $('show-technique-btn');
@@ -519,6 +587,25 @@ async function boot() {
     return;
   }
 
+  if (SESS) {
+    // Session mode — scope to this block's ids in plan order (the persistent
+    // bar counts these), and render the bar. The exit chip returns to the
+    // session screen so the wrapper stays consistent with the other types.
+    const blockIds = sessionBlockIds();
+    if (blockIds.length) {
+      const byId = new Map(po.lessons.map((l) => [l.id, l]));
+      const scoped = blockIds.map((id) => byId.get(id)).filter(Boolean);
+      if (scoped.length) po.lessons = scoped;
+    }
+    refreshSessionWrap({ exitHref: '/session.html' });
+    // The lesson-list sidebar is the standalone browse affordance; hide it in a
+    // session so the screen stays scoped to the block (no cross-block jumping).
+    const listCard = $('lesson-list');
+    if (listCard) listCard.classList.add('hidden');
+    const prevBtn = $('prev-btn');
+    if (prevBtn) prevBtn.classList.add('hidden');
+  }
+
   loadLesson(0);
   setStatus('Loading engine…');
 
@@ -531,6 +618,16 @@ async function boot() {
   } catch (err) {
     setStatus('Engine failed: ' + err.message);
   }
+}
+
+// Read the endgames block's ids from the session plan (Spec 21 §1.1).
+function sessionBlockIds() {
+  try {
+    const plan = JSON.parse(localStorage.getItem('chess-coach-session-v1') || 'null');
+    if (!plan || !Array.isArray(plan.blocks)) return [];
+    const b = plan.blocks.find((x) => x && x.id === 'endgames');
+    return (b && Array.isArray(b.ids)) ? b.ids.slice() : [];
+  } catch { return []; }
 }
 
 boot();

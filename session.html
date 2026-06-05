@@ -140,11 +140,12 @@
   var ICON = {
     mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
     review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
-    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>'
+    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>',
+    endgames: '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>'
   };
   // noun per block for the "Mistake 3 of 8" readout + short rail label
-  var NOUN  = { mistakes: 'Mistake', review: 'Card', recognition: 'Position' };
-  var SHORT = { mistakes: 'Mistakes', review: 'Review', recognition: 'Recognition' };
+  var NOUN  = { mistakes: 'Mistake', review: 'Card', recognition: 'Position', endgames: 'Position' };
+  var SHORT = { mistakes: 'Mistakes', review: 'Review', recognition: 'Recognition', endgames: 'Endgames' };
 
   // ---- load ----
   var plan, attempts, ratingCache;
@@ -180,16 +181,24 @@
   var recognition = {};
   try { recognition = JSON.parse(localStorage.getItem('chess-coach-recognition-v1') || '{}') || {}; } catch (e) {}
   if (!recognition.seen) recognition.seen = {};
-  function blockType(b) { return b && b.id === 'recognition' ? 'recognition' : 'mistake'; }
+  var endgames = {};
+  try { endgames = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {}; } catch (e) {}
+  function blockType(b) {
+    if (b && b.id === 'recognition') return 'recognition';
+    if (b && b.id === 'endgames') return 'endgame';
+    return 'mistake';
+  }
   // RESOLVED (attempted) this session — pass OR fail. This is the progress
   // count; `correct` is tracked separately (v0.58-c2: the bar/summary used to
   // count only solves, so failed items never advanced).
   function resolvedInSession(type, id) {
     if (type === 'recognition') { var r = recognition.seen[id]; if (r && typeof r === 'object') return r.at >= sinceMs; return typeof r === 'number' && r >= sinceMs; }
+    if (type === 'endgame') { var e = endgames[id]; return !!(e && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
     var a = attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= sinceMs);
   }
   function correctInSession(type, id) {
     if (type === 'recognition') { var r = recognition.seen[id]; return !!(r && typeof r === 'object' && r.correct === true && r.at >= sinceMs); }
+    if (type === 'endgame') { var e = endgames[id]; return !!(e && e.lastResult === 'pass' && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
     var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
   }
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
@@ -206,7 +215,9 @@
   // (persistent bar + the shared onItemResolved counting); other types run on
   // the canonical puzzle shell. Deep-links the right surface for the block.
   function blockHref(b) {
-    var base = (b && b.id === 'recognition') ? '/endgame-recognition.html' : '/puzzle.html';
+    var base = '/puzzle.html';
+    if (b && b.id === 'recognition') base = '/endgame-recognition.html';
+    else if (b && b.id === 'endgames') base = '/endgames.html';
     return base + '?session=today&block=' + b.id;
   }
   var nLive = plan.blocks.length;
