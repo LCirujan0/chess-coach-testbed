@@ -32,7 +32,7 @@ window.addEventListener('unhandledrejection', (e) => {
 // of the script per M1, so they catch failures from anywhere in this module
 // rather than only what happens after Boot.)
 import { STORAGE_KEY_SESSION, MOTIFS, RATING_REFRESH_INTERVAL_MS, DEFAULT_PUZZLE } from './config.js';
-import { renderSessionWrap } from '/js/session-wrap.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
 import { state } from './state.js';
 import { $, setInlineStatus } from './dom.js';
 import {
@@ -92,7 +92,7 @@ state.mode = (loadMode() === 'deep') ? 'deep' : 'drill';
 // v0.55 — render the persistent in-session wrapper (no-op + hidden when the
 // surface is opened outside a Today session). The exit chip returns to the
 // session wrapper screen.
-renderSessionWrap(document.getElementById('session-wrap'), { exitHref: '/session.html' });
+refreshSessionWrap({ exitHref: '/session.html' });
 
 // Rating: load cached value, refresh from Chess.com in background if stale.
 const cachedRating = loadCachedRating();

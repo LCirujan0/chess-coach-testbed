@@ -16,6 +16,8 @@ import { showResult } from './result.js';
 import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex, revealAnswerOnBoard } from './review.js';
 import { renderPending } from './pending.js';
 import { fireCoachExplanation } from './coach.js';
+import { refreshSessionWrap } from '/js/session-wrap.js';
+import { onItemResolved } from './resolved.js';
 
 export function gradeMove(userUci) {
   const userKey = userUci.slice(0, 4);
@@ -335,13 +337,30 @@ export function recordAttempt(grade) {
   // Today block, recompute `done` from the count of solved ids and persist.
   // Always derive from the truth (attempts store) rather than incrementing
   // so partial re-runs / retries don't double-count.
-  if (state.sessionMode) sessionModeWriteBack();
+  // Spec 21 §2.3 — route the mistake resolution through the single
+  // onItemResolved callback so attempt + result counting is uniform across
+  // types (it recomputes the block's done=ATTEMPTED + correct, persists, and
+  // refreshes the persistent bar). The bar now advances on every resolved
+  // item, not only solves (the v0.58-c1 counting bug).
+  if (state.sessionMode) {
+    onItemResolved({
+      type: 'mistake',
+      refId: puzzle.id,
+      outcome: isSuccess ? 'solved' : 'failed',
+      accuracy: accuracy != null ? accuracy : null,
+      clean: null,
+      chosen: null,
+    });
+  }
 }
 
-// Recompute the active block's `done` from solved attempts on its queueIds,
-// persist to localStorage. Called after each resolved attempt. Vision blocks
-// (queueIds=[]) use the normal queue, so we count solved-ids in attempts that
-// belong to whatever the user just played — harmless no-op if nothing matches.
+// Recompute the active block's `done` (= items ATTEMPTED this session) and
+// `correct` (= items solved this session) from the attempts ledger on its
+// queueIds, persist to localStorage. Called after each resolved attempt and
+// on the final block-complete bounce in queue.js. `done` now advances on every
+// resolution (pass OR fail) — the v0.58-c1 bug was that it counted only solves,
+// so a failed item never advanced and nothing read as an attempt/result.
+// Vision blocks (queueIds=[]) keep no per-id progress (harmless no-op).
 export function sessionModeWriteBack() {
   if (!state.sessionMode) return;
   let plan;
@@ -351,10 +370,12 @@ export function sessionModeWriteBack() {
   if (!block || block.id !== state.sessionMode.blockId) return; // plan changed under us
   const ids = Array.isArray(block.ids) ? block.ids : [];
   if (!ids.length) return; // vision-style block: no per-id progress
-  // P0 fix (hotfix/r1.2): count only puzzles solved DURING this session
-  // (last solve at/after the plan's createdAt), not lifetime solves.
+  // Count only items resolved DURING this session (last attempt at/after the
+  // plan's createdAt), not lifetime — so a drill over previously-seen items
+  // doesn't pre-count.
   const since = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
-  block.done = ids.filter((id) => { const a = state.attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= since); }).length;
+  block.done = ids.filter((id) => { const a = state.attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= since); }).length;
+  block.correct = ids.filter((id) => { const a = state.attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= since); }).length;
   try { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(plan)); } catch {}
 }
 

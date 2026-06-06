@@ -139,11 +139,13 @@
 
   var ICON = {
     mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
-    review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>'
+    review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
+    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>',
+    endgames: '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>'
   };
   // noun per block for the "Mistake 3 of 8" readout + short rail label
-  var NOUN  = { mistakes: 'Mistake', review: 'Card' };
-  var SHORT = { mistakes: 'Mistakes', review: 'Review' };
+  var NOUN  = { mistakes: 'Mistake', review: 'Card', recognition: 'Position', endgames: 'Position' };
+  var SHORT = { mistakes: 'Mistakes', review: 'Review', recognition: 'Recognition', endgames: 'Endgames' };
 
   // ---- load ----
   var plan, attempts, ratingCache;
@@ -176,14 +178,48 @@
   // its last solve is at/after the plan's createdAt. isSolved (lifetime) is
   // kept below for the accuracy stats, which are display-only.
   var sinceMs = (plan && plan.createdAt) ? (Date.parse(plan.createdAt) || 0) : 0;
+  var recognition = {};
+  try { recognition = JSON.parse(localStorage.getItem('chess-coach-recognition-v1') || '{}') || {}; } catch (e) {}
+  if (!recognition.seen) recognition.seen = {};
+  var endgames = {};
+  try { endgames = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {}; } catch (e) {}
+  function blockType(b) {
+    if (b && b.id === 'recognition') return 'recognition';
+    if (b && b.id === 'endgames') return 'endgame';
+    return 'mistake';
+  }
+  // RESOLVED (attempted) this session — pass OR fail. This is the progress
+  // count; `correct` is tracked separately (v0.58-c2: the bar/summary used to
+  // count only solves, so failed items never advanced).
+  function resolvedInSession(type, id) {
+    if (type === 'recognition') { var r = recognition.seen[id]; if (r && typeof r === 'object') return r.at >= sinceMs; return typeof r === 'number' && r >= sinceMs; }
+    if (type === 'endgame') { var e = endgames[id]; return !!(e && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
+    var a = attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= sinceMs);
+  }
+  function correctInSession(type, id) {
+    if (type === 'recognition') { var r = recognition.seen[id]; return !!(r && typeof r === 'object' && r.correct === true && r.at >= sinceMs); }
+    if (type === 'endgame') { var e = endgames[id]; return !!(e && e.lastResult === 'pass' && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
+    var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
+  }
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
-  function solvedInSession(id) { var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs); }
   plan.blocks.forEach(function (b) {
-    var solvedInBlock = (b.ids || []).filter(solvedInSession).length;
-    b.done = Math.max(b.done || 0, solvedInBlock);
+    var t = blockType(b);
+    var resolvedCt = (b.ids || []).filter(function (id) { return resolvedInSession(t, id); }).length;
+    var correctCt = (b.ids || []).filter(function (id) { return correctInSession(t, id); }).length;
+    b.done = Math.max(b.done || 0, resolvedCt);
     if (b.done > b.count) b.done = b.count;
+    b.correct = Math.min(Math.max(b.correct || 0, correctCt), b.done);
   });
   function blockComplete(b) { return (b.done || 0) >= (b.count || 0); }
+  // Spec 21 — recognition runs on its own page under the same session chrome
+  // (persistent bar + the shared onItemResolved counting); other types run on
+  // the canonical puzzle shell. Deep-links the right surface for the block.
+  function blockHref(b) {
+    var base = '/puzzle.html';
+    if (b && b.id === 'recognition') base = '/endgame-recognition.html';
+    else if (b && b.id === 'endgames') base = '/endgames.html';
+    return base + '?session=today&block=' + b.id;
+  }
   var nLive = plan.blocks.length;
 
   // current block = first incomplete; persist idx so Today's resume is honest
@@ -221,13 +257,15 @@
     var ids = [];
     plan.blocks.forEach(function (b) { (b.ids || []).forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); }); });
     var solved = ids.filter(isSolved);
+    // reps = items ATTEMPTED this session; correct = resolved correctly.
     var reps = plan.blocks.reduce(function (s, b) { return s + (b.done || 0); }, 0);
+    var correct = plan.blocks.reduce(function (s, b) { return s + (b.correct || 0); }, 0);
     var accs = solved.map(function (id) {
       var a = attempts[id];
       return (a && typeof a.firstAccuracy === 'number') ? a.firstAccuracy : (a && typeof a.lastAccuracy === 'number') ? a.lastAccuracy : null;
     }).filter(function (v) { return v != null; });
     var acc = accs.length ? Math.round(accs.reduce(function (a, b) { return a + b; }, 0) / accs.length) : null;
-    return { reps: reps, accuracy: acc };
+    return { reps: reps, correct: correct, accuracy: acc };
   }
 
   // =====================================================================
@@ -241,12 +279,12 @@
       ? '<div class="stat"><div class="v">' + pctToTarget + '<small>%</small></div><div class="k">To 1500</div></div>'
       : '<div class="stat"><div class="v">🔥</div><div class="k">Streak</div></div>';
     var read = 'Cleared your recent mistakes and the cards due today. Tomorrow leans the same way until your endgame trainer unlocks.';
-    save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
+    save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, correct: st.correct, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
     root.innerHTML =
       '<div class="sum"><div class="crown">🔥</div><h1>Session complete</h1>' +
-      '<div class="ssub">Streak secured · ' + st.reps + ' puzzle' + (st.reps === 1 ? '' : 's') + '</div>' +
+      '<div class="ssub">Streak secured · ' + st.correct + ' of ' + st.reps + ' correct</div>' +
       '<div class="stats">' +
-        '<div class="stat"><div class="v">' + st.reps + '</div><div class="k">Solved</div></div>' +
+        '<div class="stat"><div class="v">' + st.correct + '<small>/' + st.reps + '</small></div><div class="k">Correct</div></div>' +
         '<div class="stat"><div class="v">' + (st.accuracy != null ? st.accuracy + '<small>%</small>' : '—') + '</div><div class="k">Accuracy</div></div>' +
         thirdStat +
       '</div>' +
@@ -289,7 +327,7 @@
       '<h2>' + esc(b.title) + '</h2>' +
       '<div class="sub">' + esc(b.sub) + '</div>' +
       '<div class="meta">' + ofText + (b.mode === 'deep' ? ' · Deep mode' : '') + '</div>' +
-      '<a class="btn primary" href="/puzzle.html?session=today&block=' + b.id + '">' + ((b.done || 0) > 0 ? 'Continue block' : 'Begin block') + ' →</a>' +
+      '<a class="btn primary" href="' + blockHref(b) + '">' + ((b.done || 0) > 0 ? 'Continue block' : 'Begin block') + ' →</a>' +
       '<button class="skip" id="skip-btn">Skip this block</button></div>';
     wireExit();
     var sk = $('skip-btn');

@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/css/screen.css">
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
+<link rel="stylesheet" href="/css/session-wrap.css">
 <link rel="stylesheet" href="/css/type.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -142,9 +143,25 @@
   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
 </style>
+<style>
+  /* Coarse pawns eval bar (Spec 21 endgame interim — §31 pixel polish deferred to Design). */
+  .eg-evalbar { display:flex; align-items:center; gap:10px; max-width:420px; margin:8px auto 0; }
+  .eg-evalbar.hidden { display:none; }
+  .eg-evalbar-track { position:relative; flex:1; height:10px; border-radius:6px; overflow:hidden;
+    background:linear-gradient(90deg, var(--surface3, #2a2a2a) 0%, var(--surface2, #1c1c1c) 100%); }
+  .eg-evalbar-fill { position:absolute; left:50%; top:0; bottom:0; width:0; transform:translateX(0);
+    background:var(--accent, #34d399); transition:width .25s ease, left .25s ease, background .25s ease; }
+  .eg-evalbar-fill.neg { background:var(--danger, #ef4444); }
+  .eg-evalbar-num { min-width:46px; text-align:right; font-family:"Spline Sans Mono", ui-monospace, monospace;
+    font-size:14px; font-weight:600; color:var(--ink, #e8e8e8); }
+</style>
 </head>
 <body>
 <div class="container">
+  <!-- Persistent in-session wrapper (Spec 21 — endgame play-out folded into
+       the session host). Hidden + no-op unless opened via
+       ?session=today&block=endgames. -->
+  <div class="session-wrap hidden" id="session-wrap"></div>
   <div class="header-bar">
     <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -170,6 +187,14 @@
   <div class="board-wrap">
     <div id="board" class="board"></div>
     <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
+  </div>
+
+  <!-- Coarse pawns eval bar (Spec 21 §2.1 endgame interim; §31). One-decimal
+       pawns, e.g. "+3.4". No-spoiler: shows the running eval only, never the
+       engine's move or line. -->
+  <div id="eval-bar" class="eg-evalbar hidden" aria-hidden="true">
+    <div class="eg-evalbar-track"><div id="eval-bar-fill" class="eg-evalbar-fill"></div></div>
+    <div id="eval-bar-num" class="eg-evalbar-num">0.0</div>
   </div>
 
   <div id="status-text"></div>
