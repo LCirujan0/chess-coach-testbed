@@ -13,6 +13,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/type.css">
@@ -27,37 +28,6 @@
   /* ============================================================
      Daylight design tokens (spec §1)
      ============================================================ */
-  :root {
-    /* accent — Emerald */
-    --accent:      #2F9E76;
-    --accent-2:    #5FB58F;
-    --accent-soft: #E7F4EE;
-
-    /* neutrals */
-    --ink:      #1B1D22;
-    --muted:    #6E727B;
-    --surface:  #FFFFFF;
-    --surface2: #F2F4F7;
-    --surface3: #E9ECF1;
-    --line:     rgba(0,0,0,.10);
-
-    /* state */
-    --pos:  #1F9D57;
-    --warn: #C98A2E;
-    --bad:  #D2553F;
-
-    /* board — Warm wood */
-    --light-sq: #ECE3D2;
-    --dark-sq:  #B49A78;
-    --hl-move: rgba(47,158,118,.26);
-    --hl-sel:  rgba(47,158,118,.36);
-
-    /* (The --pc-* two-tone tokens were retired with the swap to the Celtic
-       SVG set in v0.6; the pieces carry their own colours from the file.) */
-
-    /* radii */
-    --r-card:16px; --r-panel:14px; --r-btn:12px; --r-board:9px; --r-pill:20px;
-  }
 
   /* Modern browsers get the color-mix highlights for cleaner transparency. */
   @supports (background: color-mix(in srgb, red 50%, transparent)) {

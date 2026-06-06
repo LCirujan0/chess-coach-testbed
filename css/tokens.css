@@ -1,0 +1,47 @@
+/* ============================================================================
+   tokens.css — THE single source of truth for KnightPath design tokens.
+   ----------------------------------------------------------------------------
+   The Daylight palette, semantic colours, board colours, and shape scale.
+   Every page links this FIRST, before any other stylesheet or inline <style>,
+   so the whole app inherits one consistent set of variables. Do NOT redefine
+   these in a page's inline :root — change them here and the change is global.
+
+   (Previously these 24 tokens were copy-pasted into an inline :root block on
+   all 11 pages; session.html had silently drifted to --surface2:#F4F6F8. This
+   file reconciles every surface to the canonical values below.)
+   ============================================================================ */
+:root {
+  /* Daylight palette */
+  --accent:      #2F9E76;
+  --accent-2:    #5FB58F;
+  --accent-soft: #E7F4EE;
+  --ink:         #1B1D22;
+  --muted:       #6E727B;
+  --surface:     #FFFFFF;
+  --surface2:    #F2F4F7;
+  --surface3:    #E9ECF1;
+  --line:        rgba(0,0,0,.10);
+
+  /* Semantic status */
+  --pos:  #1F9D57;
+  --warn: #C98A2E;
+  --bad:  #D2553F;
+
+  /* Board */
+  --light-sq: #ECE3D2;
+  --dark-sq:  #B49A78;
+  --hl-move:  rgba(47,158,118,.26);
+  --hl-sel:   rgba(47,158,118,.36);
+
+  /* Shape scale */
+  --r-card:  16px;
+  --r-panel: 14px;
+  --r-btn:   12px;
+  --r-board: 9px;
+  --r-pill:  20px;
+
+  /* Phase accents (opening / middlegame / endgame) */
+  --open:   #4F7CC4;
+  --middle: #2F9E76;
+  --endg:   #C98A2E;
+}
