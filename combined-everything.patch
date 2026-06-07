@@ -1183,12 +1183,26 @@ index 0000000..6ede4ee
 +.playout-section p { font-size: 13px; color: var(--ink); margin-bottom: 8px; }
 +
 +#status-text { min-height: 22px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 8px; font-style: italic; }
+diff --git a/css/session-wrap.css b/css/session-wrap.css
+index 8c0d200..8124531 100644
+--- a/css/session-wrap.css
++++ b/css/session-wrap.css
+@@ -67,3 +67,9 @@
+   color: var(--muted); border: 1px solid var(--line); border-radius: 14px;
+   padding: 4px 10px; flex-shrink: 0;
+ }
++
++/* Outcome-coloured progress pips: green = solved first try (no hint),
++   orange = solved with a hint or on a retry, red = not solved. */
++.session-wrap .sw-pip.first  { background: var(--pos); }
++.session-wrap .sw-pip.hinted { background: var(--warn); }
++.session-wrap .sw-pip.fail   { background: var(--bad); }
 diff --git a/css/shell.css b/css/shell.css
 new file mode 100644
-index 0000000..70c4415
+index 0000000..533a010
 --- /dev/null
 +++ b/css/shell.css
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,78 @@
 +/* ============================================================================
 +   shell.css — THE canonical app-shell chrome shared by every training screen.
 +   ----------------------------------------------------------------------------
@@ -1253,6 +1267,10 @@ index 0000000..70c4415
 +
 +.hidden { display: none !important; }
 +
++.nav-drawer-link.coming .nav-soon { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--surface2); color: var(--muted); padding: 2px 7px; border-radius: 9px; }
++.nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
++.tab-bar a.coming { opacity: .55; }
++
 +/* ---- Desktop (>=880px): pinned sidebar, wide container, no tab bar, and the
 +   hamburger is redundant (the sidebar is always visible) so it is hidden. ---- */
 +@media (min-width: 880px) {
@@ -1265,10 +1283,10 @@ index 0000000..70c4415
 +}
 diff --git a/css/train.css b/css/train.css
 new file mode 100644
-index 0000000..98a2f15
+index 0000000..4395f28
 --- /dev/null
 +++ b/css/train.css
-@@ -0,0 +1,347 @@
+@@ -0,0 +1,366 @@
 +/* ============================================================================
 +   train.css — THE shared training-screen COMPONENT sheet.
 +   ----------------------------------------------------------------------------
@@ -1616,6 +1634,25 @@ index 0000000..98a2f15
 +.btn.ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
 +.btn.ghost:hover { background: var(--surface2); }
 +.btn.ghost:disabled { opacity: .45; cursor: default; }
++
++/* ----------------------------------------------------------------------------
++   Desktop (>=880px) layout/component parity with the reference (puzzle) screen.
++   These rules live in puzzle.css's desktop @media; mirrored here so recognition
++   + endgames render IDENTICALLY on desktop (board-flush material rows, a coach
++   card that fills + scrolls its column, matched type sizes).
++   ---------------------------------------------------------------------------- */
++@media (min-width: 880px) {
++  .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
++  .material-row .mb-piece, .mb-piece { width: 22px; height: 22px; }
++  .material-row .mb-score { font-size: 13px; }
++  .lg-right > .coach-card {
++    align-self: stretch; flex: 1 1 auto;
++    min-height: 0; max-height: calc(100vh - 56px); margin-bottom: 0;
++  }
++  .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
++  .msg { font-size: 14px; }
++  .coach-input { font-size: 14px; }
++}
 diff --git a/docs/training-screen-pattern.md b/docs/training-screen-pattern.md
 new file mode 100644
 index 0000000..7dc5bc5
@@ -2263,7 +2300,7 @@ index f4e3a81..4db685b 100644
  </body>
  </html>
 diff --git a/games.html b/games.html
-index b7b7eac..d7593e3 100644
+index b7b7eac..e420753 100644
 --- a/games.html
 +++ b/games.html
 @@ -311,7 +311,17 @@
@@ -2334,7 +2371,7 @@ index b7b7eac..d7593e3 100644
    const counts = {
      opening: mistakes.filter((m) => m.category === 'opening').length,
      middlegame: mistakes.filter((m) => m.category === 'middlegame').length,
-@@ -1064,6 +1085,45 @@ function renderMistakeList(mistakes, perGameSummary) {
+@@ -1064,6 +1085,86 @@ function renderMistakeList(mistakes, perGameSummary) {
      `${mistakes.length} new mistakes found — ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
  }
  
@@ -2377,10 +2414,51 @@ index b7b7eac..d7593e3 100644
 +  });
 +}
 +
++// Persistent "Your games" list (from stored mistakes) so review + drill are
++// always available, not only right after an ingest run.
++function renderSavedGames() {
++  let all = [];
++  try { all = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1') || '[]') || []; } catch {}
++  if (!all.length) return;
++  const groups = new Map();
++  for (const m of all) {
++    const k = m.gameUrl || (m.id || '').split('|')[0] || 'unknown';
++    if (!groups.has(k)) groups.set(k, { gameUrl: k, opponent: m.opponent || 'opponent', dateStr: m.dateStr || '', userColorName: m.userColorName || '', n: 0 });
++    groups.get(k).n++;
++  }
++  const listEl = $('mistakes-list');
++  if (!listEl) return;
++  listEl.innerHTML = '';
++  const head = document.createElement('div');
++  head.className = 'mistake-item';
++  head.innerHTML = '<div class="cat">Your games — tap “Review with coach” for the coach’s take, or drill the mistakes.</div>';
++  listEl.appendChild(head);
++  const arr = Array.from(groups.values()).sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
++  for (const gm of arr) {
++    const div = document.createElement('div');
++    div.className = 'mistake-item';
++    div.innerHTML = `
++      <div class="top">
++        <span class="src">vs ${escapeHtml(gm.opponent)} (${escapeHtml(gm.dateStr)}, ${escapeHtml(gm.userColorName)})</span>
++        <span class="cat">${gm.n} mistake${gm.n === 1 ? '' : 's'}</span>
++      </div>
++      <div class="game-review-actions">
++        <button class="btn-review-game" data-gameurl="${escapeHtml(gm.gameUrl)}">Review with coach</button>
++        <a class="btn-drill-game" href="/puzzle.html?drill=${encodeURIComponent(gm.gameUrl)}|all">Drill all ${gm.n}</a>
++      </div>
++      <div class="game-review-out hidden" data-out="${escapeHtml(gm.gameUrl)}"></div>`;
++    listEl.appendChild(div);
++  }
++  $('list-panel').classList.remove('hidden');
++  const sum = $('list-summary');
++  if (sum) sum.textContent = `${arr.length} game${arr.length === 1 ? '' : 's'} with saved mistakes — pick one to review or drill.`;
++  wireReviewHandlers();
++}
++
  function escapeHtml(s) {
    return String(s).replace(/[&<>"']/g, (c) =>
      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-@@ -1110,6 +1170,29 @@ async function handleIngestSubmit(e) {
+@@ -1110,6 +1211,29 @@ async function handleIngestSubmit(e) {
        catch (e) { console.warn('saveScorecards failed:', e.message); }
      }
  
@@ -2410,6 +2488,14 @@ index b7b7eac..d7593e3 100644
      // Persist the game URLs so they're skipped on the next run.
      const ingested = loadIngestedGameUrls();
      for (const g of perGameSummary) if (g.gameUrl) ingested.add(g.gameUrl);
+@@ -1305,6 +1429,7 @@ initStockfish().catch((err) => {
+   setProgress('Engine init failed: ' + err.message, 100, 'error');
+ });
+ renderSavedStats();
++renderSavedGames();
+ </script>
+ <script type="module" src="/js/puzzle/config.js"></script>
+ </body>
 diff --git a/js/coach-widget.js b/js/coach-widget.js
 new file mode 100644
 index 0000000..f506ca5
@@ -2575,11 +2661,62 @@ index 01a1e48..99438e7 100644
  // ----------------------------------------------------------------------------
  // Unified puzzle schema (phase 1a) — load the static endgame + recognition
  // puzzle sets and merge them into state.puzzles. Additive: a page only sees
+diff --git a/js/session-wrap.js b/js/session-wrap.js
+index 4f23dd8..de77919 100644
+--- a/js/session-wrap.js
++++ b/js/session-wrap.js
+@@ -77,6 +77,19 @@ function itemCorrect(type, id, stores, sinceMs) {
+   const a = stores.attempts[id];
+   return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
+ }
++function pipOutcome(block, id, stores, sinceMs) {
++  // '' (not done) | 'first' (solved first try, no hint) | 'hinted' (hint or
++  // retried) | 'fail' (not solved). Recognition/endgame are binary -> first|fail.
++  const type = blockType(block);
++  if (!id || !itemResolved(type, id, stores, sinceMs)) return '';
++  if (!itemCorrect(type, id, stores, sinceMs)) return 'fail';
++  if (type === 'mistake') {
++    const a = stores.attempts[id];
++    if (a && a.solved && (a.attempts || 0) <= 1 && !a.shownPieceUsed) return 'first';
++    return 'hinted';
++  }
++  return 'first';
++}
+ function resolvedInBlock(block, stores, sinceMs) {
+   const ids = Array.isArray(block.ids) ? block.ids : [];
+   if (!ids.length) return Math.max(0, block.done || 0);
+@@ -147,10 +160,11 @@ export function renderSessionWrap(el, opts = {}) {
+     const bDone = (i < activeIdx) ? bCount : (i === activeIdx ? done : 0);
+     let pips = '';
+     const pipN = Math.max(bCount, 1);
++    const bIds = Array.isArray(b.ids) ? b.ids : [];
++    let curMarked = false;
+     for (let p = 0; p < pipN; p++) {
+-      let cls = '';
+-      if (p < bDone) cls = 'done';
+-      else if (i === activeIdx && p === bDone) cls = 'cur';
++      let cls = pipOutcome(b, bIds[p], stores, sinceMs); // 'first'|'hinted'|'fail'|''
++      if (!cls && i === activeIdx && !curMarked) { cls = 'cur'; curMarked = true; }
+       pips += '<span class="sw-pip ' + cls + '"></span>';
+     }
+     const lbl = BLOCK_SHORT[b.id] || ('B' + (i + 1));
 diff --git a/puzzle.html b/puzzle.html
-index 4e6edeb..08bbdd9 100644
+index 4e6edeb..8e18b8f 100644
 --- a/puzzle.html
 +++ b/puzzle.html
-@@ -24,1091 +24,7 @@
+@@ -14,1101 +14,19 @@
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+ <link rel="manifest" href="/manifest.json">
+ <link rel="stylesheet" href="/css/tokens.css">
++<link rel="stylesheet" href="/css/shell.css">
+ <link rel="stylesheet" href="/css/nav.css">
+ <link rel="stylesheet" href="/css/board.css">
+ <link rel="stylesheet" href="/css/type.css">
+ <link rel="stylesheet" href="/css/gate.css">
+ <link rel="stylesheet" href="/css/screen.css">
++<link rel="stylesheet" href="/css/train.css">
+ <link rel="stylesheet" href="/css/session-wrap.css">
+ <meta name="apple-mobile-web-app-title" content="KnightPath">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
