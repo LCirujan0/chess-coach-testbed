@@ -1,240 +1,175 @@
 diff --git a/css/endgames.css b/css/endgames.css
 new file mode 100644
-index 0000000..32c08d6
+index 0000000..b0aa792
 --- /dev/null
 +++ b/css/endgames.css
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,45 @@
 +/* ============================================================================
-+   endgames.css — page-specific styles for endgames.html ONLY.
-+   Lesson header, "show technique" panel, the interim coarse pawns eval bar
-+   (.eg-evalbar*), verdict card, lesson list. Shared components (board, coach,
-+   buttons, controls, material) come from css/train.css. Loaded AFTER train.css.
++   endgames.css — page-specific exercise widgets for endgames.html.
++   Lesson header, "show technique" panel, verdict card, lesson list, and the
++   interim coarse pawns eval bar. App-shell chrome -> shell.css; layout ->
++   screen.css; shared components (board, coach, buttons, controls) -> train.css.
 +   ============================================================================ */
-+* { box-sizing:border-box; margin:0; padding:0; }
-+html, body {
-+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
-+    background-attachment:fixed; min-height:100vh;
-+  }
-+body {
-+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-+    color:var(--ink);
-+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-+    line-height:1.5; -webkit-font-smoothing:antialiased;
-+  }
-+.container { max-width:640px; margin:0 auto; }
-+h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
-+/* Header bar */
-+  .header-bar {
-+    display:flex; align-items:center; gap:12px; margin-bottom:14px;
-+    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
-+    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-+    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
-+    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
-+  }
-+.hamburger-btn {
-+    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
-+    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
-+    transition:background .15s;
-+  }
-+.hamburger-btn:hover { background:var(--surface2); }
-+.page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
-+/* Nav drawer */
-+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
-+.nav-drawer.open { transform:translateX(0); }
-+.nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
-+.nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
-+.nav-brand-name { font-weight:700; font-size:15px; }
-+.nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
-+.nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
-+.nav-drawer-link:hover { background:var(--surface2); }
-+.nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
-+.nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
-+.nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
-+.nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
-+.nav-drawer-link.coming { color:var(--muted); }
-+.version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
-+.nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
-+.nav-backdrop.open { opacity:1; pointer-events:auto; }
-+.tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
-+.tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
-+.tab-bar a.active { color:var(--accent); }
-+.tab-bar a .tab-icon { width:22px; height:22px; }
-+.tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
-+.tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
-+@media (min-width: 880px) {
-+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-+    .container { max-width:780px; }
-+    .tab-bar { display:none; }
-+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
-+    .nav-backdrop { display:none !important; }
-+  }
-+/* Lesson card */
-+  .lesson-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 8px 22px -14px rgba(30,40,70,.3); }
-+.lesson-group-badge { display:inline-flex; align-items:center; padding:3px 9px; background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; border-radius:var(--r-pill); margin-bottom:8px; }
-+.lesson-title { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:18px; line-height:1.25; margin-bottom:5px; }
-+.lesson-stm { font-size:13px; color:var(--muted); margin-bottom:10px; }
-+.lesson-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-+.technique-btn { padding:7px 13px; background:var(--surface2); border:1px solid var(--line); border-radius:var(--r-btn); font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; font-family:inherit; transition:background .12s ease; }
-+.technique-btn:hover { background:var(--surface3); }
-+.technique-text { margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; font-size:13px; line-height:1.5; color:var(--ink); }
-+.advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
-+/* Status + verdict */
-+  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
-+.verdict-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
-+.verdict-headline { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:16px; margin-bottom:8px; }
-+.verdict-headline.pass { color:var(--pos); }
-+.verdict-headline.fail { color:var(--bad); }
-+.ctrl-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px -6px var(--accent); }
-+.ctrl-btn.primary:hover:not(:disabled) { filter:brightness(1.07); }
++.lesson-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 8px 22px -14px rgba(30,40,70,.3); }
++.lesson-group-badge { display: inline-flex; align-items: center; padding: 3px 9px; background: var(--surface2); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: var(--r-pill); margin-bottom: 8px; }
++.lesson-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 18px; line-height: 1.25; margin-bottom: 5px; }
++.lesson-stm { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
++.lesson-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
++.technique-btn { padding: 7px 13px; background: var(--surface2); border: 1px solid var(--line); border-radius: var(--r-btn); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; transition: background .12s ease; }
++.technique-btn:hover { background: var(--surface3); }
++.technique-text { margin-top: 10px; padding: 10px 12px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 13px; line-height: 1.5; color: var(--ink); }
++.advanced-badge { display: inline-flex; padding: 3px 8px; background: #FFF3E0; color: var(--warn); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: var(--r-pill); }
++
++#status-text { min-height: 22px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 8px; font-style: italic; }
++.verdict-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px -10px rgba(30,40,70,.3); }
++.verdict-headline { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 8px; }
++.verdict-headline.pass { color: var(--pos); }
++.verdict-headline.fail { color: var(--bad); }
++
 +/* Lesson list */
-+  .lesson-list-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); overflow:hidden; margin-bottom:14px; }
-+.lesson-list-header { padding:10px 14px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); background:var(--surface2); }
-+.lesson-list-group { padding:8px 0 4px; }
-+.lesson-list-group-label { padding:4px 14px 2px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
-+.lesson-list-item { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; transition:background .12s ease; border-bottom:1px solid var(--line); }
-+.lesson-list-item:last-child { border-bottom:none; }
-+.lesson-list-item:hover { background:var(--surface2); }
-+.lesson-list-item.active { background:var(--accent-soft); }
-+.lesson-list-name { flex:1; font-size:13px; font-weight:600; }
-+.lesson-list-result { font-size:11px; color:var(--muted); }
-+.mastery-pips { display:flex; gap:3px; }
-+.pip { width:7px; height:7px; border-radius:50%; background:var(--surface3); border:1px solid var(--line); }
-+.pip.filled { background:var(--accent); border-color:var(--accent); }
-+.pip.mastered { background:var(--warn); border-color:var(--warn); }
-+.hidden { display:none !important; }
-+.nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
-+.nav-drawer-link.secondary:hover { background:var(--surface2); }
-+.nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
-+.nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
-+/* Coarse pawns eval bar (Spec 21 endgame interim — §31 pixel polish deferred to Design). */
-+  .eg-evalbar { display:flex; align-items:center; gap:10px; max-width:420px; margin:8px auto 0; }
-+.eg-evalbar.hidden { display:none; }
-+.eg-evalbar-track { position:relative; flex:1; height:10px; border-radius:6px; overflow:hidden;
-+    background:linear-gradient(90deg, var(--surface3, #2a2a2a) 0%, var(--surface2, #1c1c1c) 100%); }
-+.eg-evalbar-fill { position:absolute; left:50%; top:0; bottom:0; width:0; transform:translateX(0);
-+    background:var(--accent, #34d399); transition:width .25s ease, left .25s ease, background .25s ease; }
-+.eg-evalbar-fill.neg { background:var(--danger, #ef4444); }
-+.eg-evalbar-num { min-width:46px; text-align:right; font-family:"Spline Sans Mono", ui-monospace, monospace;
-+    font-size:14px; font-weight:600; color:var(--ink, #e8e8e8); }
++.lesson-list-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); overflow: hidden; margin-bottom: 14px; }
++.lesson-list-header { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--surface2); }
++.lesson-list-group { padding: 8px 0 4px; }
++.lesson-list-group-label { padding: 4px 14px 2px; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
++.lesson-list-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; transition: background .12s ease; border-bottom: 1px solid var(--line); }
++.lesson-list-item:last-child { border-bottom: none; }
++.lesson-list-item:hover { background: var(--surface2); }
++.lesson-list-item.active { background: var(--accent-soft); }
++.lesson-list-name { flex: 1; font-size: 13px; font-weight: 600; }
++.lesson-list-result { font-size: 11px; color: var(--muted); }
++.mastery-pips { display: flex; gap: 3px; }
++.pip { width: 7px; height: 7px; border-radius: 50%; background: var(--surface3); border: 1px solid var(--line); }
++.pip.filled { background: var(--accent); border-color: var(--accent); }
++.pip.mastered { background: var(--warn); border-color: var(--warn); }
++
++/* Interim coarse pawns eval bar */
++.eg-evalbar { display: flex; align-items: center; gap: 10px; max-width: 420px; margin: 8px auto 0; }
++.eg-evalbar.hidden { display: none; }
++.eg-evalbar-track { position: relative; flex: 1; height: 10px; border-radius: 6px; overflow: hidden; background: linear-gradient(90deg, var(--surface3) 0%, var(--surface2) 100%); }
++.eg-evalbar-fill { position: absolute; left: 50%; top: 0; bottom: 0; width: 0; background: var(--accent); transition: width .25s ease, left .25s ease, background .25s ease; }
++.eg-evalbar-fill.neg { background: var(--bad); }
++.eg-evalbar-num { min-width: 46px; text-align: right; font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 14px; font-weight: 600; color: var(--ink); }
 diff --git a/css/recognition.css b/css/recognition.css
 new file mode 100644
-index 0000000..5298373
+index 0000000..6ede4ee
 --- /dev/null
 +++ b/css/recognition.css
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,29 @@
 +/* ============================================================================
-+   recognition.css — page-specific styles for endgame-recognition.html ONLY.
-+   The win/draw/loss panel (.classify-card/.classify-btns/.vbtn), the prompt,
-+   score pill, side-to-move label, play-out section. Shared components (board,
-+   coach, buttons, controls) come from css/train.css. Loaded AFTER train.css.
++   recognition.css — page-specific exercise widgets for endgame-recognition.html.
++   ONLY the win/draw/loss panel + side label + play-out section live here.
++   App-shell chrome -> shell.css; layout -> screen.css; shared components
++   (board, coach, buttons, controls, material) -> train.css.
 +   ============================================================================ */
-+* { box-sizing:border-box; margin:0; padding:0; }
++.board-side-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); font-family: "Plus Jakarta Sans", sans-serif; margin-bottom: 8px; }
++
++/* Win / draw / loss panel */
++.classify-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px -10px rgba(30,40,70,.3); }
++.prompt { text-align: center; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 14px; font-family: "Plus Jakarta Sans", sans-serif; }
++.classify-btns { display: flex; gap: 10px; margin-bottom: 14px; }
++.vbtn { flex: 1; padding: 13px 8px; border-radius: var(--r-btn); border: 2px solid var(--line); font-size: 14px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
++.vbtn:hover:not(:disabled) { background: var(--surface2); border-color: var(--accent); }
++.vbtn:active { transform: translateY(1px); }
++.vbtn:disabled { opacity: .45; cursor: default; transform: none; }
++
++/* Verdict reveal */
++.verdict-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 800; font-family: "Plus Jakarta Sans", sans-serif; padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 10px; }
++.verdict-badge.correct { background: #E8F5EE; color: var(--pos); }
++.verdict-badge.wrong { background: #FBF0ED; color: var(--bad); }
++.keyfactor { font-size: 13px; color: var(--ink); margin-bottom: 8px; line-height: 1.5; }
++.keyfactor strong { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
++
++/* Play-out section */
++.playout-section { background: var(--accent-soft); border: 1px solid var(--accent-2); border-radius: var(--r-panel); padding: 12px 16px; margin-top: 10px; }
++.playout-section p { font-size: 13px; color: var(--ink); margin-bottom: 8px; }
++
++#status-text { min-height: 22px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 8px; font-style: italic; }
+diff --git a/css/shell.css b/css/shell.css
+new file mode 100644
+index 0000000..70c4415
+--- /dev/null
++++ b/css/shell.css
+@@ -0,0 +1,74 @@
++/* ============================================================================
++   shell.css — THE canonical app-shell chrome shared by every training screen.
++   ----------------------------------------------------------------------------
++   Page background, .container width, header bar, hamburger (hidden on desktop),
++   the nav drawer + desktop pinned sidebar, the mobile tab bar, and the desktop
++   body offset. Values are puzzle.html's (the reference screen) so puzzle,
++   recognition and endgames render IDENTICALLY. Pages must NOT redefine this
++   chrome in their page sheet — change it here, once.
++   Load order on every training page:
++     tokens -> shell -> nav -> board -> type -> screen -> train -> [page].css
++   ============================================================================ */
++* { box-sizing: border-box; margin: 0; padding: 0; }
++
 +html, body {
-+    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
-+    background-attachment:fixed; min-height:100vh;
-+  }
++  background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
++  background-attachment: fixed; min-height: 100vh;
++}
 +body {
-+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-+    color:var(--ink);
-+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-+    line-height:1.5; -webkit-font-smoothing:antialiased;
-+  }
-+.container { max-width:640px; margin:0 auto; }
-+h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
-+/* Header bar */
-+  .header-bar {
-+    display:flex; align-items:center; gap:12px; margin-bottom:14px;
-+    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
-+    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-+    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
-+    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
-+  }
-+.hamburger-btn {
-+    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
-+    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
-+    transition:background .15s;
-+  }
-+.hamburger-btn:hover { background:var(--surface2); }
-+.page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
-+.score-pill {
-+    margin-left:auto; background:var(--surface2); border-radius:var(--r-pill);
-+    padding:4px 12px; font-size:12px; font-weight:700; color:var(--ink);
-+    font-family:"Spline Sans Mono",monospace; white-space:nowrap;
-+  }
-+/* Nav drawer */
-+  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
-+.nav-drawer.open { transform:translateX(0); }
-+.nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
-+.nav-brand-mark { width:30px; height:30px; object-fit:contain; flex-shrink:0; }
-+.nav-brand-name { font-weight:700; font-size:15px; }
-+.nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
-+.nav-drawer-link:hover { background:var(--surface2); }
-+.nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
-+.nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
-+.nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
-+.nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
-+.nav-drawer-link.coming { color:var(--muted); }
-+.version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
-+.nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
-+.nav-backdrop.open { opacity:1; pointer-events:auto; }
-+.tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
-+.tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
-+.tab-bar a.active { color:var(--accent); }
-+.tab-bar a .tab-icon { width:22px; height:22px; }
-+.tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
-+.tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
++  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++  color: var(--ink);
++  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
++  line-height: 1.5; -webkit-font-smoothing: antialiased;
++}
++.container { max-width: 560px; margin: 0 auto; }
++h1, .page-title, .nav-brand-name, .nav-drawer-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
++
++/* Header bar — plain (matches puzzle.html; not sticky). */
++.header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
++.page-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
++.hamburger-btn { background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: background .15s; }
++.hamburger-btn:hover { background: var(--surface2); }
++
++/* Nav drawer (mobile slide-in) */
++.nav-drawer { position: fixed; top: 0; left: 0; width: 288px; max-width: 84vw; height: 100vh; background: var(--surface); border-right: 1px solid var(--line); transform: translateX(-100%); transition: transform 200ms ease; z-index: 100; padding: 20px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 20px 40px -22px rgba(20,30,55,.25); }
++.nav-drawer.open { transform: translateX(0); }
++.nav-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
++.nav-brand-mark { width: 30px; height: 30px; border-radius: 0; background: none; box-shadow: none; object-fit: contain; flex-shrink: 0; }
++.nav-brand-name { font-weight: 700; font-size: 15px; }
++.nav-group-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 12px 10px 4px; }
++.nav-drawer-link { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; transition: background .15s ease; }
++.nav-drawer-link:hover { background: var(--surface2); }
++.nav-drawer-link.active { background: var(--accent); color: #fff; box-shadow: 0 6px 14px -8px var(--accent); }
++.nav-drawer-link .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
++.nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
++.nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
++.nav-drawer-link.coming { color: var(--muted); }
++.nav-drawer-link.secondary { font-size: 13px; padding: 7px 12px; color: var(--muted); }
++.nav-drawer-link.secondary:hover { background: var(--surface2); }
++.nav-drawer-link.secondary.active { background: none; color: var(--accent); box-shadow: none; font-weight: 700; }
++.nav-separator { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
++.version-stamp { margin-top: auto; padding: 10px 12px 4px; font-size: 10px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; letter-spacing: .02em; border-top: 1px solid var(--line); }
++.nav-backdrop { position: fixed; inset: 0; background: rgba(15,20,30,.45); z-index: 99; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
++.nav-backdrop.open { opacity: 1; pointer-events: auto; }
++
++/* Mobile bottom tab bar */
++.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--surface); border-top: 1px solid var(--line); z-index: 90; padding: 6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow: 0 -8px 22px -16px rgba(15,20,40,.16); }
++.tab-bar a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 7px 4px; border-radius: 10px; font-size: 10px; font-weight: 600; color: var(--muted); text-decoration: none; transition: color .15s ease; }
++.tab-bar a.active { color: var(--accent); }
++.tab-bar a .tab-icon { width: 22px; height: 22px; }
++.tab-bar a svg.tab-icon { stroke: currentColor; fill: none; }
++.tab-bar a svg.tab-icon .filldot { fill: currentColor; stroke: none; }
++
++.hidden { display: none !important; }
++
++/* ---- Desktop (>=880px): pinned sidebar, wide container, no tab bar, and the
++   hamburger is redundant (the sidebar is always visible) so it is hidden. ---- */
 +@media (min-width: 880px) {
-+    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-+    .container { max-width:780px; }
-+    .tab-bar { display:none; }
-+    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
-+    .nav-backdrop { display:none !important; }
-+  }
-+.board-side-label { text-align:center; font-size:11px; font-weight:600; color:var(--muted); font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px; }
-+/* Classify card */
-+  .classify-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
-+.prompt { text-align:center; font-size:15px; font-weight:600; color:var(--ink); margin-bottom:14px; font-family:"Plus Jakarta Sans",sans-serif; }
-+.classify-btns { display:flex; gap:10px; margin-bottom:14px; }
-+.vbtn {
-+    flex:1; padding:13px 8px; border-radius:var(--r-btn); border:2px solid var(--line);
-+    font-size:14px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif;
-+    background:var(--surface); color:var(--ink); cursor:pointer;
-+    transition:border-color .15s, background .15s, transform .1s;
-+  }
-+.vbtn:hover:not(:disabled) { background:var(--surface2); border-color:var(--accent); }
-+.vbtn:active { transform:translateY(1px); }
-+.vbtn:disabled { opacity:.45; cursor:default; transform:none; }
-+/* Verdict area */
-+  .verdict-badge {
-+    display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:800;
-+    font-family:"Plus Jakarta Sans",sans-serif; padding:6px 14px;
-+    border-radius:var(--r-pill); margin-bottom:10px;
-+  }
-+.verdict-badge.correct { background:#E8F5EE; color:var(--pos); }
-+.verdict-badge.wrong   { background:#FBF0ED; color:var(--bad); }
-+.keyfactor { font-size:13px; color:var(--ink); margin-bottom:8px; line-height:1.5; }
-+.keyfactor strong { font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; }
-+/* Playout area */
-+  .playout-section { background:var(--accent-soft); border:1px solid var(--accent-2); border-radius:var(--r-panel); padding:12px 16px; margin-top:10px; }
-+.playout-section p { font-size:13px; color:var(--ink); margin-bottom:8px; }
-+.btn.primary { background:var(--accent); color:#fff; box-shadow:0 8px 18px -10px var(--accent); border:none; }
-+.btn.primary:hover { filter:brightness(1.06); }
-+.btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); }
-+.btn.ghost:hover { background:var(--surface2); }
-+.btn.ghost:disabled { opacity:.45; cursor:default; }
-+/* Status */
-+  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
-+.hidden { display:none !important; }
-+.nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
-+.nav-drawer-link.secondary:hover { background:var(--surface2); }
-+.nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
-+.nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
++  body { padding-left: 248px; padding-right: 28px; padding-bottom: 28px; font-size: 15px; }
++  .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
++  .hamburger-btn { display: none; }
++  .tab-bar { display: none; }
++  .nav-backdrop { display: none !important; }
++  .nav-drawer { position: fixed !important; top: 0; left: 0; width: 224px !important; max-width: 224px !important; height: 100vh; transform: none !important; border-right: 1px solid var(--line); background: var(--surface); padding: 22px 14px 18px; z-index: 10; }
++}
 diff --git a/css/train.css b/css/train.css
 new file mode 100644
-index 0000000..3576d90
+index 0000000..98a2f15
 --- /dev/null
 +++ b/css/train.css
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,347 @@
 +/* ============================================================================
 +   train.css — THE shared training-screen COMPONENT sheet.
 +   ----------------------------------------------------------------------------
@@ -575,12 +510,19 @@ index 0000000..3576d90
 +/* Material-difference chip (js/material.js) — net on-board advantage. */
 +.material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
 +.material-row .mb-score.mb-even { color: var(--muted); }
++
++/* Shared button variants (used by exercise panels: play-out, primary actions). */
++.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); border: none; }
++.btn.primary:hover { filter: brightness(1.06); }
++.btn.ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
++.btn.ghost:hover { background: var(--surface2); }
++.btn.ghost:disabled { opacity: .45; cursor: default; }
 diff --git a/docs/training-screen-pattern.md b/docs/training-screen-pattern.md
 new file mode 100644
-index 0000000..ee87275
+index 0000000..7dc5bc5
 --- /dev/null
 +++ b/docs/training-screen-pattern.md
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,79 @@
 +# Training-screen pattern (HARD RULE)
 +
 +Every page that shows a board-based exercise — a "puzzle" of any kind: mistake
@@ -593,13 +535,14 @@ index 0000000..ee87275
 +## 1. Stylesheets — in this order, and NO inline `<style>`
 +```html
 +<link rel="stylesheet" href="/css/tokens.css">   <!-- design variables -->
++<link rel="stylesheet" href="/css/shell.css">    <!-- app-shell chrome (container, nav, tabbar, hamburger) -->
 +<link rel="stylesheet" href="/css/nav.css">
 +<link rel="stylesheet" href="/css/board.css">
 +<link rel="stylesheet" href="/css/type.css">
 +<link rel="stylesheet" href="/css/screen.css">   <!-- canonical LAYOUT -->
 +<link rel="stylesheet" href="/css/train.css">    <!-- shared COMPONENTS -->
 +<link rel="stylesheet" href="/css/session-wrap.css">
-+<link rel="stylesheet" href="/css/<page>.css">   <!-- thin page-specific -->
++<link rel="stylesheet" href="/css/<page>.css">   <!-- thin page-specific (exercise widgets ONLY) -->
 +```
 +No page may carry an inline `<style>` block. Page-specific rules live in the
 +page's own sheet, loaded last.
@@ -617,7 +560,10 @@ index 0000000..ee87275
 +hand-roll a column layout.
 +
 +## 3. Shared components come from `train.css`
-+Board frame + material rows, nav arrows, `.controls`, all `.btn*`, the eval /
++App-shell chrome (page width, header, nav drawer, mobile tab bar, and
++**hiding the hamburger on desktop**) lives in `shell.css` — every screen shares
++it, so the board size/position and chrome are identical. Board frame + material
++rows, nav arrows, `.controls`, all `.btn*`, the eval /
 +`.cp-bar`, and the **coach card + `.msg` bubbles** are defined ONCE in
 +`train.css`. Change a component there and every screen updates.
 +
@@ -650,20 +596,22 @@ index 0000000..ee87275
 +  mounted on recognition + endgames into `#material-top`. Self-contained,
 +  reads the board DOM, no engine deps. puzzle.html keeps its richer
 +  captured-pieces display; unifying the two is a future polish.
-+- ⏳ `puzzle.html` still links its own `puzzle.css` copy of the shared
-+  components. `train.css` mirrors those values. Migrating puzzle.html onto
-+  `train.css` (and deleting the duplicated rules from `puzzle.css`) is a
-+  tracked follow-up — do it as its own preview-checked change so the reference
-+  screen never regresses.
++- ⏳ `puzzle.html` still carries its own copy of the shell chrome + shared
++  components in `puzzle.css`. `shell.css`/`train.css` mirror those exact
++  values, so recognition + endgames render identically to it. Migrating
++  puzzle.html onto `shell.css` + `train.css` (deleting the dupes from
++  `puzzle.css`) is a tracked follow-up — done as its own preview-checked
++  change so the reference screen never regresses.
 diff --git a/endgame-recognition.html b/endgame-recognition.html
-index c52d7a6..91bfb59 100644
+index c52d7a6..3f092d4 100644
 --- a/endgame-recognition.html
 +++ b/endgame-recognition.html
-@@ -5,148 +5,28 @@
+@@ -5,148 +5,29 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
  <meta name="puzzle-type-filter" content="recognition">
  <title>KnightPath — Endgame Recognition</title>
 +  <link rel="stylesheet" href="/css/tokens.css">
++  <link rel="stylesheet" href="/css/shell.css">
 +  <link rel="stylesheet" href="/css/nav.css">
 +  <link rel="stylesheet" href="/css/board.css">
 +  <link rel="stylesheet" href="/css/type.css">
@@ -817,7 +765,7 @@ index c52d7a6..91bfb59 100644
    <div class="header-bar">
      <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-@@ -157,39 +37,57 @@
+@@ -157,39 +38,57 @@
      <div class="score-pill" id="score-pill">0 / 0</div>
    </div>
  
@@ -903,7 +851,7 @@ index c52d7a6..91bfb59 100644
    </div>
  </div>
  
-@@ -227,5 +125,17 @@
+@@ -227,5 +126,17 @@
  </nav>
  
  <script type="module" src="/js/puzzle/classify.js"></script>
@@ -922,14 +870,15 @@ index c52d7a6..91bfb59 100644
  </body>
  </html>
 diff --git a/endgames.html b/endgames.html
-index f4e3a81..546bedc 100644
+index f4e3a81..4db685b 100644
 --- a/endgames.html
 +++ b/endgames.html
-@@ -5,153 +5,27 @@
+@@ -5,153 +5,28 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
  <meta name="puzzle-type-filter" content="endgame">
  <title>KnightPath — Endgames</title>
 +  <link rel="stylesheet" href="/css/tokens.css">
++  <link rel="stylesheet" href="/css/shell.css">
 +  <link rel="stylesheet" href="/css/nav.css">
 +  <link rel="stylesheet" href="/css/board.css">
 +  <link rel="stylesheet" href="/css/type.css">
@@ -1088,7 +1037,7 @@ index f4e3a81..546bedc 100644
    <div class="header-bar">
      <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-@@ -161,49 +35,68 @@
+@@ -161,49 +36,68 @@
      <span class="page-title">Endgames</span>
    </div>
  
@@ -1196,7 +1145,7 @@ index f4e3a81..546bedc 100644
  </div>
  
  <!-- Nav drawer -->
-@@ -240,5 +133,17 @@
+@@ -240,5 +134,17 @@
  </nav>
  
  <script type="module" src="/js/puzzle/playout.js"></script>
