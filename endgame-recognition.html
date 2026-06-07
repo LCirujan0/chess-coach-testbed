@@ -5,148 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="puzzle-type-filter" content="recognition">
 <title>KnightPath — Endgame Recognition</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/board.css">
+  <link rel="stylesheet" href="/css/type.css">
+  <link rel="stylesheet" href="/css/screen.css">
+  <link rel="stylesheet" href="/css/train.css">
+  <link rel="stylesheet" href="/css/session-wrap.css">
+  <link rel="stylesheet" href="/css/recognition.css">
+
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
-<link rel="stylesheet" href="/css/tokens.css">
-<link rel="stylesheet" href="/css/screen.css">
-<link rel="stylesheet" href="/css/nav.css">
-<link rel="stylesheet" href="/css/board.css">
-<link rel="stylesheet" href="/css/session-wrap.css">
-<link rel="stylesheet" href="/css/type.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  html, body {
-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
-    background-attachment:fixed; min-height:100vh;
-  }
-  body {
-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-    color:var(--ink);
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    line-height:1.5; -webkit-font-smoothing:antialiased;
-  }
-  .container { max-width:640px; margin:0 auto; }
-  h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
 
-  /* Header bar */
-  .header-bar {
-    display:flex; align-items:center; gap:12px; margin-bottom:14px;
-    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
-    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
-    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
-  }
-  .hamburger-btn {
-    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
-    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
-    transition:background .15s;
-  }
-  .hamburger-btn:hover { background:var(--surface2); }
-  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
-  .score-pill {
-    margin-left:auto; background:var(--surface2); border-radius:var(--r-pill);
-    padding:4px 12px; font-size:12px; font-weight:700; color:var(--ink);
-    font-family:"Spline Sans Mono",monospace; white-space:nowrap;
-  }
-
-  /* Nav drawer */
-  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
-  .nav-drawer.open { transform:translateX(0); }
-  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
-  .nav-brand-mark { width:30px; height:30px; object-fit:contain; flex-shrink:0; }
-  .nav-brand-name { font-weight:700; font-size:15px; }
-  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
-  .nav-drawer-link:hover { background:var(--surface2); }
-  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
-  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
-  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
-  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
-  .nav-drawer-link.coming { color:var(--muted); }
-  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
-  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
-  .nav-backdrop.open { opacity:1; pointer-events:auto; }
-  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
-  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
-  .tab-bar a.active { color:var(--accent); }
-  .tab-bar a .tab-icon { width:22px; height:22px; }
-  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
-  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
-  @media (min-width: 880px) {
-    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-    .container { max-width:780px; }
-    .tab-bar { display:none; }
-    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
-    .nav-backdrop { display:none !important; }
-  }
-
-  /* Board */
-  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
-  .board-side-label { text-align:center; font-size:11px; font-weight:600; color:var(--muted); font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px; }
-
-  /* Classify card */
-  .classify-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
-  .prompt { text-align:center; font-size:15px; font-weight:600; color:var(--ink); margin-bottom:14px; font-family:"Plus Jakarta Sans",sans-serif; }
-  .classify-btns { display:flex; gap:10px; margin-bottom:14px; }
-  .vbtn {
-    flex:1; padding:13px 8px; border-radius:var(--r-btn); border:2px solid var(--line);
-    font-size:14px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif;
-    background:var(--surface); color:var(--ink); cursor:pointer;
-    transition:border-color .15s, background .15s, transform .1s;
-  }
-  .vbtn:hover:not(:disabled) { background:var(--surface2); border-color:var(--accent); }
-  .vbtn:active { transform:translateY(1px); }
-  .vbtn:disabled { opacity:.45; cursor:default; transform:none; }
-
-  /* Verdict area */
-  .verdict-badge {
-    display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:800;
-    font-family:"Plus Jakarta Sans",sans-serif; padding:6px 14px;
-    border-radius:var(--r-pill); margin-bottom:10px;
-  }
-  .verdict-badge.correct { background:#E8F5EE; color:var(--pos); }
-  .verdict-badge.wrong   { background:#FBF0ED; color:var(--bad); }
-  .keyfactor { font-size:13px; color:var(--ink); margin-bottom:8px; line-height:1.5; }
-  .keyfactor strong { font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; }
-
-  /* Playout area */
-  .playout-section { background:var(--accent-soft); border:1px solid var(--accent-2); border-radius:var(--r-panel); padding:12px 16px; margin-top:10px; }
-  .playout-section p { font-size:13px; color:var(--ink); margin-bottom:8px; }
-
-  /* Buttons */
-  .btn {
-    font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; font-size:14px;
-    padding:12px 16px; border-radius:var(--r-btn); border:1px solid transparent;
-    cursor:pointer; width:100%; transition:filter .15s, transform .1s;
-    display:block; text-align:center; margin-top:8px;
-  }
-  .btn.primary { background:var(--accent); color:#fff; box-shadow:0 8px 18px -10px var(--accent); border:none; }
-  .btn.primary:hover { filter:brightness(1.06); }
-  .btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); }
-  .btn.ghost:hover { background:var(--surface2); }
-  .btn.ghost:disabled { opacity:.45; cursor:default; }
-
-  /* Status */
-  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
-  .hidden { display:none !important; }
-  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
-  .nav-drawer-link.secondary:hover { background:var(--surface2); }
-  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
-  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
-</style>
 </head>
 <body>
 <div class="container">
-  <!-- Persistent in-session wrapper (Spec 21 — recognition folded into the
-       session host). Hidden + no-op unless opened via
-       ?session=today&block=recognition. -->
-  <div class="session-wrap hidden" id="session-wrap"></div>
   <div class="header-bar">
     <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -157,39 +37,57 @@
     <div class="score-pill" id="score-pill">0 / 0</div>
   </div>
 
-  <!-- Side-to-move label -->
-  <div class="board-side-label" id="side-to-move-label">—</div>
+  <!-- Canonical training screen (css/screen.css): head / board-left / rail-right -->
+  <div class="layout-grid">
+    <div class="session-wrap hidden" id="session-wrap"></div>
 
-  <!-- Board -->
-  <div class="board-wrap">
-    <div id="board" class="board"></div>
-  </div>
-
-  <div id="status-text"></div>
-
-  <!-- Classify prompt + buttons -->
-  <div class="classify-card">
-    <div class="prompt">Is this position <strong>winning, drawn, or losing</strong>?</div>
-    <div class="classify-btns" id="classify-area">
-      <button class="vbtn" id="btn-winning">Winning</button>
-      <button class="vbtn" id="btn-drawn">Drawn</button>
-      <button class="vbtn" id="btn-losing">Losing</button>
+    <div class="lg-head">
+      <div class="board-side-label" id="side-to-move-label">—</div>
+      <div id="status-text" class="inline-status"></div>
     </div>
 
-    <!-- Verdict reveal (hidden until classified) -->
-    <div id="verdict-area" class="hidden"></div>
-
-    <!-- Play it out (hidden; shown only after correct win classification) -->
-    <button class="btn ghost hidden" id="playout-btn">Play it out →</button>
-
-    <!-- Playout section (hidden until play-out activated) -->
-    <div id="playout-area" class="playout-section hidden">
-      <p>Board is now interactive. Play to convert the win.</p>
-      <div id="playout-verdict-area" class="hidden"></div>
+    <div class="lg-left">
+      <div class="board-wrap">
+        <div class="material-row material-top" id="material-top"></div>
+        <div id="board" class="board"></div>
+        <div class="material-row material-bottom" id="material-bottom"></div>
+      </div>
     </div>
 
-    <!-- Next button area -->
-    <div id="next-area"></div>
+    <div class="lg-right">
+      <!-- PAGE-SPECIFIC exercise panel: win / draw / loss judgement -->
+      <div class="classify-card">
+        <div class="prompt">Is this position <strong>winning, drawn, or losing</strong>?</div>
+        <div class="classify-btns" id="classify-area">
+          <button class="vbtn" id="btn-winning">Winning</button>
+          <button class="vbtn" id="btn-drawn">Drawn</button>
+          <button class="vbtn" id="btn-losing">Losing</button>
+        </div>
+        <div id="verdict-area" class="hidden"></div>
+        <button class="btn ghost hidden" id="playout-btn">Play it out →</button>
+        <div id="playout-area" class="playout-section hidden">
+          <p>Board is now interactive. Play to convert the win.</p>
+          <div id="playout-verdict-area" class="hidden"></div>
+        </div>
+        <div id="next-area"></div>
+      </div>
+
+      <!-- ALWAYS-PRESENT coach (css/train.css + js/coach-widget.js) -->
+      <div class="coach-card">
+        <div class="coach-header">
+          <span class="coach-avatar">C</span>
+          <span class="coach-title">Coach</span>
+          <span class="coach-status">Online</span>
+        </div>
+        <div class="coach-log" id="coach-log">
+          <div class="msg system">Stuck? Ask the coach for a nudge — no spoilers.</div>
+        </div>
+        <form class="coach-input-row" id="coach-form">
+          <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
+          <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -227,5 +125,17 @@
 </nav>
 
 <script type="module" src="/js/puzzle/classify.js"></script>
+<script type="module">
+  import { mountCoachWidget } from '/js/coach-widget.js';
+  import { mountMaterial } from '/js/material.js';
+  mountCoachWidget({
+    logEl: document.getElementById('coach-log'),
+    formEl: document.getElementById('coach-form'),
+    inputEl: document.getElementById('coach-input'),
+    sendEl: document.getElementById('coach-send'),
+    context: 'The user is judging whether a chess position is winning, drawn, or losing, then may play the position out.'
+  });
+  mountMaterial(document.getElementById('board'), document.getElementById('material-top'));
+</script>
 </body>
 </html>
