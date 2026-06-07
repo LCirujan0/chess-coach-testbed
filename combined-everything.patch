@@ -1,0 +1,3811 @@
+diff --git a/css/endgames.css b/css/endgames.css
+new file mode 100644
+index 0000000..b0aa792
+--- /dev/null
++++ b/css/endgames.css
+@@ -0,0 +1,45 @@
++/* ============================================================================
++   endgames.css — page-specific exercise widgets for endgames.html.
++   Lesson header, "show technique" panel, verdict card, lesson list, and the
++   interim coarse pawns eval bar. App-shell chrome -> shell.css; layout ->
++   screen.css; shared components (board, coach, buttons, controls) -> train.css.
++   ============================================================================ */
++.lesson-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 8px 22px -14px rgba(30,40,70,.3); }
++.lesson-group-badge { display: inline-flex; align-items: center; padding: 3px 9px; background: var(--surface2); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: var(--r-pill); margin-bottom: 8px; }
++.lesson-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 18px; line-height: 1.25; margin-bottom: 5px; }
++.lesson-stm { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
++.lesson-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
++.technique-btn { padding: 7px 13px; background: var(--surface2); border: 1px solid var(--line); border-radius: var(--r-btn); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; transition: background .12s ease; }
++.technique-btn:hover { background: var(--surface3); }
++.technique-text { margin-top: 10px; padding: 10px 12px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 13px; line-height: 1.5; color: var(--ink); }
++.advanced-badge { display: inline-flex; padding: 3px 8px; background: #FFF3E0; color: var(--warn); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: var(--r-pill); }
++
++#status-text { min-height: 22px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 8px; font-style: italic; }
++.verdict-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px -10px rgba(30,40,70,.3); }
++.verdict-headline { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 8px; }
++.verdict-headline.pass { color: var(--pos); }
++.verdict-headline.fail { color: var(--bad); }
++
++/* Lesson list */
++.lesson-list-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); overflow: hidden; margin-bottom: 14px; }
++.lesson-list-header { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--surface2); }
++.lesson-list-group { padding: 8px 0 4px; }
++.lesson-list-group-label { padding: 4px 14px 2px; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
++.lesson-list-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; transition: background .12s ease; border-bottom: 1px solid var(--line); }
++.lesson-list-item:last-child { border-bottom: none; }
++.lesson-list-item:hover { background: var(--surface2); }
++.lesson-list-item.active { background: var(--accent-soft); }
++.lesson-list-name { flex: 1; font-size: 13px; font-weight: 600; }
++.lesson-list-result { font-size: 11px; color: var(--muted); }
++.mastery-pips { display: flex; gap: 3px; }
++.pip { width: 7px; height: 7px; border-radius: 50%; background: var(--surface3); border: 1px solid var(--line); }
++.pip.filled { background: var(--accent); border-color: var(--accent); }
++.pip.mastered { background: var(--warn); border-color: var(--warn); }
++
++/* Interim coarse pawns eval bar */
++.eg-evalbar { display: flex; align-items: center; gap: 10px; max-width: 420px; margin: 8px auto 0; }
++.eg-evalbar.hidden { display: none; }
++.eg-evalbar-track { position: relative; flex: 1; height: 10px; border-radius: 6px; overflow: hidden; background: linear-gradient(90deg, var(--surface3) 0%, var(--surface2) 100%); }
++.eg-evalbar-fill { position: absolute; left: 50%; top: 0; bottom: 0; width: 0; background: var(--accent); transition: width .25s ease, left .25s ease, background .25s ease; }
++.eg-evalbar-fill.neg { background: var(--bad); }
++.eg-evalbar-num { min-width: 46px; text-align: right; font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 14px; font-weight: 600; color: var(--ink); }
+diff --git a/css/puzzle.css b/css/puzzle.css
+new file mode 100644
+index 0000000..1eba0b6
+--- /dev/null
++++ b/css/puzzle.css
+@@ -0,0 +1,1093 @@
++/* ============================================================================
++   puzzle.css — styles for the mistake-puzzle solving screen (puzzle.html).
++   ----------------------------------------------------------------------------
++   Extracted verbatim from puzzle.html's inline <style> (was ~45KB inline).
++   Loads AFTER the shared stylesheets (tokens/nav/board/type/gate/screen/
++   session-wrap) to preserve the original cascade order. Design tokens live in
++   css/tokens.css; this file is puzzle-screen-specific presentation only.
++   Next foundation step: promote the shared bits (coach card, feedback, eval
++   bar, controls) into a common training-rail component sheet.
++   ============================================================================ */
++  /* ============================================================
++     Daylight design tokens (spec §1)
++     ============================================================ */
++
++  /* Modern browsers get the color-mix highlights for cleaner transparency. */
++  @supports (background: color-mix(in srgb, red 50%, transparent)) {
++    :root {
++      --hl-move: color-mix(in srgb, var(--accent) 26%, transparent);
++      --hl-sel:  color-mix(in srgb, var(--accent) 36%, transparent);
++    }
++  }
++
++  * { box-sizing: border-box; margin: 0; padding: 0; }
++  html, body {
++    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
++    background-attachment: fixed;
++    min-height: 100vh;
++  }
++  body {
++    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++    color: var(--ink);
++    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
++    line-height: 1.5;
++    -webkit-font-smoothing: antialiased;
++  }
++  .container { max-width: 560px; margin: 0 auto; }
++
++  /* ============================================================
++     Typography (spec §2)
++     ============================================================ */
++  h1, .title, .page-title, .nav-drawer-title {
++    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
++  }
++  /* Spline Sans Mono is data-only per redesign-spec §2 (eval numbers, FEN,
++     coords, raw counts). NOT for prose / meta / labels. .puzzle-meta moved
++     OUT — its content is "puzzle 1 of 21 · vs IanN_143 · 2026-05-29 · …"
++     which is meta prose, so it inherits Inter from body. */
++  .mono, .coord, .data {
++    font-family: "Spline Sans Mono", ui-monospace, monospace;
++  }
++
++  h1 {
++    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
++    line-height: 1.1; margin-bottom: 4px;
++  }
++  .eyebrow {
++    font-size: 11px; font-weight: 700; letter-spacing: 0.13em;
++    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
++  }
++  .meta-label {
++    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
++    text-transform: uppercase; color: var(--muted);
++  }
++
++  /* ============================================================
++     Header + page-title
++     ============================================================ */
++  .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
++  .page-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
++  .header-mode { margin-left: auto; display: flex; gap: 4px; }
++  .mode-pill {
++    padding: 6px 12px; border: 1px solid var(--line);
++    border-radius: var(--r-pill); background: var(--surface);
++    color: var(--muted); font-size: 10px; font-weight: 700;
++    letter-spacing: 0.06em; text-transform: uppercase;
++    cursor: pointer; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .mode-pill:hover { background: var(--surface2); }
++  .mode-pill.active {
++    background: var(--ink); color: #fff; border-color: var(--ink);
++  }
++
++  /* ============================================================
++     Sidebar / nav drawer (spec §7)
++     Mobile: slide-in drawer. Desktop: pinned sidebar.
++     ============================================================ */
++  .nav-drawer {
++    position: fixed; top: 0; left: 0;
++    width: 288px; max-width: 84vw; height: 100vh;
++    background: var(--surface); border-right: 1px solid var(--line);
++    transform: translateX(-100%);
++    transition: transform 200ms ease;
++    z-index: 100; padding: 20px 14px; overflow-y: auto;
++    display: flex; flex-direction: column; gap: 4px;
++    box-shadow: 0 20px 40px -22px rgba(20,30,55,.25);
++  }
++  .nav-drawer.open { transform: translateX(0); }
++  .nav-brand {
++    display: flex; align-items: center; gap: 10px;
++    padding: 6px 8px 14px;
++    margin-bottom: 6px;
++    border-bottom: 1px solid var(--line);
++  }
++  .nav-brand-mark {
++    width: 30px; height: 30px; border-radius: 0;
++    background: none; box-shadow: none;
++    object-fit: contain; flex-shrink: 0;
++  }
++  .nav-brand-name {
++    font-family: "Plus Jakarta Sans", sans-serif;
++    font-weight: 700; font-size: 15px;
++  }
++  .nav-group-label {
++    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
++    text-transform: uppercase; color: var(--muted);
++    padding: 12px 10px 4px;
++  }
++  .nav-drawer-link {
++    display: flex; align-items: center; gap: 11px;
++    padding: 10px 12px; border-radius: 10px;
++    font-size: 14px; font-weight: 600;
++    color: var(--ink); text-decoration: none;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .nav-drawer-link:hover { background: var(--surface2); }
++  .nav-drawer-link.active {
++    background: var(--accent); color: #fff;
++    box-shadow: 0 6px 14px -8px var(--accent);
++  }
++  .nav-drawer-link .nav-icon {
++    width: 18px; height: 18px; flex-shrink: 0;
++    display: inline-flex; align-items: center; justify-content: center;
++  }
++  /* SVG nav icons (spec §7) inherit colour from the link state; the active
++     pill flips text+icon to white via .nav-drawer-link.active. */
++  .nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
++  .nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
++  .tab-bar a svg.tab-icon { stroke: currentColor; fill: none; }
++  .tab-bar a svg.tab-icon .filldot { fill: currentColor; stroke: none; }
++  .nav-drawer-link.coming {
++    color: var(--muted);
++  }
++  .nav-drawer-link.coming .nav-soon {
++    margin-left: auto; font-size: 9px; font-weight: 700;
++    letter-spacing: 0.08em; text-transform: uppercase;
++    background: var(--surface2); color: var(--muted);
++    padding: 2px 7px; border-radius: 9px;
++  }
++  .nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
++  .version-stamp {
++    margin-top: auto;
++    padding: 10px 12px 4px;
++    font-size: 10px;
++    color: var(--muted);
++    letter-spacing: 0.02em;
++    border-top: 1px solid var(--line);
++  }
++  .nav-backdrop {
++    position: fixed; inset: 0; background: rgba(15,20,30,.45);
++    z-index: 99; opacity: 0; pointer-events: none;
++    transition: opacity 200ms ease;
++  }
++  .nav-backdrop.open { opacity: 1; pointer-events: auto; }
++
++  /* Mobile tab bar (bottom) — desktop hides via media query */
++  .tab-bar {
++    position: fixed; bottom: 0; left: 0; right: 0;
++    display: flex; align-items: stretch;
++    background: var(--surface); border-top: 1px solid var(--line);
++    z-index: 90;
++    padding: 6px 6px max(env(safe-area-inset-bottom, 6px), 6px);
++    box-shadow: 0 -8px 22px -16px rgba(15,20,40,.16);
++  }
++  .tab-bar a {
++    flex: 1; display: flex; flex-direction: column;
++    align-items: center; justify-content: center; gap: 2px;
++    padding: 7px 4px; border-radius: 10px;
++    font-size: 10px; font-weight: 600;
++    color: var(--muted); text-decoration: none;
++    transition: color .15s ease;
++  }
++  .tab-bar a.active { color: var(--accent); }
++  .tab-bar a .tab-icon { width: 22px; height: 22px; }
++  .tab-bar a.coming { opacity: .55; }
++
++  /* ============================================================
++     Filters (segmented control, spec §6)
++     ============================================================ */
++  .filter-toggle {
++    display: flex; align-items: center; gap: 10px;
++    width: 100%; padding: 10px 14px;
++    background: var(--surface); border: 1px solid var(--line);
++    border-radius: var(--r-btn); color: var(--ink);
++    font-size: 13px; font-weight: 700;
++    cursor: pointer; font-family: inherit;
++    margin-bottom: 10px;
++    box-shadow: 0 2px 4px rgba(0,0,0,.03);
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .filter-toggle:hover { background: var(--surface2); }
++  .filter-toggle .filter-badge {
++    margin-left: auto;
++    font-size: 12px; color: var(--muted); font-weight: 500;
++  }
++  .filter-toggle .filter-caret { font-size: 10px; color: var(--muted); }
++  .filter-toggle.open .filter-caret { transform: rotate(180deg); display: inline-block; }
++
++  .filter-panel {
++    padding: 14px; background: var(--surface);
++    border: 1px solid var(--line); border-radius: var(--r-panel);
++    margin-bottom: 12px;
++    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
++  }
++  .filter-panel.hidden { display: none; }
++  .filter-group { margin-bottom: 12px; }
++  .filter-group:last-child { margin-bottom: 0; }
++  .filter-group-label {
++    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
++    text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
++  }
++  .filter-tabs, .cat-tabs {
++    display: inline-flex; padding: 3px; gap: 2px;
++    background: var(--surface2); border-radius: 11px;
++    width: 100%;
++  }
++  .filter-tab, .cat-tab, .tried-tab {
++    flex: 1; border: none; background: transparent;
++    cursor: pointer; color: var(--muted);
++    font: inherit; font-size: 11px; font-weight: 600;
++    padding: 7px 10px; border-radius: 8px;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; white-space: nowrap;
++    text-align: center;
++  }
++  .filter-tab.active {
++    background: var(--surface); color: var(--ink);
++    box-shadow: 0 1px 3px rgba(0,0,0,.13);
++  }
++  .cat-tab.active {
++    background: var(--accent); color: #fff;
++    box-shadow: 0 2px 6px -2px var(--accent);
++  }
++  .tried-tab.active {
++    background: var(--surface); color: var(--ink);
++    box-shadow: 0 1px 3px rgba(0,0,0,.13);
++  }
++  .filter-tab.empty, .cat-tab.empty, .tried-tab.empty { opacity: 0.45; cursor: not-allowed; }
++  .filter-tab .count, .cat-tab .count, .tried-tab .count {
++    display: inline-block; background: rgba(0,0,0,.1);
++    border-radius: 8px; padding: 1px 6px; margin-left: 4px;
++    font-family: "Spline Sans Mono", monospace; font-size: 10px;
++    font-weight: 500;
++  }
++  .filter-tab.active .count, .tried-tab.active .count { background: var(--surface2); }
++
++  /* Spec 02 — Theme collapsible row + Drill this theme */
++  .theme-toggle {
++    display: flex; align-items: center; gap: 10px;
++    width: 100%; padding: 9px 12px;
++    background: var(--surface2); border: 1px solid transparent;
++    border-radius: 11px; cursor: pointer; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .theme-toggle:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
++  .theme-toggle .theme-current {
++    margin-left: auto; font-size: 12px; color: var(--ink);
++    font-weight: 600;
++  }
++  .theme-toggle .filter-caret {
++    font-size: 10px; color: var(--muted); transition: transform .15s ease;
++  }
++  .theme-toggle.open .filter-caret { transform: rotate(180deg); }
++  .theme-panel {
++    margin-top: 8px; padding: 10px;
++    background: var(--surface); border: 1px solid var(--line);
++    border-radius: var(--r-panel);
++  }
++  .theme-panel.hidden { display: none; }
++  .theme-pills {
++    display: flex; flex-wrap: wrap; gap: 5px;
++    max-height: 170px; overflow-y: auto;
++    margin-bottom: 10px;
++  }
++  .theme-pill {
++    padding: 5px 11px; background: var(--surface2);
++    border: 1px solid transparent; border-radius: var(--r-pill);
++    color: var(--ink); font-size: 11px; font-weight: 600;
++    cursor: pointer; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .theme-pill:hover { background: color-mix(in srgb, var(--surface2) 75%, var(--accent) 25%); }
++  .theme-pill.active {
++    background: var(--accent); color: #fff; border-color: var(--accent);
++    box-shadow: 0 2px 6px -2px var(--accent);
++  }
++  .theme-pill.empty { opacity: .4; cursor: not-allowed; }
++  .theme-pill .count {
++    margin-left: 4px; font-size: 10px; opacity: .8;
++    font-family: "Spline Sans Mono", monospace;
++  }
++  .drill-cta { width: 100%; margin: 0; padding: 9px 12px; font-size: 13px; }
++  .drill-cta:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; }
++
++  .drill-banner {
++    display: flex; align-items: center; gap: 10px;
++    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
++    border-radius: var(--r-btn); padding: 8px 12px; margin-bottom: 10px;
++    box-shadow: 0 4px 10px -6px rgba(47,158,118,.35);
++  }
++  .drill-banner.hidden { display: none; }
++  .drill-banner .drill-label {
++    flex: 1; font-size: 13px; font-weight: 700; color: var(--accent);
++  }
++  .drill-banner .drill-end {
++    padding: 5px 10px; font-size: 11px; font-weight: 700;
++    background: transparent; border: 1px solid var(--accent); color: var(--accent);
++    border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .drill-banner .drill-end:hover { background: var(--accent); color: #fff; }
++  .cat-tab.active .count { background: rgba(255,255,255,.22); color: #fff; }
++
++  /* ============================================================
++     Puzzle meta + status
++     ============================================================ */
++  .puzzle-meta {
++    font-size: 12px; color: var(--muted);
++    margin-bottom: 8px;
++  }
++  .puzzle-meta.hidden { display: none; }
++  .repeat-badge {
++    display: inline-block;
++    padding: 4px 10px; background: var(--bad);
++    color: #fff; border-radius: var(--r-pill);
++    font-size: 10px; font-weight: 700;
++    letter-spacing: 0.06em; text-transform: uppercase;
++    margin-bottom: 8px;
++    box-shadow: 0 2px 6px -2px var(--bad);
++  }
++  .repeat-badge.hidden { display: none; }
++  .inline-status {
++    font-size: 12px; color: var(--muted);
++    margin-bottom: 8px;
++  }
++  .inline-status.error { color: var(--bad); }
++  .inline-status.thinking { color: var(--warn); }
++  .inline-status.hidden { display: none; }
++  /* v0.23 — user-correct-sq: subtle green tint on from/to when move was engine best */
++  .square.user-correct-sq { background-color: rgba(60, 180, 100, 0.35) !important; }
++  /* v0.23 — "Show Follow-up" button: accent tint, sits beside Restart */
++  .btn.btn-followup { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
++  .btn.btn-followup:hover { background: var(--accent-soft); }
++
++  /* Thinking gate (Deep mode) styles moved to css/gate.css (v0.53b) — it is
++     now its own component, decoupled from the right column so its height can
++     never squeeze the coach. */
++
++  /* ============================================================
++     Board (spec §5) — warm wood
++     ============================================================ */
++  .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
++  .material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
++  .mb-piece { width: 18px; height: 18px; display: inline-block; }
++  .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
++  /* ============================================================
++     Controls (buttons) — spec §6
++     ============================================================ */
++  .controls {
++    display: flex; flex-wrap: wrap; gap: 8px;
++    margin-bottom: 12px;
++  }
++  .btn {
++    flex: 1; min-width: 110px;
++    padding: 11px 14px;
++    font-family: inherit; font-weight: 700; font-size: 14px;
++    border: 1px solid var(--line);
++    border-radius: var(--r-btn);
++    background: var(--surface); color: var(--ink);
++    cursor: pointer;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++    box-shadow: 0 2px 4px rgba(0,0,0,.03);
++  }
++  .btn:hover { background: var(--surface2); }
++  .btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
++  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
++  .btn.btn-primary {
++    background: var(--accent); color: #fff; border-color: transparent;
++    box-shadow: 0 8px 18px -8px var(--accent);
++  }
++  .btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
++
++  /* ============================================================
++     Post-resolution navigation
++     ============================================================ */
++  .nav-arrows {
++    display: flex; align-items: center; gap: 10px;
++    background: var(--surface); border: 1px solid var(--line);
++    border-radius: var(--r-btn); padding: 6px 10px;
++    margin-bottom: 12px;
++    box-shadow: 0 2px 4px rgba(0,0,0,.03);
++  }
++  .nav-arrows.hidden { display: none; }
++  .nav-arrows .nav-step {
++    background: transparent; border: none;
++    cursor: pointer; font-size: 15px; line-height: 1;
++    padding: 4px 10px; color: var(--ink);
++    border-radius: 8px;
++    /* §53 — pin the arrow glyphs to the UI font so they don't fall back to a
++       serif/system glyph (Jorge flagged the nav-arrows font). */
++    font-family: var(--font-body, "Inter", system-ui, sans-serif);
++    transition: background .15s ease;
++  }
++  .nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
++  .nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
++  .nav-label {
++    flex: 1; text-align: center;
++    /* §53 — use the type system (Inter body), readable size + weight. */
++    font-family: var(--font-body, "Inter", system-ui, sans-serif);
++    font-size: 13px; font-weight: 600; color: var(--muted);
++    letter-spacing: 0.01em;
++  }
++
++  /* ============================================================
++     Result panel = verdict card (spec §6)
++     ============================================================ */
++  @keyframes slide-down-fade {
++    from { opacity: 0; transform: translateY(-8px); }
++    to { opacity: 1; transform: translateY(0); }
++  }
++  .result {
++    padding: 14px 16px;
++    border: 1px solid var(--line);
++    border-radius: var(--r-panel);
++    background: var(--surface);
++    margin-bottom: 12px;
++    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
++    animation: slide-down-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
++  }
++  .result.hidden { display: none; animation: none; }
++  .result-headline {
++    display: flex; align-items: center; gap: 10px;
++    font-weight: 700; font-size: 14px;
++    margin-bottom: 4px;
++  }
++  .result-headline::before {
++    content: ""; flex-shrink: 0;
++    width: 22px; height: 22px; border-radius: 50%;
++    display: inline-block;
++    background: var(--muted);
++    background-image: var(--badge-symbol);
++    background-repeat: no-repeat; background-position: center;
++    background-size: 14px 14px;
++  }
++  .result.pass .result-headline { color: var(--pos); }
++  .result.pass .result-headline::before {
++    background-color: var(--pos);
++    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3.5,8.5 6.5,11.5 12.5,5'/></svg>");
++  }
++  .result.warn .result-headline { color: var(--warn); }
++  .result.warn .result-headline::before {
++    background-color: var(--warn);
++    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><rect x='7' y='3' width='2' height='6' rx='1'/><circle cx='8' cy='12' r='1.2'/></svg>");
++  }
++  .result.fail .result-headline { color: var(--bad); }
++  .result.fail .result-headline::before {
++    background-color: var(--bad);
++    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><line x1='4' y1='4' x2='12' y2='12'/><line x1='12' y1='4' x2='4' y2='12'/></svg>");
++  }
++  .result.pass { background: #F1F8F4; border-color: #D4E9DC; }
++  .result.warn { background: #FBF5EA; border-color: #EBDDC2; }
++  .result.fail { background: #FBF0ED; border-color: #EDD2CB; }
++  .result-body { font-size: 13px; color: var(--ink); line-height: 1.5; }
++  /* Motif chip on the post-resolution result panel (v0.7). Hidden until the
++     reveal is earned — same gate as the engine column on the comparison
++     table. Spec-02 motif tag was previously invisible because nothing rendered
++     it outside the Filters → Theme submenu. */
++  .result-motif {
++    display: inline-flex; align-items: center; gap: 5px;
++    margin-top: 9px;
++    padding: 4px 10px;
++    background: var(--accent-soft);
++    color: var(--accent);
++    border-radius: var(--r-pill);
++    font-size: 11px; font-weight: 600;
++    letter-spacing: 0.02em;
++  }
++  .result-motif.hidden { display: none; }
++  .result-motif .label { color: var(--muted); font-weight: 500; }
++  /* Post-puzzle component picker (Deep mode only, v0.7). Capture #2 §component:
++     the student taps the training component they think this puzzle was about.
++     Stored on the just-finished attempt log entry via setAttemptComponent().
++     Drill mode hides this row per coaching-style.md "Drill skips reflection". */
++  .result-components {
++    margin-top: 12px;
++    display: flex; flex-wrap: wrap; gap: 6px;
++  }
++  .result-components.hidden { display: none; }
++  .result-components-label {
++    width: 100%;
++    font-size: 11px; font-weight: 700;
++    letter-spacing: 0.08em; text-transform: uppercase;
++    color: var(--muted);
++    margin-bottom: 4px;
++  }
++  .component-pill {
++    padding: 5px 10px;
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: var(--r-pill);
++    color: var(--ink);
++    font-size: 12px; font-weight: 600;
++    cursor: pointer;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++    font-family: inherit;
++  }
++  .component-pill:hover { background: var(--surface2); }
++  .component-pill.active {
++    background: var(--accent);
++    color: #fff;
++    border-color: var(--accent);
++  }
++  .result-repeat {
++    margin-top: 6px; font-size: 11px; color: var(--muted);
++    font-style: italic;
++  }
++  .result-repeat.hidden { display: none; }
++
++  /* ============================================================
++     §29/§30 result card — verdict banner, pips, reveal, card actions
++     ============================================================ */
++  .task-prompt { font-size: 13px; color: var(--muted); margin: -2px 0 10px; font-weight: 600; }
++  .task-prompt.hidden { display: none; }
++
++  /* One card border around the whole result block (§30.1) */
++  #result { display: flex; flex-direction: column; gap: 10px; }
++  .result-verdict { display: flex; align-items: center; gap: 11px; }
++  .verdict-icon {
++    width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
++    display: inline-flex; align-items: center; justify-content: center;
++    font-size: 21px; font-weight: 800; color: #fff;
++  }
++  .result.pass .verdict-icon, .result.warn .verdict-icon { background: var(--pos); }
++  .result.fail .verdict-icon { background: var(--bad); }
++  .verdict-word {
++    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
++    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
++  }
++  .result.pass .verdict-word, .result.warn .verdict-word { color: var(--pos); }
++  .result.fail .verdict-word { color: var(--bad); }
++
++  /* Attempt pips — three dots; spent ones hollow (§29.2) */
++  .result-pips { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
++  .result-pips.hidden { display: none; }
++  .result-pips .pip {
++    width: 11px; height: 11px; border-radius: 50%;
++    background: var(--bad); border: 2px solid var(--bad); box-sizing: border-box;
++  }
++  .result-pips .pip.spent { background: transparent; }
++
++  .result-subline { font-size: 13px; color: var(--muted); line-height: 1.45; }
++  .result-subline.hidden { display: none; }
++  .result-nudge { font-size: 13px; color: var(--ink); font-weight: 600; }
++  .result-nudge.hidden { display: none; }
++
++  /* One-line contrast: "You Bd6 · Best Nxd5" (§29.3) */
++  .result-contrast {
++    font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 13px;
++    color: var(--ink); background: var(--surface2); border-radius: 8px;
++    padding: 7px 11px;
++  }
++  .result-contrast.hidden { display: none; }
++  .result-contrast .c-best { color: var(--pos); font-weight: 600; }
++  .result-contrast .c-you  { color: var(--bad); font-weight: 600; }
++
++  /* Engine best line at the stop point (§30.3 + US-13). Reads as a quiet
++     labelled line, not a separate alert box — the contrast line above already
++     carries the verdict colour. */
++  .result-answer {
++    font-size: 13px; color: var(--ink);
++    background: var(--accent-soft); border-left: 3px solid var(--accent);
++    border-radius: 6px; padding: 8px 12px; line-height: 1.5;
++  }
++  .result-answer .answer-label {
++    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
++    text-transform: uppercase; color: var(--accent); margin-right: 6px;
++  }
++  .result-answer .answer-line {
++    font-family: "Spline Sans Mono", ui-monospace, monospace; font-weight: 600;
++  }
++  .result-answer.hidden { display: none; }
++
++  /* Card action row — one dominant action per state (§29.4/§30.2) */
++  .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
++  .result-actions .btn { flex: 1 1 auto; min-width: 120px; }
++  .result-actions .btn.hidden { display: none; }
++  .btn.btn-review { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
++  .btn.btn-review:hover { background: var(--accent-soft); }
++
++  /* Quiet "Show me the answer" escape (from the 2nd miss, §30.6 #3) */
++  .result-escape {
++    align-self: flex-start; background: none; border: none; padding: 2px 0;
++    color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer;
++    text-decoration: underline; text-underline-offset: 2px;
++  }
++  .result-escape:hover { color: var(--ink); }
++  .result-escape.hidden { display: none; }
++
++  .controls.hidden { display: none; }
++
++  /* ============================================================
++     §29.3 / §30.1 — iPhone progressive disclosure (accordions).
++     Comparison + coach collapse to one-tap headers on mobile; desktop
++     (>=880px) ignores .acc-collapsed and keeps them expanded.
++     ============================================================ */
++  .acc-head { display: none; }   /* shown only on mobile (below) */
++  @media (max-width: 879px) {
++    .acc-head {
++      display: flex; align-items: center; gap: 6px; cursor: pointer;
++      font-size: 13px; font-weight: 700; color: var(--ink); user-select: none;
++      list-style: none;
++    }
++    .acc-head .acc-caret { transition: transform .15s ease; color: var(--muted); }
++    .acc-collapsed .acc-caret { transform: rotate(0deg); }
++    .acc-head .acc-preview { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
++    .comparison.acc-collapsed table,
++    .comparison.acc-collapsed .comparison-title { display: none; }
++    .coach-card.acc-collapsed .coach-log,
++    .coach-card.acc-collapsed .coach-input-row { display: none; }
++    .coach-card .acc-head { padding: 2px 0; }
++  }
++
++  /* ============================================================
++     Move-by-move comparison
++     ============================================================ */
++  .comparison {
++    padding: 14px 16px;
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: var(--r-panel);
++    margin-bottom: 12px;
++    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
++  }
++  .comparison.hidden { display: none; }
++  .comparison-title {
++    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
++    text-transform: uppercase; color: var(--muted);
++    margin-bottom: 8px;
++  }
++  .comparison table { width: 100%; border-collapse: collapse; }
++  .comparison th {
++    font-size: 10px; font-weight: 700; text-align: left;
++    padding: 5px 7px; color: var(--muted);
++    letter-spacing: 0.06em; text-transform: uppercase;
++    border-bottom: 1px solid var(--line);
++  }
++  .comparison td {
++    padding: 7px 7px; font-size: 13px;
++    border-bottom: 1px solid var(--line);
++  }
++  .comparison tr:last-child td { border-bottom: none; }
++  .comparison .col-yours { color: var(--ink); font-weight: 600; }
++  .comparison .col-engine {
++    color: var(--accent);
++    font-family: "Spline Sans Mono", monospace; font-size: 12px;
++  }
++  .comparison tr { cursor: pointer; transition: background .15s ease; }
++  .comparison tr:hover td { background: var(--surface2); }
++  .comparison tr.active td { background: var(--accent-soft); }
++
++  .rank-badge {
++    display: inline-block; padding: 2px 8px;
++    border-radius: var(--r-pill);
++    font-size: 10px; font-weight: 800;
++    letter-spacing: 0.05em; color: #fff;
++    margin-left: 4px; vertical-align: middle;
++    font-family: "Spline Sans Mono", monospace;
++  }
++  .rank-badge.rank-1 { background: var(--pos); }
++  .rank-badge.rank-2,
++  .rank-badge.rank-3 { background: var(--warn); }
++  .rank-badge.rank-4,
++  .rank-badge.rank-5 { background: var(--bad); }
++  .rank-badge.rank-off { background: var(--bad); }
++  .cp-loss-small {
++    display: inline-block; padding: 2px 7px;
++    border-radius: var(--r-pill);
++    font-size: 10px; font-weight: 800;
++    letter-spacing: 0.05em; color: #fff;
++    margin-left: 4px; vertical-align: middle;
++    font-family: "Spline Sans Mono", monospace;
++    background: var(--warn);
++  }
++  .cp-loss-small.cp-mid { background: var(--bad); }
++  .cp-loss-small.cp-big { background: #8E2A1B; }
++
++  /* Generic utility — any element with .hidden disappears. Page-specific
++     rules (e.g. .result.hidden) already had this, but a generic rule is
++     needed for ad-hoc toggles like buttons. */
++  .hidden { display: none !important; }
++
++  /* Hide engine + game cols during live play (in-progress comparison). */
++  .comparison[data-mode="live"] th.col-game,
++  .comparison[data-mode="live"] th.col-engine,
++  .comparison[data-mode="live"] td.col-game,
++  .comparison[data-mode="live"] td.col-engine { display: none; }
++  .comparison[data-mode="live"] tr { cursor: default; }
++  .comparison[data-mode="live"] tr:hover td { background: transparent; }
++  /* Resolved but engine reveal not yet earned (single failed attempt, sessionFails<3).
++     Hide the engine column. The "Your move + rank badge" column stays so the
++     player can still see how they performed without spoiling the engine line. */
++  .comparison[data-mode="resolved-locked"] th.col-engine,
++  .comparison[data-mode="resolved-locked"] td.col-engine { display: none; }
++
++  /* ============================================================
++     Coach panel (spec §6)
++     ============================================================ */
++  .coach-card {
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: var(--r-panel);
++    overflow: hidden;
++    margin-bottom: 12px;
++    display: flex; flex-direction: column;
++    box-shadow: 0 16px 36px -22px rgba(30,40,70,.4);
++  }
++  .coach-header {
++    padding: 13px 15px;
++    display: flex; align-items: center; gap: 10px;
++    border-bottom: 1px solid var(--line);
++    background: #FAFBFC;
++  }
++  .coach-avatar {
++    width: 26px; height: 26px; border-radius: 9px;
++    background: linear-gradient(140deg, var(--accent), var(--accent-2));
++    display: flex; align-items: center; justify-content: center;
++    color: #fff; font-weight: 700; font-size: 13px;
++    box-shadow: 0 3px 9px -3px var(--accent);
++  }
++  .coach-title { font-weight: 700; font-size: 14px; }
++  .coach-status {
++    margin-left: auto;
++    display: flex; align-items: center; gap: 6px;
++    font-size: 11px; color: var(--muted);
++  }
++  .coach-status::before {
++    content: ""; width: 7px; height: 7px; border-radius: 50%;
++    background: var(--pos);
++    box-shadow: 0 0 0 3px rgba(31,157,87,.18);
++  }
++  .coach-log {
++    padding: 14px 15px;
++    display: flex; flex-direction: column; gap: 11px;
++    max-height: 320px;
++    overflow-y: auto;
++    flex: 1;
++    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
++    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
++  }
++  .msg {
++    font-size: 13px; line-height: 1.5;
++    padding: 10px 13px; border-radius: 14px;
++    max-width: 90%;
++    word-wrap: break-word;
++  }
++  .msg.system {
++    color: var(--muted); font-size: 12px; padding: 4px 0;
++    background: transparent; max-width: 100%;
++    font-style: italic;
++  }
++  .msg.coach {
++    align-self: flex-start;
++    background: var(--surface2);
++    border-bottom-left-radius: 4px;
++  }
++  .msg.user {
++    align-self: flex-end;
++    background: var(--accent); color: #fff;
++    border-bottom-right-radius: 4px;
++  }
++  .msg.error {
++    align-self: flex-start;
++    background: #FBF0ED; color: var(--bad);
++    border: 1px solid #EDD2CB;
++    font-size: 12px;
++  }
++  /* ────────────────────────────────────────────────────────────────────
++     §17 Structured review bubble (the post-puzzle review, per-game "how
++     you played", aggregated coach read all share this shape — never a
++     paragraph). max-width matches .msg, but the inner content uses the
++     fixed-column label layout from the spec.
++     ──────────────────────────────────────────────────────────────────── */
++  .msg.review {
++    align-self: flex-start;
++    background: var(--surface2);
++    border-bottom-left-radius: 4px;
++    padding: 13px 15px;
++    max-width: 92%;
++    font-size: 13.5px; line-height: 1.5;
++  }
++  .msg.review .rv-lead {
++    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
++    font-weight: 800;
++    font-size: 15px; line-height: 1.3;
++    color: var(--ink);
++    margin-bottom: 11px;
++  }
++  .msg.review .rv-points {
++    display: flex; flex-direction: column; gap: 8px;
++    margin-bottom: 10px;
++  }
++  .msg.review .rv-point {
++    display: grid;
++    grid-template-columns: 70px 1fr;
++    gap: 10px;
++    align-items: baseline;
++  }
++  .msg.review .rv-label {
++    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
++    font-weight: 700;
++    font-size: 11px;
++    letter-spacing: 0.04em;
++    text-transform: uppercase;
++    color: var(--muted);
++    line-height: 1.3;
++  }
++  /* Sentiment-tinted labels (§17 — colour = --muted / --pos (good) /
++     --warn (mid) / --bad (bad)). The renderer applies the class. */
++  .msg.review .rv-point.tone-pos .rv-label { color: var(--pos); }
++  .msg.review .rv-point.tone-warn .rv-label { color: var(--warn); }
++  .msg.review .rv-point.tone-bad .rv-label { color: var(--bad); }
++  .msg.review .rv-text {
++    font-size: 13px; line-height: 1.45;
++    color: var(--ink);
++  }
++  .msg.review .rv-turn {
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: 10px;
++    padding: 9px 12px;
++    font-size: 12.5px;
++    color: var(--ink);
++    margin-bottom: 10px;
++  }
++  .msg.review .rv-turn .rv-turn-label {
++    font-weight: 700;
++    color: var(--muted);
++    margin-right: 4px;
++  }
++  .msg.review .rv-question {
++    border-top: 1px solid var(--line);
++    padding-top: 10px;
++    font-style: italic;
++    font-size: 13px;
++    color: var(--ink);
++  }
++  .msg.review .rv-cta {
++    display: flex; gap: 9px;
++    margin-top: 11px;
++  }
++  .msg.review .rv-cta button {
++    flex: 1;
++    padding: 8px 12px;
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: 10px;
++    color: var(--ink);
++    font-family: inherit;
++    font-size: 13px; font-weight: 600;
++    cursor: pointer;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .msg.review .rv-cta button:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
++  .msg.review .rv-cta button.primary {
++    background: var(--accent);
++    color: #fff;
++    border-color: var(--accent);
++  }
++  .msg.review .rv-grounded {
++    margin-top: 10px;
++    font-size: 11px;
++    color: var(--muted);
++    font-style: italic;
++  }
++  .coach-input-row {
++    display: flex; gap: 8px;
++    padding: 11px 12px;
++    border-top: 1px solid var(--line);
++    background: var(--surface);
++  }
++  .coach-input {
++    flex: 1; padding: 9px 12px;
++    font-size: 13px; font-family: inherit;
++    border: 1px solid var(--line); border-radius: 11px;
++    background: var(--surface); color: var(--ink);
++    outline: none;
++    transition: border-color .15s ease, box-shadow .15s ease;
++  }
++  .coach-input:focus {
++    border-color: var(--accent);
++    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
++  }
++  .coach-send {
++    padding: 9px 16px;
++    background: var(--accent); color: #fff;
++    border: none; border-radius: 11px;
++    cursor: pointer;
++    font-size: 13px; font-weight: 700; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++  .coach-send:hover:not(:disabled) { filter: brightness(1.07); }
++  .coach-send:active { transform: translateY(1px); }
++  .coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
++
++  /* ============================================================
++     Layout — now provided by the SHARED training-screen shell
++     (css/screen.css, v0.55): .layout-grid mobile single-column +
++     desktop two-column (board left / rail right), .lg-head / .lg-left /
++     .lg-right, canonical board sizing, full-width #gate-card + .session-wrap
++     bands. puzzle.html consumes that shell unchanged; only the puzzle-SPECIFIC
++     extras that the shell does not own stay here (material rows that must track
++     the board width, coach-card sizing, desktop body padding + type touch-ups).
++     The v0.54 appearance is preserved: the shell's desktop grid + 640px board +
++     gate-band match what puzzle.html shipped, so this is a no-visual-change
++     extraction (project rule: one source for shared components).
++     ============================================================ */
++  @media (min-width: 880px) {
++    body {
++      padding-left: 248px;     /* room for the fixed sidebar */
++      padding-right: 28px;
++      padding-bottom: 28px;
++      font-size: 15px;
++    }
++    /* v0.55a — desktop nav restore. The screen.css extraction kept the body
++       padding for the sidebar gutter but dropped the two rules that actually
++       convert the off-canvas mobile drawer into the fixed desktop sidebar and
++       hide the bottom tab-bar. Without them puzzle.html showed the mobile
++       tab-bar and no sidebar at >=880px (recognition kept these, hence the
++       drift). Mirrors endgame-recognition.html's >=880px block. */
++    .tab-bar { display: none; }
++    .nav-backdrop { display: none !important; }
++    .nav-drawer {
++      position: fixed !important; top: 0; left: 0;
++      width: 224px !important; max-width: 224px !important; height: 100vh;
++      transform: none !important; border-right: 1px solid var(--line);
++      background: var(--surface); padding: 22px 14px 18px; z-index: 10;
++    }
++    /* Left-align content against the sidebar gutter (the base rule centres a
++       narrow mobile column; on desktop the body reserves 248px for the fixed
++       sidebar, so centring a capped column opened a dead band — hug the gutter). */
++    .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
++
++    /* Material rows track the desktop board width so captured-piece rows stay
++       flush with the board (the shell sizes the board itself to 640px). */
++    .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
++    .mb-piece { width: 22px; height: 22px; }
++    .mb-score { font-size: 13px; }
++
++    /* Coach fills the remaining right-column space; only its own log scrolls. */
++    .lg-right > .coach-card {
++      align-self: stretch; flex: 1 1 auto;
++      min-height: 0; max-height: calc(100vh - 56px);
++    }
++    .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
++    .lg-right > .coach-card { margin-bottom: 0; }
++
++    /* Touch up desktop type */
++    h1 { font-size: 30px; }
++    .puzzle-meta { font-size: 13px; }
++    .msg { font-size: 14px; }
++    .coach-input { font-size: 14px; }
++  }
++  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
++  .nav-drawer-link.secondary:hover { background:var(--surface2); }
++  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
++  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
++
++  /* ============================================================
++     §53 (v0.53) — PUZZLE SCREEN: single composition (no variants)
++     ------------------------------------------------------------
++     One final hybrid: compact card proportions + the move-by-move
++     comparison embedded NATIVELY inside the feedback card, with an
++     eval-change column gated to the earned reveal. Compact icon action
++     buttons; Try-again always available.
++     ============================================================ */
++
++  /* ---- Compact icon action buttons (smaller than the full-width .btn) ---- */
++  .btn.btn-action {
++    flex: 0 1 auto; min-width: 0;
++    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
++    padding: 8px 14px; font-size: 13px; font-weight: 700;
++    line-height: 1.1;
++  }
++  .btn.btn-action .btn-ico { flex: 0 0 auto; vertical-align: middle; }
++  .btn.btn-action .btn-label { white-space: nowrap; }
++  /* The dominant (primary) action reads slightly stronger; the secondary
++     Try-again is quieter but always present. */
++  .result-actions .btn.btn-action { flex: 0 1 auto; min-width: 0; }
++  .result-actions .btn.btn-primary.btn-action { flex: 1 1 auto; }
++
++  /* ---- Embedded comparison: a NATIVE section of the feedback card.
++     Drop the standalone card chrome (border/shadow/background) so it reads as
++     part of #result; a light divider + the card's own internal padding tie it
++     in. Same type as the card. ---- */
++  #result > .comparison {
++    margin: 0; padding: 0; border: none; box-shadow: none; background: transparent;
++    border-top: 1px solid var(--line); padding-top: 11px; margin-top: 2px;
++  }
++  #result > .comparison.hidden { display: none; }
++  #result > .comparison .comparison-title { margin-bottom: 6px; }
++  #result > .comparison table { width: 100%; }
++
++  /* ---- Eval-change chips ---- */
++  .col-eval { text-align: right; white-space: nowrap; }
++  .comparison th.col-eval { text-align: right; }
++  .eval-chip {
++    display: inline-block; min-width: 40px; text-align: center;
++    padding: 2px 8px; border-radius: var(--r-pill);
++    font-family: "Spline Sans Mono", ui-monospace, monospace;
++    font-size: 11px; font-weight: 700; letter-spacing: .02em;
++  }
++  .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }
++  .eval-chip.eval-mid  { background: #FBF5EA; color: var(--warn); }
++  .eval-chip.eval-bad  { background: #FBF0ED; color: var(--bad); }
++  .eval-chip.eval-na   { background: var(--surface2); color: var(--muted); font-weight: 600; }
++
++  /* ---- No-spoiler gate for the eval column: hidden during live play AND
++     while the answer isn't yet earned (resolved-locked), exactly like the
++     engine column. Only the fully-resolved (earned) state shows it. ---- */
++  .comparison[data-mode="live"] th.col-eval,
++  .comparison[data-mode="live"] td.col-eval,
++  .comparison[data-mode="resolved-locked"] th.col-eval,
++  .comparison[data-mode="resolved-locked"] td.col-eval { display: none; }
++
++  /* ---- PENDING feedback card (calm pre-move / mid-solve face) ---- */
++  .result.pending {
++    background: var(--surface); border-color: var(--line);
++    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
++  }
++  .result.pending .verdict-icon {
++    background: var(--accent-soft); color: var(--accent);
++    font-size: 20px; font-weight: 700;
++  }
++  .result.pending .verdict-word { color: var(--ink); font-size: 18px; }
++  .result.pending .result-subline { color: var(--ink); font-weight: 600; }
++  .result.pending .result-nudge { color: var(--muted); font-weight: 500; }
++
++  /* ---- Mobile: embedded comparison + coach never impose a tiny inner scroll. ---- */
++  @media (max-width: 879px) {
++    #result > .comparison { max-height: none; overflow: visible; }
++    .coach-card { max-height: none; }
++  }
++
++  /* Honour prefers-reduced-motion — drop the verdict-card slide-in. */
++  @media (prefers-reduced-motion: reduce) {
++    .result { animation: none !important; }
++  }
++
++/* Phase 2: per-move cp progress bar */
++.cp-bar {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  margin: 8px 0;
++  padding: 0 2px;
++}
++.cp-bar.hidden { display: none !important; }
++.cp-seg {
++  flex: 1;
++  border-radius: 3px;
++  background: var(--surface3);
++  font-size: 11px;
++  font-weight: 700;
++  text-align: center;
++  line-height: 1;
++  padding: 8px 4px 4px;
++  min-height: 22px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  border: 1px solid var(--line);
++  transition: background 0.2s, color 0.2s;
++  color: var(--muted);
++}
++.cp-seg--pending { background: var(--surface2); }
++.cp-seg--ok { background: var(--accent-soft); color: var(--pos); border-color: var(--accent); }
++.cp-seg--red { background: #FEE2E0; color: var(--bad); border-color: var(--bad); }
++.cp-bar-label {
++  font-size: 11px;
++  color: var(--muted);
++  white-space: nowrap;
++  min-width: 90px;
++  text-align: right;
++}
+diff --git a/css/recognition.css b/css/recognition.css
+new file mode 100644
+index 0000000..6ede4ee
+--- /dev/null
++++ b/css/recognition.css
+@@ -0,0 +1,29 @@
++/* ============================================================================
++   recognition.css — page-specific exercise widgets for endgame-recognition.html.
++   ONLY the win/draw/loss panel + side label + play-out section live here.
++   App-shell chrome -> shell.css; layout -> screen.css; shared components
++   (board, coach, buttons, controls, material) -> train.css.
++   ============================================================================ */
++.board-side-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); font-family: "Plus Jakarta Sans", sans-serif; margin-bottom: 8px; }
++
++/* Win / draw / loss panel */
++.classify-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px -10px rgba(30,40,70,.3); }
++.prompt { text-align: center; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 14px; font-family: "Plus Jakarta Sans", sans-serif; }
++.classify-btns { display: flex; gap: 10px; margin-bottom: 14px; }
++.vbtn { flex: 1; padding: 13px 8px; border-radius: var(--r-btn); border: 2px solid var(--line); font-size: 14px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
++.vbtn:hover:not(:disabled) { background: var(--surface2); border-color: var(--accent); }
++.vbtn:active { transform: translateY(1px); }
++.vbtn:disabled { opacity: .45; cursor: default; transform: none; }
++
++/* Verdict reveal */
++.verdict-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 800; font-family: "Plus Jakarta Sans", sans-serif; padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 10px; }
++.verdict-badge.correct { background: #E8F5EE; color: var(--pos); }
++.verdict-badge.wrong { background: #FBF0ED; color: var(--bad); }
++.keyfactor { font-size: 13px; color: var(--ink); margin-bottom: 8px; line-height: 1.5; }
++.keyfactor strong { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
++
++/* Play-out section */
++.playout-section { background: var(--accent-soft); border: 1px solid var(--accent-2); border-radius: var(--r-panel); padding: 12px 16px; margin-top: 10px; }
++.playout-section p { font-size: 13px; color: var(--ink); margin-bottom: 8px; }
++
++#status-text { min-height: 22px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 8px; font-style: italic; }
+diff --git a/css/session-wrap.css b/css/session-wrap.css
+index 8c0d200..8124531 100644
+--- a/css/session-wrap.css
++++ b/css/session-wrap.css
+@@ -67,3 +67,9 @@
+   color: var(--muted); border: 1px solid var(--line); border-radius: 14px;
+   padding: 4px 10px; flex-shrink: 0;
+ }
++
++/* Outcome-coloured progress pips: green = solved first try (no hint),
++   orange = solved with a hint or on a retry, red = not solved. */
++.session-wrap .sw-pip.first  { background: var(--pos); }
++.session-wrap .sw-pip.hinted { background: var(--warn); }
++.session-wrap .sw-pip.fail   { background: var(--bad); }
+diff --git a/css/shell.css b/css/shell.css
+new file mode 100644
+index 0000000..533a010
+--- /dev/null
++++ b/css/shell.css
+@@ -0,0 +1,78 @@
++/* ============================================================================
++   shell.css — THE canonical app-shell chrome shared by every training screen.
++   ----------------------------------------------------------------------------
++   Page background, .container width, header bar, hamburger (hidden on desktop),
++   the nav drawer + desktop pinned sidebar, the mobile tab bar, and the desktop
++   body offset. Values are puzzle.html's (the reference screen) so puzzle,
++   recognition and endgames render IDENTICALLY. Pages must NOT redefine this
++   chrome in their page sheet — change it here, once.
++   Load order on every training page:
++     tokens -> shell -> nav -> board -> type -> screen -> train -> [page].css
++   ============================================================================ */
++* { box-sizing: border-box; margin: 0; padding: 0; }
++
++html, body {
++  background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
++  background-attachment: fixed; min-height: 100vh;
++}
++body {
++  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++  color: var(--ink);
++  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
++  line-height: 1.5; -webkit-font-smoothing: antialiased;
++}
++.container { max-width: 560px; margin: 0 auto; }
++h1, .page-title, .nav-brand-name, .nav-drawer-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
++
++/* Header bar — plain (matches puzzle.html; not sticky). */
++.header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
++.page-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
++.hamburger-btn { background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: background .15s; }
++.hamburger-btn:hover { background: var(--surface2); }
++
++/* Nav drawer (mobile slide-in) */
++.nav-drawer { position: fixed; top: 0; left: 0; width: 288px; max-width: 84vw; height: 100vh; background: var(--surface); border-right: 1px solid var(--line); transform: translateX(-100%); transition: transform 200ms ease; z-index: 100; padding: 20px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 20px 40px -22px rgba(20,30,55,.25); }
++.nav-drawer.open { transform: translateX(0); }
++.nav-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
++.nav-brand-mark { width: 30px; height: 30px; border-radius: 0; background: none; box-shadow: none; object-fit: contain; flex-shrink: 0; }
++.nav-brand-name { font-weight: 700; font-size: 15px; }
++.nav-group-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 12px 10px 4px; }
++.nav-drawer-link { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; transition: background .15s ease; }
++.nav-drawer-link:hover { background: var(--surface2); }
++.nav-drawer-link.active { background: var(--accent); color: #fff; box-shadow: 0 6px 14px -8px var(--accent); }
++.nav-drawer-link .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
++.nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
++.nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
++.nav-drawer-link.coming { color: var(--muted); }
++.nav-drawer-link.secondary { font-size: 13px; padding: 7px 12px; color: var(--muted); }
++.nav-drawer-link.secondary:hover { background: var(--surface2); }
++.nav-drawer-link.secondary.active { background: none; color: var(--accent); box-shadow: none; font-weight: 700; }
++.nav-separator { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
++.version-stamp { margin-top: auto; padding: 10px 12px 4px; font-size: 10px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; letter-spacing: .02em; border-top: 1px solid var(--line); }
++.nav-backdrop { position: fixed; inset: 0; background: rgba(15,20,30,.45); z-index: 99; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
++.nav-backdrop.open { opacity: 1; pointer-events: auto; }
++
++/* Mobile bottom tab bar */
++.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--surface); border-top: 1px solid var(--line); z-index: 90; padding: 6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow: 0 -8px 22px -16px rgba(15,20,40,.16); }
++.tab-bar a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 7px 4px; border-radius: 10px; font-size: 10px; font-weight: 600; color: var(--muted); text-decoration: none; transition: color .15s ease; }
++.tab-bar a.active { color: var(--accent); }
++.tab-bar a .tab-icon { width: 22px; height: 22px; }
++.tab-bar a svg.tab-icon { stroke: currentColor; fill: none; }
++.tab-bar a svg.tab-icon .filldot { fill: currentColor; stroke: none; }
++
++.hidden { display: none !important; }
++
++.nav-drawer-link.coming .nav-soon { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--surface2); color: var(--muted); padding: 2px 7px; border-radius: 9px; }
++.nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
++.tab-bar a.coming { opacity: .55; }
++
++/* ---- Desktop (>=880px): pinned sidebar, wide container, no tab bar, and the
++   hamburger is redundant (the sidebar is always visible) so it is hidden. ---- */
++@media (min-width: 880px) {
++  body { padding-left: 248px; padding-right: 28px; padding-bottom: 28px; font-size: 15px; }
++  .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
++  .hamburger-btn { display: none; }
++  .tab-bar { display: none; }
++  .nav-backdrop { display: none !important; }
++  .nav-drawer { position: fixed !important; top: 0; left: 0; width: 224px !important; max-width: 224px !important; height: 100vh; transform: none !important; border-right: 1px solid var(--line); background: var(--surface); padding: 22px 14px 18px; z-index: 10; }
++}
+diff --git a/css/train.css b/css/train.css
+new file mode 100644
+index 0000000..4395f28
+--- /dev/null
++++ b/css/train.css
+@@ -0,0 +1,366 @@
++/* ============================================================================
++   train.css — THE shared training-screen COMPONENT sheet.
++   ----------------------------------------------------------------------------
++   Board frame + material rows, board nav arrows, controls, buttons (.btn*),
++   the eval / cp progress bar, and the always-present Coach card + message
++   bubbles. Used by every board-exercise page (recognition, endgames, and
++   eventually puzzle) on top of: tokens.css (variables) + screen.css (the
++   .layout-grid / .lg-head / .lg-left / .lg-right layout).
++
++   HARD RULE: change a training component HERE, once. Page sheets
++   (recognition.css / endgames.css / puzzle.css) may ADD page-specific widgets
++   in .lg-right but must not redefine these shared components.
++
++   NOTE: values mirror puzzle.css (the reference screen) so the screens match.
++   puzzle.html still links its own puzzle.css copy for now; migrating it onto
++   train.css is a tracked follow-up (see docs/training-screen-pattern.md).
++   ============================================================================ */
++
++/* Thinking gate (Deep mode) styles moved to css/gate.css (v0.53b) — it is
++     now its own component, decoupled from the right column so its height can
++     never squeeze the coach. */
++
++  /* ============================================================
++     Board (spec §5) — warm wood
++     ============================================================ */
++  .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
++
++.material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
++
++/* ============================================================
++     Controls (buttons) — spec §6
++     ============================================================ */
++  .controls {
++    display: flex; flex-wrap: wrap; gap: 8px;
++    margin-bottom: 12px;
++  }
++
++.btn {
++    flex: 1; min-width: 110px;
++    padding: 11px 14px;
++    font-family: inherit; font-weight: 700; font-size: 14px;
++    border: 1px solid var(--line);
++    border-radius: var(--r-btn);
++    background: var(--surface); color: var(--ink);
++    cursor: pointer;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++    box-shadow: 0 2px 4px rgba(0,0,0,.03);
++  }
++
++.btn:hover { background: var(--surface2); }
++
++.btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
++
++.btn:disabled { opacity: 0.45; cursor: not-allowed; }
++
++.btn.btn-primary {
++    background: var(--accent); color: #fff; border-color: transparent;
++    box-shadow: 0 8px 18px -8px var(--accent);
++  }
++
++.btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
++
++/* ============================================================
++     Post-resolution navigation
++     ============================================================ */
++  .nav-arrows {
++    display: flex; align-items: center; gap: 10px;
++    background: var(--surface); border: 1px solid var(--line);
++    border-radius: var(--r-btn); padding: 6px 10px;
++    margin-bottom: 12px;
++    box-shadow: 0 2px 4px rgba(0,0,0,.03);
++  }
++
++.nav-arrows.hidden { display: none; }
++
++.nav-arrows .nav-step {
++    background: transparent; border: none;
++    cursor: pointer; font-size: 15px; line-height: 1;
++    padding: 4px 10px; color: var(--ink);
++    border-radius: 8px;
++    /* §53 — pin the arrow glyphs to the UI font so they don't fall back to a
++       serif/system glyph (Jorge flagged the nav-arrows font). */
++    font-family: var(--font-body, "Inter", system-ui, sans-serif);
++    transition: background .15s ease;
++  }
++
++.nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
++
++.nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
++
++.nav-label {
++    flex: 1; text-align: center;
++    /* §53 — use the type system (Inter body), readable size + weight. */
++    font-family: var(--font-body, "Inter", system-ui, sans-serif);
++    font-size: 13px; font-weight: 600; color: var(--muted);
++    letter-spacing: 0.01em;
++  }
++
++.btn.btn-review { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
++
++.btn.btn-review:hover { background: var(--accent-soft); }
++
++.controls.hidden { display: none; }
++
++/* ============================================================
++     §29.3 / §30.1 — iPhone progressive disclosure (accordions).
++     Comparison + coach collapse to one-tap headers on mobile; desktop
++     (>=880px) ignores .acc-collapsed and keeps them expanded.
++     ============================================================ */
++  .acc-head { display: none; }
++
++@media (max-width: 879px) {
++  .acc-head {
++      display: flex; align-items: center; gap: 6px; cursor: pointer;
++      font-size: 13px; font-weight: 700; color: var(--ink); user-select: none;
++      list-style: none;
++    }
++  .acc-head .acc-caret { transition: transform .15s ease; color: var(--muted); }
++  .acc-collapsed .acc-caret { transform: rotate(0deg); }
++  .acc-head .acc-preview { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
++  .coach-card.acc-collapsed .coach-log,
++    .coach-card.acc-collapsed .coach-input-row { display: none; }
++  .coach-card .acc-head { padding: 2px 0; }
++}
++
++.cp-loss-small {
++    display: inline-block; padding: 2px 7px;
++    border-radius: var(--r-pill);
++    font-size: 10px; font-weight: 800;
++    letter-spacing: 0.05em; color: #fff;
++    margin-left: 4px; vertical-align: middle;
++    font-family: "Spline Sans Mono", monospace;
++    background: var(--warn);
++  }
++
++.cp-loss-small.cp-mid { background: var(--bad); }
++
++.cp-loss-small.cp-big { background: #8E2A1B; }
++
++/* Generic utility — any element with .hidden disappears. Page-specific
++     rules (e.g. .result.hidden) already had this, but a generic rule is
++     needed for ad-hoc toggles like buttons. */
++  .hidden { display: none !important; }
++
++/* ============================================================
++     Coach panel (spec §6)
++     ============================================================ */
++  .coach-card {
++    background: var(--surface);
++    border: 1px solid var(--line);
++    border-radius: var(--r-panel);
++    overflow: hidden;
++    margin-bottom: 12px;
++    display: flex; flex-direction: column;
++    box-shadow: 0 16px 36px -22px rgba(30,40,70,.4);
++  }
++
++.coach-header {
++    padding: 13px 15px;
++    display: flex; align-items: center; gap: 10px;
++    border-bottom: 1px solid var(--line);
++    background: #FAFBFC;
++  }
++
++.coach-avatar {
++    width: 26px; height: 26px; border-radius: 9px;
++    background: linear-gradient(140deg, var(--accent), var(--accent-2));
++    display: flex; align-items: center; justify-content: center;
++    color: #fff; font-weight: 700; font-size: 13px;
++    box-shadow: 0 3px 9px -3px var(--accent);
++  }
++
++.coach-title { font-weight: 700; font-size: 14px; }
++
++.coach-status {
++    margin-left: auto;
++    display: flex; align-items: center; gap: 6px;
++    font-size: 11px; color: var(--muted);
++  }
++
++.coach-status::before {
++    content: ""; width: 7px; height: 7px; border-radius: 50%;
++    background: var(--pos);
++    box-shadow: 0 0 0 3px rgba(31,157,87,.18);
++  }
++
++.coach-log {
++    padding: 14px 15px;
++    display: flex; flex-direction: column; gap: 11px;
++    max-height: 320px;
++    overflow-y: auto;
++    flex: 1;
++    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
++    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
++  }
++
++.msg {
++    font-size: 13px; line-height: 1.5;
++    padding: 10px 13px; border-radius: 14px;
++    max-width: 90%;
++    word-wrap: break-word;
++  }
++
++.msg.system {
++    color: var(--muted); font-size: 12px; padding: 4px 0;
++    background: transparent; max-width: 100%;
++    font-style: italic;
++  }
++
++.msg.coach {
++    align-self: flex-start;
++    background: var(--surface2);
++    border-bottom-left-radius: 4px;
++  }
++
++.msg.user {
++    align-self: flex-end;
++    background: var(--accent); color: #fff;
++    border-bottom-right-radius: 4px;
++  }
++
++.msg.error {
++    align-self: flex-start;
++    background: #FBF0ED; color: var(--bad);
++    border: 1px solid #EDD2CB;
++    font-size: 12px;
++  }
++
++.coach-input-row {
++    display: flex; gap: 8px;
++    padding: 11px 12px;
++    border-top: 1px solid var(--line);
++    background: var(--surface);
++  }
++
++.coach-input {
++    flex: 1; padding: 9px 12px;
++    font-size: 13px; font-family: inherit;
++    border: 1px solid var(--line); border-radius: 11px;
++    background: var(--surface); color: var(--ink);
++    outline: none;
++    transition: border-color .15s ease, box-shadow .15s ease;
++  }
++
++.coach-input:focus {
++    border-color: var(--accent);
++    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
++  }
++
++.coach-send {
++    padding: 9px 16px;
++    background: var(--accent); color: #fff;
++    border: none; border-radius: 11px;
++    cursor: pointer;
++    font-size: 13px; font-weight: 700; font-family: inherit;
++    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
++  }
++
++.coach-send:hover:not(:disabled) { filter: brightness(1.07); }
++
++.coach-send:active { transform: translateY(1px); }
++
++.coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
++
++@media (min-width: 880px) {
++  .msg { font-size: 14px; }
++  .coach-input { font-size: 14px; }
++}
++
++/* ============================================================
++     §53 (v0.53) — PUZZLE SCREEN: single composition (no variants)
++     ------------------------------------------------------------
++     One final hybrid: compact card proportions + the move-by-move
++     comparison embedded NATIVELY inside the feedback card, with an
++     eval-change column gated to the earned reveal. Compact icon action
++     buttons; Try-again always available.
++     ============================================================ */
++
++  /* ---- Compact icon action buttons (smaller than the full-width .btn) ---- */
++  .btn.btn-action {
++    flex: 0 1 auto; min-width: 0;
++    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
++    padding: 8px 14px; font-size: 13px; font-weight: 700;
++    line-height: 1.1;
++  }
++
++.btn.btn-action .btn-ico { flex: 0 0 auto; vertical-align: middle; }
++
++.btn.btn-action .btn-label { white-space: nowrap; }
++
++@media (max-width: 879px) {
++  .coach-card { max-height: none; }
++}
++
++/* Phase 2: per-move cp progress bar */
++.cp-bar {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  margin: 8px 0;
++  padding: 0 2px;
++}
++
++.cp-bar.hidden { display: none !important; }
++
++.cp-seg {
++  flex: 1;
++  border-radius: 3px;
++  background: var(--surface3);
++  font-size: 11px;
++  font-weight: 700;
++  text-align: center;
++  line-height: 1;
++  padding: 8px 4px 4px;
++  min-height: 22px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  border: 1px solid var(--line);
++  transition: background 0.2s, color 0.2s;
++  color: var(--muted);
++}
++
++.cp-seg--pending { background: var(--surface2); }
++
++.cp-seg--ok { background: var(--accent-soft); color: var(--pos); border-color: var(--accent); }
++
++.cp-seg--red { background: #FEE2E0; color: var(--bad); border-color: var(--bad); }
++
++.cp-bar-label {
++  font-size: 11px;
++  color: var(--muted);
++  white-space: nowrap;
++  min-width: 90px;
++  text-align: right;
++}
++
++/* Material-difference chip (js/material.js) — net on-board advantage. */
++.material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
++.material-row .mb-score.mb-even { color: var(--muted); }
++
++/* Shared button variants (used by exercise panels: play-out, primary actions). */
++.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); border: none; }
++.btn.primary:hover { filter: brightness(1.06); }
++.btn.ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
++.btn.ghost:hover { background: var(--surface2); }
++.btn.ghost:disabled { opacity: .45; cursor: default; }
++
++/* ----------------------------------------------------------------------------
++   Desktop (>=880px) layout/component parity with the reference (puzzle) screen.
++   These rules live in puzzle.css's desktop @media; mirrored here so recognition
++   + endgames render IDENTICALLY on desktop (board-flush material rows, a coach
++   card that fills + scrolls its column, matched type sizes).
++   ---------------------------------------------------------------------------- */
++@media (min-width: 880px) {
++  .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
++  .material-row .mb-piece, .mb-piece { width: 22px; height: 22px; }
++  .material-row .mb-score { font-size: 13px; }
++  .lg-right > .coach-card {
++    align-self: stretch; flex: 1 1 auto;
++    min-height: 0; max-height: calc(100vh - 56px); margin-bottom: 0;
++  }
++  .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
++  .msg { font-size: 14px; }
++  .coach-input { font-size: 14px; }
++}
+diff --git a/docs/training-screen-pattern.md b/docs/training-screen-pattern.md
+new file mode 100644
+index 0000000..7dc5bc5
+--- /dev/null
++++ b/docs/training-screen-pattern.md
+@@ -0,0 +1,79 @@
++# Training-screen pattern (HARD RULE)
++
++Every page that shows a board-based exercise — a "puzzle" of any kind: mistake
++puzzles, endgame play-out, win/draw/loss recognition, and anything we add later
++— **must** follow this pattern. Consistency is the point: a learner should feel
++they are on the same screen, only the exercise changes.
++
++`puzzle.html` is the reference implementation.
++
++## 1. Stylesheets — in this order, and NO inline `<style>`
++```html
++<link rel="stylesheet" href="/css/tokens.css">   <!-- design variables -->
++<link rel="stylesheet" href="/css/shell.css">    <!-- app-shell chrome (container, nav, tabbar, hamburger) -->
++<link rel="stylesheet" href="/css/nav.css">
++<link rel="stylesheet" href="/css/board.css">
++<link rel="stylesheet" href="/css/type.css">
++<link rel="stylesheet" href="/css/screen.css">   <!-- canonical LAYOUT -->
++<link rel="stylesheet" href="/css/train.css">    <!-- shared COMPONENTS -->
++<link rel="stylesheet" href="/css/session-wrap.css">
++<link rel="stylesheet" href="/css/<page>.css">   <!-- thin page-specific (exercise widgets ONLY) -->
++```
++No page may carry an inline `<style>` block. Page-specific rules live in the
++page's own sheet, loaded last.
++
++## 2. Layout — the canonical shell from `screen.css`
++```
++.layout-grid
++  ├─ #session-wrap.session-wrap   (optional Today-session band, first child)
++  ├─ .lg-head     exercise meta on top (side-to-move, status)
++  ├─ .lg-left     .board-wrap → #material-top, #board, #material-bottom
++  └─ .lg-right    [page-specific exercise panel]  THEN  the coach card
++```
++The board sits left; the right rail holds the exercise controls **and the
++coach**. On mobile it stacks to one column (meta → board → rail). Do not
++hand-roll a column layout.
++
++## 3. Shared components come from `train.css`
++App-shell chrome (page width, header, nav drawer, mobile tab bar, and
++**hiding the hamburger on desktop**) lives in `shell.css` — every screen shares
++it, so the board size/position and chrome are identical. Board frame + material
++rows, nav arrows, `.controls`, all `.btn*`, the eval /
++`.cp-bar`, and the **coach card + `.msg` bubbles** are defined ONCE in
++`train.css`. Change a component there and every screen updates.
++
++**Page sheets may ADD page-specific widgets in `.lg-right`; they must NOT
++redefine shared components.** The page-specific part is the exercise itself:
++- puzzle → result/verdict + move comparison
++- recognition → win / draw / loss buttons
++- endgames → show-technique + verdict
++
++## 4. The coach is always present
++Every training screen includes the `.coach-card` markup in `.lg-right` and
++mounts it via `js/coach-widget.js`:
++```html
++<script type="module">
++  import { mountCoachWidget } from '/js/coach-widget.js';
++  mountCoachWidget({
++    logEl:   document.getElementById('coach-log'),
++    formEl:  document.getElementById('coach-form'),
++    inputEl: document.getElementById('coach-input'),
++    sendEl:  document.getElementById('coach-send'),
++    context: 'One sentence telling the coach which exercise this screen is.'
++  });
++</script>
++```
++
++## Status / follow-ups
++- ✅ `recognition` (endgame-recognition.html) follows this pattern.
++- ✅ `endgames.html` follows this pattern.
++- ✅ Material-difference indicator: `js/material.js` (net on-board advantage),
++  mounted on recognition + endgames into `#material-top`. Self-contained,
++  reads the board DOM, no engine deps. puzzle.html keeps its richer
++  captured-pieces display; unifying the two is a future polish.
++- ⏳ `puzzle.html` still carries its own copy of the shell chrome + shared
++  components in `puzzle.css`. `shell.css`/`train.css` mirror those exact
++  values, so recognition + endgames render identically to it. Migrating
++  puzzle.html onto `shell.css` + `train.css` (deleting the dupes from
++  `puzzle.css`) is a tracked follow-up — done as its own preview-checked
++  change so the reference screen never regresses.
+diff --git a/endgame-recognition.html b/endgame-recognition.html
+index c52d7a6..3f092d4 100644
+--- a/endgame-recognition.html
++++ b/endgame-recognition.html
+@@ -5,148 +5,29 @@
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+ <meta name="puzzle-type-filter" content="recognition">
+ <title>KnightPath — Endgame Recognition</title>
++  <link rel="stylesheet" href="/css/tokens.css">
++  <link rel="stylesheet" href="/css/shell.css">
++  <link rel="stylesheet" href="/css/nav.css">
++  <link rel="stylesheet" href="/css/board.css">
++  <link rel="stylesheet" href="/css/type.css">
++  <link rel="stylesheet" href="/css/screen.css">
++  <link rel="stylesheet" href="/css/train.css">
++  <link rel="stylesheet" href="/css/session-wrap.css">
++  <link rel="stylesheet" href="/css/recognition.css">
++
+ <link rel="icon" type="image/x-icon" href="/favicon.ico">
+ <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+ <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+ <link rel="manifest" href="/manifest.json">
+-<link rel="stylesheet" href="/css/tokens.css">
+-<link rel="stylesheet" href="/css/screen.css">
+-<link rel="stylesheet" href="/css/nav.css">
+-<link rel="stylesheet" href="/css/board.css">
+-<link rel="stylesheet" href="/css/session-wrap.css">
+-<link rel="stylesheet" href="/css/type.css">
+ <meta name="apple-mobile-web-app-title" content="KnightPath">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+-<style>
+-  * { box-sizing:border-box; margin:0; padding:0; }
+-  html, body {
+-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+-    background-attachment:fixed; min-height:100vh;
+-  }
+-  body {
+-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+-    color:var(--ink);
+-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+-    line-height:1.5; -webkit-font-smoothing:antialiased;
+-  }
+-  .container { max-width:640px; margin:0 auto; }
+-  h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+-
+-  /* Header bar */
+-  .header-bar {
+-    display:flex; align-items:center; gap:12px; margin-bottom:14px;
+-    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
+-    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+-    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
+-    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
+-  }
+-  .hamburger-btn {
+-    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
+-    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
+-    transition:background .15s;
+-  }
+-  .hamburger-btn:hover { background:var(--surface2); }
+-  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+-  .score-pill {
+-    margin-left:auto; background:var(--surface2); border-radius:var(--r-pill);
+-    padding:4px 12px; font-size:12px; font-weight:700; color:var(--ink);
+-    font-family:"Spline Sans Mono",monospace; white-space:nowrap;
+-  }
+-
+-  /* Nav drawer */
+-  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+-  .nav-drawer.open { transform:translateX(0); }
+-  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+-  .nav-brand-mark { width:30px; height:30px; object-fit:contain; flex-shrink:0; }
+-  .nav-brand-name { font-weight:700; font-size:15px; }
+-  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
+-  .nav-drawer-link:hover { background:var(--surface2); }
+-  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+-  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+-  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+-  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+-  .nav-drawer-link.coming { color:var(--muted); }
+-  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
+-  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+-  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+-  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+-  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+-  .tab-bar a.active { color:var(--accent); }
+-  .tab-bar a .tab-icon { width:22px; height:22px; }
+-  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+-  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+-  @media (min-width: 880px) {
+-    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+-    .container { max-width:780px; }
+-    .tab-bar { display:none; }
+-    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+-    .nav-backdrop { display:none !important; }
+-  }
+-
+-  /* Board */
+-  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
+-  .board-side-label { text-align:center; font-size:11px; font-weight:600; color:var(--muted); font-family:"Plus Jakarta Sans",sans-serif; margin-bottom:8px; }
+-
+-  /* Classify card */
+-  .classify-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
+-  .prompt { text-align:center; font-size:15px; font-weight:600; color:var(--ink); margin-bottom:14px; font-family:"Plus Jakarta Sans",sans-serif; }
+-  .classify-btns { display:flex; gap:10px; margin-bottom:14px; }
+-  .vbtn {
+-    flex:1; padding:13px 8px; border-radius:var(--r-btn); border:2px solid var(--line);
+-    font-size:14px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif;
+-    background:var(--surface); color:var(--ink); cursor:pointer;
+-    transition:border-color .15s, background .15s, transform .1s;
+-  }
+-  .vbtn:hover:not(:disabled) { background:var(--surface2); border-color:var(--accent); }
+-  .vbtn:active { transform:translateY(1px); }
+-  .vbtn:disabled { opacity:.45; cursor:default; transform:none; }
+-
+-  /* Verdict area */
+-  .verdict-badge {
+-    display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:800;
+-    font-family:"Plus Jakarta Sans",sans-serif; padding:6px 14px;
+-    border-radius:var(--r-pill); margin-bottom:10px;
+-  }
+-  .verdict-badge.correct { background:#E8F5EE; color:var(--pos); }
+-  .verdict-badge.wrong   { background:#FBF0ED; color:var(--bad); }
+-  .keyfactor { font-size:13px; color:var(--ink); margin-bottom:8px; line-height:1.5; }
+-  .keyfactor strong { font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; }
+-
+-  /* Playout area */
+-  .playout-section { background:var(--accent-soft); border:1px solid var(--accent-2); border-radius:var(--r-panel); padding:12px 16px; margin-top:10px; }
+-  .playout-section p { font-size:13px; color:var(--ink); margin-bottom:8px; }
+ 
+-  /* Buttons */
+-  .btn {
+-    font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; font-size:14px;
+-    padding:12px 16px; border-radius:var(--r-btn); border:1px solid transparent;
+-    cursor:pointer; width:100%; transition:filter .15s, transform .1s;
+-    display:block; text-align:center; margin-top:8px;
+-  }
+-  .btn.primary { background:var(--accent); color:#fff; box-shadow:0 8px 18px -10px var(--accent); border:none; }
+-  .btn.primary:hover { filter:brightness(1.06); }
+-  .btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); }
+-  .btn.ghost:hover { background:var(--surface2); }
+-  .btn.ghost:disabled { opacity:.45; cursor:default; }
+-
+-  /* Status */
+-  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
+-  .hidden { display:none !important; }
+-  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
+-  .nav-drawer-link.secondary:hover { background:var(--surface2); }
+-  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
+-  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+-</style>
+ </head>
+ <body>
+ <div class="container">
+-  <!-- Persistent in-session wrapper (Spec 21 — recognition folded into the
+-       session host). Hidden + no-op unless opened via
+-       ?session=today&block=recognition. -->
+-  <div class="session-wrap hidden" id="session-wrap"></div>
+   <div class="header-bar">
+     <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
+       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+@@ -157,39 +38,57 @@
+     <div class="score-pill" id="score-pill">0 / 0</div>
+   </div>
+ 
+-  <!-- Side-to-move label -->
+-  <div class="board-side-label" id="side-to-move-label">—</div>
+-
+-  <!-- Board -->
+-  <div class="board-wrap">
+-    <div id="board" class="board"></div>
+-  </div>
+-
+-  <div id="status-text"></div>
++  <!-- Canonical training screen (css/screen.css): head / board-left / rail-right -->
++  <div class="layout-grid">
++    <div class="session-wrap hidden" id="session-wrap"></div>
+ 
+-  <!-- Classify prompt + buttons -->
+-  <div class="classify-card">
+-    <div class="prompt">Is this position <strong>winning, drawn, or losing</strong>?</div>
+-    <div class="classify-btns" id="classify-area">
+-      <button class="vbtn" id="btn-winning">Winning</button>
+-      <button class="vbtn" id="btn-drawn">Drawn</button>
+-      <button class="vbtn" id="btn-losing">Losing</button>
++    <div class="lg-head">
++      <div class="board-side-label" id="side-to-move-label">—</div>
++      <div id="status-text" class="inline-status"></div>
+     </div>
+ 
+-    <!-- Verdict reveal (hidden until classified) -->
+-    <div id="verdict-area" class="hidden"></div>
+-
+-    <!-- Play it out (hidden; shown only after correct win classification) -->
+-    <button class="btn ghost hidden" id="playout-btn">Play it out →</button>
+-
+-    <!-- Playout section (hidden until play-out activated) -->
+-    <div id="playout-area" class="playout-section hidden">
+-      <p>Board is now interactive. Play to convert the win.</p>
+-      <div id="playout-verdict-area" class="hidden"></div>
++    <div class="lg-left">
++      <div class="board-wrap">
++        <div class="material-row material-top" id="material-top"></div>
++        <div id="board" class="board"></div>
++        <div class="material-row material-bottom" id="material-bottom"></div>
++      </div>
+     </div>
+ 
+-    <!-- Next button area -->
+-    <div id="next-area"></div>
++    <div class="lg-right">
++      <!-- PAGE-SPECIFIC exercise panel: win / draw / loss judgement -->
++      <div class="classify-card">
++        <div class="prompt">Is this position <strong>winning, drawn, or losing</strong>?</div>
++        <div class="classify-btns" id="classify-area">
++          <button class="vbtn" id="btn-winning">Winning</button>
++          <button class="vbtn" id="btn-drawn">Drawn</button>
++          <button class="vbtn" id="btn-losing">Losing</button>
++        </div>
++        <div id="verdict-area" class="hidden"></div>
++        <button class="btn ghost hidden" id="playout-btn">Play it out →</button>
++        <div id="playout-area" class="playout-section hidden">
++          <p>Board is now interactive. Play to convert the win.</p>
++          <div id="playout-verdict-area" class="hidden"></div>
++        </div>
++        <div id="next-area"></div>
++      </div>
++
++      <!-- ALWAYS-PRESENT coach (css/train.css + js/coach-widget.js) -->
++      <div class="coach-card">
++        <div class="coach-header">
++          <span class="coach-avatar">C</span>
++          <span class="coach-title">Coach</span>
++          <span class="coach-status">Online</span>
++        </div>
++        <div class="coach-log" id="coach-log">
++          <div class="msg system">Stuck? Ask the coach for a nudge — no spoilers.</div>
++        </div>
++        <form class="coach-input-row" id="coach-form">
++          <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
++          <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
++        </form>
++      </div>
++    </div>
+   </div>
+ </div>
+ 
+@@ -227,5 +126,17 @@
+ </nav>
+ 
+ <script type="module" src="/js/puzzle/classify.js"></script>
++<script type="module">
++  import { mountCoachWidget } from '/js/coach-widget.js';
++  import { mountMaterial } from '/js/material.js';
++  mountCoachWidget({
++    logEl: document.getElementById('coach-log'),
++    formEl: document.getElementById('coach-form'),
++    inputEl: document.getElementById('coach-input'),
++    sendEl: document.getElementById('coach-send'),
++    context: 'The user is judging whether a chess position is winning, drawn, or losing, then may play the position out.'
++  });
++  mountMaterial(document.getElementById('board'), document.getElementById('material-top'));
++</script>
+ </body>
+ </html>
+diff --git a/endgames.html b/endgames.html
+index f4e3a81..4db685b 100644
+--- a/endgames.html
++++ b/endgames.html
+@@ -5,153 +5,28 @@
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+ <meta name="puzzle-type-filter" content="endgame">
+ <title>KnightPath — Endgames</title>
++  <link rel="stylesheet" href="/css/tokens.css">
++  <link rel="stylesheet" href="/css/shell.css">
++  <link rel="stylesheet" href="/css/nav.css">
++  <link rel="stylesheet" href="/css/board.css">
++  <link rel="stylesheet" href="/css/type.css">
++  <link rel="stylesheet" href="/css/screen.css">
++  <link rel="stylesheet" href="/css/train.css">
++  <link rel="stylesheet" href="/css/session-wrap.css">
++  <link rel="stylesheet" href="/css/endgames.css">
++
+ <link rel="icon" type="image/x-icon" href="/favicon.ico">
+ <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+ <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+ <link rel="manifest" href="/manifest.json">
+-<link rel="stylesheet" href="/css/tokens.css">
+-<link rel="stylesheet" href="/css/screen.css">
+-<link rel="stylesheet" href="/css/nav.css">
+-<link rel="stylesheet" href="/css/board.css">
+-<link rel="stylesheet" href="/css/session-wrap.css">
+-<link rel="stylesheet" href="/css/type.css">
+ <meta name="apple-mobile-web-app-title" content="KnightPath">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+-<style>
+-  * { box-sizing:border-box; margin:0; padding:0; }
+-  html, body {
+-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+-    background-attachment:fixed; min-height:100vh;
+-  }
+-  body {
+-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+-    color:var(--ink);
+-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+-    line-height:1.5; -webkit-font-smoothing:antialiased;
+-  }
+-  .container { max-width:640px; margin:0 auto; }
+-  h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
+-
+-  /* Header bar */
+-  .header-bar {
+-    display:flex; align-items:center; gap:12px; margin-bottom:14px;
+-    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
+-    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+-    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
+-    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
+-  }
+-  .hamburger-btn {
+-    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
+-    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
+-    transition:background .15s;
+-  }
+-  .hamburger-btn:hover { background:var(--surface2); }
+-  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
+-
+-  /* Nav drawer */
+-  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
+-  .nav-drawer.open { transform:translateX(0); }
+-  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+-  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
+-  .nav-brand-name { font-weight:700; font-size:15px; }
+-  .nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
+-  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
+-  .nav-drawer-link:hover { background:var(--surface2); }
+-  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
+-  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+-  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
+-  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
+-  .nav-drawer-link.coming { color:var(--muted); }
+-  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
+-  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
+-  .nav-backdrop.open { opacity:1; pointer-events:auto; }
+-  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
+-  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
+-  .tab-bar a.active { color:var(--accent); }
+-  .tab-bar a .tab-icon { width:22px; height:22px; }
+-  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
+-  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
+-  @media (min-width: 880px) {
+-    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
+-    .container { max-width:780px; }
+-    .tab-bar { display:none; }
+-    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
+-    .nav-backdrop { display:none !important; }
+-  }
+-
+-  /* Lesson card */
+-  .lesson-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 8px 22px -14px rgba(30,40,70,.3); }
+-  .lesson-group-badge { display:inline-flex; align-items:center; padding:3px 9px; background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; border-radius:var(--r-pill); margin-bottom:8px; }
+-  .lesson-title { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:18px; line-height:1.25; margin-bottom:5px; }
+-  .lesson-stm { font-size:13px; color:var(--muted); margin-bottom:10px; }
+-  .lesson-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+-  .technique-btn { padding:7px 13px; background:var(--surface2); border:1px solid var(--line); border-radius:var(--r-btn); font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; font-family:inherit; transition:background .12s ease; }
+-  .technique-btn:hover { background:var(--surface3); }
+-  .technique-text { margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; font-size:13px; line-height:1.5; color:var(--ink); }
+-  .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
+-
+-  /* Board */
+-  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
+-
+-  /* Status + verdict */
+-  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
+-  .verdict-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
+-  .verdict-headline { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:16px; margin-bottom:8px; }
+-  .verdict-headline.pass { color:var(--pos); }
+-  .verdict-headline.fail { color:var(--bad); }
+-
+-  /* Controls */
+-  .controls-row { display:flex; gap:8px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
+-  .ctrl-btn { padding:9px 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink); transition:transform .15s cubic-bezier(.34,1.56,.64,1), background .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+-  .ctrl-btn:hover:not(:disabled) { background:var(--surface2); }
+-  .ctrl-btn:active { transform:translateY(1px); }
+-  .ctrl-btn:disabled { opacity:.45; cursor:not-allowed; }
+-  .ctrl-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px -6px var(--accent); }
+-  .ctrl-btn.primary:hover:not(:disabled) { filter:brightness(1.07); }
+-
+-  /* Lesson list */
+-  .lesson-list-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); overflow:hidden; margin-bottom:14px; }
+-  .lesson-list-header { padding:10px 14px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); background:var(--surface2); }
+-  .lesson-list-group { padding:8px 0 4px; }
+-  .lesson-list-group-label { padding:4px 14px 2px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+-  .lesson-list-item { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; transition:background .12s ease; border-bottom:1px solid var(--line); }
+-  .lesson-list-item:last-child { border-bottom:none; }
+-  .lesson-list-item:hover { background:var(--surface2); }
+-  .lesson-list-item.active { background:var(--accent-soft); }
+-  .lesson-list-name { flex:1; font-size:13px; font-weight:600; }
+-  .lesson-list-result { font-size:11px; color:var(--muted); }
+-  .mastery-pips { display:flex; gap:3px; }
+-  .pip { width:7px; height:7px; border-radius:50%; background:var(--surface3); border:1px solid var(--line); }
+-  .pip.filled { background:var(--accent); border-color:var(--accent); }
+-  .pip.mastered { background:var(--warn); border-color:var(--warn); }
+-  .hidden { display:none !important; }
+-  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
+-  .nav-drawer-link.secondary:hover { background:var(--surface2); }
+-  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
+-  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+-</style>
+-<style>
+-  /* Coarse pawns eval bar (Spec 21 endgame interim — §31 pixel polish deferred to Design). */
+-  .eg-evalbar { display:flex; align-items:center; gap:10px; max-width:420px; margin:8px auto 0; }
+-  .eg-evalbar.hidden { display:none; }
+-  .eg-evalbar-track { position:relative; flex:1; height:10px; border-radius:6px; overflow:hidden;
+-    background:linear-gradient(90deg, var(--surface3, #2a2a2a) 0%, var(--surface2, #1c1c1c) 100%); }
+-  .eg-evalbar-fill { position:absolute; left:50%; top:0; bottom:0; width:0; transform:translateX(0);
+-    background:var(--accent, #34d399); transition:width .25s ease, left .25s ease, background .25s ease; }
+-  .eg-evalbar-fill.neg { background:var(--danger, #ef4444); }
+-  .eg-evalbar-num { min-width:46px; text-align:right; font-family:"Spline Sans Mono", ui-monospace, monospace;
+-    font-size:14px; font-weight:600; color:var(--ink, #e8e8e8); }
+-</style>
+ </head>
+ <body>
+ <div class="container">
+-  <!-- Persistent in-session wrapper (Spec 21 — endgame play-out folded into
+-       the session host). Hidden + no-op unless opened via
+-       ?session=today&block=endgames. -->
+-  <div class="session-wrap hidden" id="session-wrap"></div>
+   <div class="header-bar">
+     <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
+       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+@@ -161,49 +36,68 @@
+     <span class="page-title">Endgames</span>
+   </div>
+ 
+-  <!-- Lesson header -->
+-  <div class="lesson-card" id="lesson-card">
+-    <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
+-    <div id="lesson-title" class="lesson-title">—</div>
+-    <div id="lesson-stm" class="lesson-stm">—</div>
+-    <div class="lesson-meta-row">
+-      <button id="show-technique-btn" class="technique-btn">Show technique</button>
+-      <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
+-    </div>
+-    <div id="technique-text" class="technique-text hidden"></div>
+-  </div>
++  <div class="layout-grid">
++    <div class="session-wrap hidden" id="session-wrap"></div>
+ 
+-  <!-- Board -->
+-  <div class="board-wrap">
+-    <div id="board" class="board"></div>
+-    <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
+-  </div>
+-
+-  <!-- Coarse pawns eval bar (Spec 21 §2.1 endgame interim; §31). One-decimal
+-       pawns, e.g. "+3.4". No-spoiler: shows the running eval only, never the
+-       engine's move or line. -->
+-  <div id="eval-bar" class="eg-evalbar hidden" aria-hidden="true">
+-    <div class="eg-evalbar-track"><div id="eval-bar-fill" class="eg-evalbar-fill"></div></div>
+-    <div id="eval-bar-num" class="eg-evalbar-num">0.0</div>
+-  </div>
+-
+-  <div id="status-text"></div>
++    <div class="lg-head">
++      <div class="lesson-card" id="lesson-card">
++        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
++        <div id="lesson-title" class="lesson-title">—</div>
++        <div id="lesson-stm" class="lesson-stm">—</div>
++      </div>
++      <div id="status-text" class="inline-status"></div>
++    </div>
+ 
+-  <!-- Verdict (shown after each lesson ends) -->
+-  <div id="verdict-card" class="verdict-card hidden">
+-    <div id="verdict-headline" class="verdict-headline"></div>
+-    <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+-  </div>
++    <div class="lg-left">
++      <div class="board-wrap">
++        <div class="material-row material-top" id="material-top"></div>
++        <div id="board" class="board"></div>
++        <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
++        <div class="material-row material-bottom" id="material-bottom"></div>
++      </div>
++      <div id="eval-bar" class="eg-evalbar hidden" aria-hidden="true">
++        <div class="eg-evalbar-track"><div id="eval-bar-fill" class="eg-evalbar-fill"></div></div>
++        <div id="eval-bar-num" class="eg-evalbar-num">0.0</div>
++      </div>
++      <div class="controls" id="controls-row">
++        <button id="retry-btn" class="btn" disabled>Retry</button>
++        <button id="prev-btn" class="btn">← Prev</button>
++        <button id="next-btn" class="btn">Next →</button>
++      </div>
++    </div>
+ 
+-  <!-- Controls -->
+-  <div class="controls-row" id="controls-row">
+-    <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
+-    <button id="prev-btn" class="ctrl-btn">← Prev</button>
+-    <button id="next-btn" class="ctrl-btn">Next →</button>
++    <div class="lg-right">
++      <!-- PAGE-SPECIFIC exercise panel: show technique + verdict + lesson list -->
++      <div class="endgame-panel">
++        <div class="lesson-meta-row">
++          <button id="show-technique-btn" class="technique-btn">Show technique</button>
++          <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
++        </div>
++        <div id="technique-text" class="technique-text hidden"></div>
++        <div id="verdict-card" class="verdict-card hidden">
++          <div id="verdict-headline" class="verdict-headline"></div>
++          <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
++        </div>
++        <div class="lesson-list-card" id="lesson-list"></div>
++      </div>
++
++      <!-- ALWAYS-PRESENT coach -->
++      <div class="coach-card">
++        <div class="coach-header">
++          <span class="coach-avatar">C</span>
++          <span class="coach-title">Coach</span>
++          <span class="coach-status">Online</span>
++        </div>
++        <div class="coach-log" id="coach-log">
++          <div class="msg system">Working an endgame? Ask the coach for the plan — no spoilers.</div>
++        </div>
++        <form class="coach-input-row" id="coach-form">
++          <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
++          <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
++        </form>
++      </div>
++    </div>
+   </div>
+-
+-  <!-- Lesson list -->
+-  <div class="lesson-list-card" id="lesson-list"></div>
+ </div>
+ 
+ <!-- Nav drawer -->
+@@ -240,5 +134,17 @@
+ </nav>
+ 
+ <script type="module" src="/js/puzzle/playout.js"></script>
++<script type="module">
++  import { mountCoachWidget } from '/js/coach-widget.js';
++  import { mountMaterial } from '/js/material.js';
++  mountCoachWidget({
++    logEl: document.getElementById('coach-log'),
++    formEl: document.getElementById('coach-form'),
++    inputEl: document.getElementById('coach-input'),
++    sendEl: document.getElementById('coach-send'),
++    context: 'The user is playing out a chess endgame technique against the engine.'
++  });
++  mountMaterial(document.getElementById('board'), document.getElementById('material-top'));
++</script>
+ </body>
+ </html>
+diff --git a/games.html b/games.html
+index b7b7eac..e420753 100644
+--- a/games.html
++++ b/games.html
+@@ -311,7 +311,17 @@
+   .nav-drawer-link.secondary:hover { background:var(--surface2); }
+   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
+   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+-</style>
++
++    /* Game review + drill controls (coach review experience) */
++    .game-review-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
++    .btn-review-game, .btn-drill-game, .btn-drill-one { font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; border-radius:var(--r-btn,12px); padding:6px 12px; border:1px solid var(--line); }
++    .btn-review-game { background:var(--accent); color:#fff; border-color:var(--accent); }
++    .btn-drill-game, .btn-drill-one { background:var(--surface); color:var(--accent); }
++    .btn-drill-one { display:inline-block; margin-top:8px; }
++    .game-review-out { margin-top:10px; font-size:13px; line-height:1.55; color:var(--ink); }
++    .coach-review-text { background:var(--surface2); border-radius:var(--r-panel,14px); padding:10px 12px; }
++    .coach-review-drills { display:flex; flex-direction:column; gap:4px; margin-top:8px; align-items:flex-start; }
++  </style>
+ </head>
+ <body>
+ <div class="container">
+@@ -995,6 +1005,7 @@ async function ingest(username, numGames, depth, onProgress) {
+       const gameKey = game.url || game.uuid || `game-${gameIndex}-${Date.now()}`;
+       newScorecards[gameKey] = finalCard;
+     }
++    const userRatingForGame = userIsWhite ? (game.white && game.white.rating) : (game.black && game.black.rating);
+     perGameSummary.push({
+       gameUrl: game.url || game.uuid || '',
+       opponent,
+@@ -1005,6 +1016,8 @@ async function ingest(username, numGames, depth, onProgress) {
+       analysed: userMovesInGame, // every user move was analysed
+       candidates: gameCandidates.length,
+       mistakes: thinned.length,
++      rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
++      endTime: game.end_time || null,
+     });
+   }
+ 
+@@ -1027,11 +1040,17 @@ function renderMistakeList(mistakes, perGameSummary) {
+       const thinning = (typeof g.candidates === 'number' && g.candidates > g.mistakes)
+         ? ` · thinned from ${g.candidates}`
+         : '';
++      const ratingTxt = (typeof g.rating === 'number') ? ` · ${g.rating}` : '';
+       div.innerHTML = `
+         <div class="top">
+-          <span class="src">vs ${escapeHtml(g.opponent)} (${escapeHtml(g.dateStr)}, ${escapeHtml(g.userColorName)}, result ${escapeHtml(g.result)})</span>
++          <span class="src">vs ${escapeHtml(g.opponent)} (${escapeHtml(g.dateStr)}, ${escapeHtml(g.userColorName)}, result ${escapeHtml(g.result)}${ratingTxt})</span>
+           <span class="cat">${g.analysed} moves · ${g.mistakes} saved${thinning}</span>
+         </div>
++        ${g.mistakes ? `<div class="game-review-actions">
++            <button class="btn-review-game" data-gameurl="${escapeHtml(g.gameUrl)}">Review with coach</button>
++            <a class="btn-drill-game" href="/puzzle.html?drill=${encodeURIComponent(g.gameUrl)}|all">Drill all ${g.mistakes}</a>
++          </div>
++          <div class="game-review-out hidden" data-out="${escapeHtml(g.gameUrl)}"></div>` : ''}
+       `;
+       listEl.appendChild(div);
+     }
+@@ -1051,10 +1070,12 @@ function renderMistakeList(mistakes, perGameSummary) {
+       </div>
+       <div class="moves">you: ${escapeHtml(m.userMoveSan)} (${m.cpLoss}cp loss)</div>
+       <div class="cat">${m.category}</div>
++      <a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill this →</a>
+     `;
+     listEl.appendChild(div);
+   }
+   $('list-panel').classList.remove('hidden');
++  wireReviewHandlers();
+   const counts = {
+     opening: mistakes.filter((m) => m.category === 'opening').length,
+     middlegame: mistakes.filter((m) => m.category === 'middlegame').length,
+@@ -1064,6 +1085,86 @@ function renderMistakeList(mistakes, perGameSummary) {
+     `${mistakes.length} new mistakes found — ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
+ }
+ 
++// ---- Coach game review + drill (per-game) -------------------------------
++async function reviewGameWithCoach(gameUrl, outEl, btn) {
++  let all = [];
++  try { all = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1') || '[]') || []; } catch {}
++  const ms = all.filter((m) => m.gameUrl === gameUrl || (m.id || '').startsWith(gameUrl + '|'));
++  outEl.classList.remove('hidden');
++  if (!ms.length) { outEl.textContent = 'No saved mistakes for this game.'; return; }
++  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Reviewing…';
++  outEl.textContent = 'Coach is reviewing this game…';
++  const digest = ms.map((m) => ({ move: m.fullmove, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
++  const SYS = [
++    "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON).",
++    'Give a short review (3-5 sentences): name the recurring theme across these mistakes, the single most costly moment, and one thing to work on next.',
++    'Refer to moves by their move number and SAN. Use only the data given; do not invent moves. Plain prose only — no markdown, no lists, no em-dashes.',
++  ].join('\n');
++  try {
++    const r = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, system: SYS, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
++    const data = await r.json();
++    if (!r.ok) throw new Error('HTTP ' + r.status);
++    const txt = ((data.content && data.content[0] && data.content[0].text) || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/[—–]/g, ',').trim();
++    const drills = ms.map((m) => `<a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill move ${m.fullmove}: ${escapeHtml(m.userMoveSan)}</a>`).join('');
++    outEl.innerHTML = `<div class="coach-review-text">${escapeHtml(txt || '(no review)')}</div><div class="coach-review-drills">${drills}</div>`;
++  } catch (e) { outEl.textContent = 'Coach unavailable right now.'; }
++  finally { btn.disabled = false; btn.textContent = old; }
++}
++function wireReviewHandlers() {
++  const listEl = $('mistakes-list');
++  if (!listEl || listEl.dataset.reviewWired) return;
++  listEl.dataset.reviewWired = '1';
++  listEl.addEventListener('click', (e) => {
++    const rb = e.target.closest('.btn-review-game');
++    if (!rb) return;
++    const gu = rb.getAttribute('data-gameurl');
++    const out = listEl.querySelector('.game-review-out[data-out="' + (window.CSS && CSS.escape ? CSS.escape(gu) : gu) + '"]');
++    if (out) reviewGameWithCoach(gu, out, rb);
++  });
++}
++
++// Persistent "Your games" list (from stored mistakes) so review + drill are
++// always available, not only right after an ingest run.
++function renderSavedGames() {
++  let all = [];
++  try { all = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1') || '[]') || []; } catch {}
++  if (!all.length) return;
++  const groups = new Map();
++  for (const m of all) {
++    const k = m.gameUrl || (m.id || '').split('|')[0] || 'unknown';
++    if (!groups.has(k)) groups.set(k, { gameUrl: k, opponent: m.opponent || 'opponent', dateStr: m.dateStr || '', userColorName: m.userColorName || '', n: 0 });
++    groups.get(k).n++;
++  }
++  const listEl = $('mistakes-list');
++  if (!listEl) return;
++  listEl.innerHTML = '';
++  const head = document.createElement('div');
++  head.className = 'mistake-item';
++  head.innerHTML = '<div class="cat">Your games — tap “Review with coach” for the coach’s take, or drill the mistakes.</div>';
++  listEl.appendChild(head);
++  const arr = Array.from(groups.values()).sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
++  for (const gm of arr) {
++    const div = document.createElement('div');
++    div.className = 'mistake-item';
++    div.innerHTML = `
++      <div class="top">
++        <span class="src">vs ${escapeHtml(gm.opponent)} (${escapeHtml(gm.dateStr)}, ${escapeHtml(gm.userColorName)})</span>
++        <span class="cat">${gm.n} mistake${gm.n === 1 ? '' : 's'}</span>
++      </div>
++      <div class="game-review-actions">
++        <button class="btn-review-game" data-gameurl="${escapeHtml(gm.gameUrl)}">Review with coach</button>
++        <a class="btn-drill-game" href="/puzzle.html?drill=${encodeURIComponent(gm.gameUrl)}|all">Drill all ${gm.n}</a>
++      </div>
++      <div class="game-review-out hidden" data-out="${escapeHtml(gm.gameUrl)}"></div>`;
++    listEl.appendChild(div);
++  }
++  $('list-panel').classList.remove('hidden');
++  const sum = $('list-summary');
++  if (sum) sum.textContent = `${arr.length} game${arr.length === 1 ? '' : 's'} with saved mistakes — pick one to review or drill.`;
++  wireReviewHandlers();
++}
++
+ function escapeHtml(s) {
+   return String(s).replace(/[&<>"']/g, (c) =>
+     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+@@ -1110,6 +1211,29 @@ async function handleIngestSubmit(e) {
+       catch (e) { console.warn('saveScorecards failed:', e.message); }
+     }
+ 
++    // Chess.com rating time-series -> populates the EXISTING Insights rating
++    // strip + trajectory (which previously had nothing writing to it). Uses the
++    // established shapes: user-rating-v1 {rating,fetchedAt}; rating-history-v1 [{rating,at}].
++    try {
++      const ratedRun = perGameSummary.filter((g) => typeof g.rating === 'number' && g.endTime);
++      if (ratedRun.length) {
++        const KEY_RH = 'chess-coach-rating-history-v1';
++        let hist = [];
++        try { hist = JSON.parse(localStorage.getItem(KEY_RH) || '[]') || []; } catch {}
++        const seen = new Set(hist.map((p) => p.at));
++        for (const g of ratedRun) {
++          const at = new Date(g.endTime * 1000).toISOString();
++          if (!seen.has(at)) { hist.push({ rating: g.rating, at }); seen.add(at); }
++        }
++        hist.sort((a, b) => new Date(a.at) - new Date(b.at));
++        localStorage.setItem(KEY_RH, JSON.stringify(hist));
++        const latest = hist[hist.length - 1];
++        if (latest && typeof latest.rating === 'number') {
++          localStorage.setItem('chess-coach-user-rating-v1', JSON.stringify({ rating: latest.rating, fetchedAt: new Date().toISOString() }));
++        }
++      }
++    } catch (e) { console.warn('rating history capture failed:', e.message); }
++
+     // Persist the game URLs so they're skipped on the next run.
+     const ingested = loadIngestedGameUrls();
+     for (const g of perGameSummary) if (g.gameUrl) ingested.add(g.gameUrl);
+@@ -1305,6 +1429,7 @@ initStockfish().catch((err) => {
+   setProgress('Engine init failed: ' + err.message, 100, 'error');
+ });
+ renderSavedStats();
++renderSavedGames();
+ </script>
+ <script type="module" src="/js/puzzle/config.js"></script>
+ </body>
+diff --git a/js/coach-widget.js b/js/coach-widget.js
+new file mode 100644
+index 0000000..f506ca5
+--- /dev/null
++++ b/js/coach-widget.js
+@@ -0,0 +1,73 @@
++// ============================================================================
++// coach-widget.js — the reusable, always-present Coach.
++// ----------------------------------------------------------------------------
++// Mounts a self-contained general-coach chat into any training screen's
++// .coach-card elements. Talks to /api/coach (same contract as coach.html).
++// Isolated: if the API errors, only a coach bubble shows the error — it never
++// affects the exercise running alongside it.
++//
++//   import { mountCoachWidget } from '/js/coach-widget.js';
++//   mountCoachWidget({
++//     logEl:  document.getElementById('coach-log'),
++//     formEl: document.getElementById('coach-form'),
++//     inputEl:document.getElementById('coach-input'),
++//     sendEl: document.getElementById('coach-send'),
++//     context: 'The user is judging whether a position is winning, drawn or losing.'
++//   });
++// ============================================================================
++
++const BASE_SYSTEM =
++  "You are a warm, concise chess coach inside the KnightPath training app. " +
++  "Guide the student with questions and hints; nudge toward the idea rather " +
++  "than blurting the answer. Keep replies short (2-4 sentences).";
++
++function bubble(logEl, role, text) {
++  const div = document.createElement('div');
++  div.className = 'msg ' + role; // role: system | coach | user | error
++  div.textContent = text;
++  logEl.appendChild(div);
++  logEl.scrollTop = logEl.scrollHeight;
++  return div;
++}
++
++export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '', model = 'claude-sonnet-4-6' } = {}) {
++  if (!logEl || !formEl || !inputEl || !sendEl) return null;
++  const system = context ? (BASE_SYSTEM + ' Context: ' + context) : BASE_SYSTEM;
++  const history = [];
++  let sending = false;
++
++  const setSending = (v) => { sending = v; sendEl.disabled = v || !inputEl.value.trim(); };
++  inputEl.addEventListener('input', () => { sendEl.disabled = sending || !inputEl.value.trim(); });
++  sendEl.disabled = true;
++
++  async function send(text) {
++    if (sending || !text.trim()) return;
++    history.push({ role: 'user', content: text });
++    bubble(logEl, 'user', text);
++    inputEl.value = '';
++    setSending(true);
++    const typing = bubble(logEl, 'system', '…');
++    try {
++      const r = await fetch('/api/coach', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ model, max_tokens: 280, system, messages: history })
++      });
++      const data = await r.json();
++      typing.remove();
++      if (!r.ok) throw new Error('HTTP ' + r.status);
++      const reply = (data.content && data.content[0] && data.content[0].text) || '(no reply)';
++      history.push({ role: 'assistant', content: reply });
++      bubble(logEl, 'coach', reply);
++    } catch (err) {
++      typing.remove();
++      bubble(logEl, 'error', 'Coach unavailable right now.');
++    } finally {
++      setSending(false);
++      inputEl.focus();
++    }
++  }
++
++  formEl.addEventListener('submit', (e) => { e.preventDefault(); send(inputEl.value); });
++  return { send };
++}
+diff --git a/js/material.js b/js/material.js
+new file mode 100644
+index 0000000..63fbbb1
+--- /dev/null
++++ b/js/material.js
+@@ -0,0 +1,45 @@
++// ============================================================================
++// material.js — shared, self-contained material-difference indicator.
++// ----------------------------------------------------------------------------
++// Reads the rendered board (each piece is <img class="pc-img" src=".../wP.svg">,
++// so the filename encodes colour+type) and shows the NET on-board material
++// advantage in the given element, e.g. "White +3" / "Black +2" / "Even".
++//
++// Net on-board material is correct for ANY position (constructed endgames,
++// recognition positions, real games) — unlike a captured-pieces pile, which
++// only makes sense for positions derived from the full starting set.
++//
++// No engine/state dependency; safe no-op if elements are missing. Mounted per
++// page (see docs/training-screen-pattern.md):
++//   import { mountMaterial } from '/js/material.js';
++//   mountMaterial(document.getElementById('board'),
++//                 document.getElementById('material-top'));
++// ============================================================================
++const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };
++
++function netFromBoard(boardEl) {
++  let white = 0, black = 0;
++  boardEl.querySelectorAll('img.pc-img').forEach((img) => {
++    const m = (img.getAttribute('src') || '').match(/([wb])([PNBRQK])\.svg(?:$|[?#])/i);
++    if (!m) return;
++    const v = VALUE[m[2].toLowerCase()] || 0;
++    if (m[1].toLowerCase() === 'w') white += v; else black += v;
++  });
++  return white - black;
++}
++
++function paint(el, net) {
++  if (!el) return;
++  if (net > 0) el.innerHTML = '<span class="mb-score">White +' + net + '</span>';
++  else if (net < 0) el.innerHTML = '<span class="mb-score">Black +' + (-net) + '</span>';
++  else el.innerHTML = '<span class="mb-score mb-even">Even</span>';
++}
++
++export function mountMaterial(boardEl, targetEl) {
++  if (!boardEl || !targetEl) return null;
++  const update = () => paint(targetEl, netFromBoard(boardEl));
++  const obs = new MutationObserver(update);
++  obs.observe(boardEl, { childList: true, subtree: true });
++  update();
++  return { update, disconnect: () => obs.disconnect() };
++}
+diff --git a/js/puzzle/boot.js b/js/puzzle/boot.js
+index 01a1e48..99438e7 100644
+--- a/js/puzzle/boot.js
++++ b/js/puzzle/boot.js
+@@ -122,6 +122,30 @@ if (stored.length) {
+   state.motifFilter = 'all';
+   state.currentCategory = 'all';
+ }
++
++// Game-review drill — ?drill=<id|gameUrl[,...]> pins specific mistakes into a
++// focused drill, reusing the theme-drill queue path. Additive; a no-op if no
++// puzzle id matches (e.g. those mistakes were not ingested on this device).
++(function activateDrillFromUrl() {
++  const raw = urlParams.get('drill');
++  if (!raw) return;
++  const tokens = raw.split(',').map((s) => s.trim()).filter(Boolean);
++  if (!tokens.length) return;
++  const picks = state.puzzles.filter((p) => {
++    if (!p || !p.id) return false;
++    return tokens.some((t) => {
++      if (t.endsWith('|all')) { const base = t.slice(0, -4); return p.id === base || p.id.startsWith(base + '|'); }
++      return p.id === t || p.id.startsWith(t + '|');
++    });
++  });
++  if (!picks.length) return;
++  state.drillMotif = 'Review';
++  state.drillQueue = picks;
++  state.drillIndex = 0;
++  const banner = document.getElementById('drill-banner');
++  const label = document.getElementById('drill-label');
++  if (banner && label) { banner.classList.remove('hidden'); label.textContent = 'Reviewing your mistakes — ' + picks.length; }
++})();
+ // ----------------------------------------------------------------------------
+ // Unified puzzle schema (phase 1a) — load the static endgame + recognition
+ // puzzle sets and merge them into state.puzzles. Additive: a page only sees
+diff --git a/js/session-wrap.js b/js/session-wrap.js
+index 4f23dd8..de77919 100644
+--- a/js/session-wrap.js
++++ b/js/session-wrap.js
+@@ -77,6 +77,19 @@ function itemCorrect(type, id, stores, sinceMs) {
+   const a = stores.attempts[id];
+   return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
+ }
++function pipOutcome(block, id, stores, sinceMs) {
++  // '' (not done) | 'first' (solved first try, no hint) | 'hinted' (hint or
++  // retried) | 'fail' (not solved). Recognition/endgame are binary -> first|fail.
++  const type = blockType(block);
++  if (!id || !itemResolved(type, id, stores, sinceMs)) return '';
++  if (!itemCorrect(type, id, stores, sinceMs)) return 'fail';
++  if (type === 'mistake') {
++    const a = stores.attempts[id];
++    if (a && a.solved && (a.attempts || 0) <= 1 && !a.shownPieceUsed) return 'first';
++    return 'hinted';
++  }
++  return 'first';
++}
+ function resolvedInBlock(block, stores, sinceMs) {
+   const ids = Array.isArray(block.ids) ? block.ids : [];
+   if (!ids.length) return Math.max(0, block.done || 0);
+@@ -147,10 +160,11 @@ export function renderSessionWrap(el, opts = {}) {
+     const bDone = (i < activeIdx) ? bCount : (i === activeIdx ? done : 0);
+     let pips = '';
+     const pipN = Math.max(bCount, 1);
++    const bIds = Array.isArray(b.ids) ? b.ids : [];
++    let curMarked = false;
+     for (let p = 0; p < pipN; p++) {
+-      let cls = '';
+-      if (p < bDone) cls = 'done';
+-      else if (i === activeIdx && p === bDone) cls = 'cur';
++      let cls = pipOutcome(b, bIds[p], stores, sinceMs); // 'first'|'hinted'|'fail'|''
++      if (!cls && i === activeIdx && !curMarked) { cls = 'cur'; curMarked = true; }
+       pips += '<span class="sw-pip ' + cls + '"></span>';
+     }
+     const lbl = BLOCK_SHORT[b.id] || ('B' + (i + 1));
+diff --git a/puzzle.html b/puzzle.html
+index 4e6edeb..8e18b8f 100644
+--- a/puzzle.html
++++ b/puzzle.html
+@@ -14,1101 +14,19 @@
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+ <link rel="manifest" href="/manifest.json">
+ <link rel="stylesheet" href="/css/tokens.css">
++<link rel="stylesheet" href="/css/shell.css">
+ <link rel="stylesheet" href="/css/nav.css">
+ <link rel="stylesheet" href="/css/board.css">
+ <link rel="stylesheet" href="/css/type.css">
+ <link rel="stylesheet" href="/css/gate.css">
+ <link rel="stylesheet" href="/css/screen.css">
++<link rel="stylesheet" href="/css/train.css">
+ <link rel="stylesheet" href="/css/session-wrap.css">
+ <meta name="apple-mobile-web-app-title" content="KnightPath">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+-<style>
+-  /* ============================================================
+-     Daylight design tokens (spec §1)
+-     ============================================================ */
+-
+-  /* Modern browsers get the color-mix highlights for cleaner transparency. */
+-  @supports (background: color-mix(in srgb, red 50%, transparent)) {
+-    :root {
+-      --hl-move: color-mix(in srgb, var(--accent) 26%, transparent);
+-      --hl-sel:  color-mix(in srgb, var(--accent) 36%, transparent);
+-    }
+-  }
+-
+-  * { box-sizing: border-box; margin: 0; padding: 0; }
+-  html, body {
+-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+-    background-attachment: fixed;
+-    min-height: 100vh;
+-  }
+-  body {
+-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+-    color: var(--ink);
+-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+-    line-height: 1.5;
+-    -webkit-font-smoothing: antialiased;
+-  }
+-  .container { max-width: 560px; margin: 0 auto; }
+-
+-  /* ============================================================
+-     Typography (spec §2)
+-     ============================================================ */
+-  h1, .title, .page-title, .nav-drawer-title {
+-    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+-  }
+-  /* Spline Sans Mono is data-only per redesign-spec §2 (eval numbers, FEN,
+-     coords, raw counts). NOT for prose / meta / labels. .puzzle-meta moved
+-     OUT — its content is "puzzle 1 of 21 · vs IanN_143 · 2026-05-29 · …"
+-     which is meta prose, so it inherits Inter from body. */
+-  .mono, .coord, .data {
+-    font-family: "Spline Sans Mono", ui-monospace, monospace;
+-  }
+-
+-  h1 {
+-    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+-    line-height: 1.1; margin-bottom: 4px;
+-  }
+-  .eyebrow {
+-    font-size: 11px; font-weight: 700; letter-spacing: 0.13em;
+-    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+-  }
+-  .meta-label {
+-    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+-    text-transform: uppercase; color: var(--muted);
+-  }
+-
+-  /* ============================================================
+-     Header + page-title
+-     ============================================================ */
+-  .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+-  .page-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+-  .header-mode { margin-left: auto; display: flex; gap: 4px; }
+-  .mode-pill {
+-    padding: 6px 12px; border: 1px solid var(--line);
+-    border-radius: var(--r-pill); background: var(--surface);
+-    color: var(--muted); font-size: 10px; font-weight: 700;
+-    letter-spacing: 0.06em; text-transform: uppercase;
+-    cursor: pointer; font-family: inherit;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .mode-pill:hover { background: var(--surface2); }
+-  .mode-pill.active {
+-    background: var(--ink); color: #fff; border-color: var(--ink);
+-  }
+-
+-  /* ============================================================
+-     Sidebar / nav drawer (spec §7)
+-     Mobile: slide-in drawer. Desktop: pinned sidebar.
+-     ============================================================ */
+-  .nav-drawer {
+-    position: fixed; top: 0; left: 0;
+-    width: 288px; max-width: 84vw; height: 100vh;
+-    background: var(--surface); border-right: 1px solid var(--line);
+-    transform: translateX(-100%);
+-    transition: transform 200ms ease;
+-    z-index: 100; padding: 20px 14px; overflow-y: auto;
+-    display: flex; flex-direction: column; gap: 4px;
+-    box-shadow: 0 20px 40px -22px rgba(20,30,55,.25);
+-  }
+-  .nav-drawer.open { transform: translateX(0); }
+-  .nav-brand {
+-    display: flex; align-items: center; gap: 10px;
+-    padding: 6px 8px 14px;
+-    margin-bottom: 6px;
+-    border-bottom: 1px solid var(--line);
+-  }
+-  .nav-brand-mark {
+-    width: 30px; height: 30px; border-radius: 0;
+-    background: none; box-shadow: none;
+-    object-fit: contain; flex-shrink: 0;
+-  }
+-  .nav-brand-name {
+-    font-family: "Plus Jakarta Sans", sans-serif;
+-    font-weight: 700; font-size: 15px;
+-  }
+-  .nav-group-label {
+-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+-    text-transform: uppercase; color: var(--muted);
+-    padding: 12px 10px 4px;
+-  }
+-  .nav-drawer-link {
+-    display: flex; align-items: center; gap: 11px;
+-    padding: 10px 12px; border-radius: 10px;
+-    font-size: 14px; font-weight: 600;
+-    color: var(--ink); text-decoration: none;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .nav-drawer-link:hover { background: var(--surface2); }
+-  .nav-drawer-link.active {
+-    background: var(--accent); color: #fff;
+-    box-shadow: 0 6px 14px -8px var(--accent);
+-  }
+-  .nav-drawer-link .nav-icon {
+-    width: 18px; height: 18px; flex-shrink: 0;
+-    display: inline-flex; align-items: center; justify-content: center;
+-  }
+-  /* SVG nav icons (spec §7) inherit colour from the link state; the active
+-     pill flips text+icon to white via .nav-drawer-link.active. */
+-  .nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
+-  .nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
+-  .tab-bar a svg.tab-icon { stroke: currentColor; fill: none; }
+-  .tab-bar a svg.tab-icon .filldot { fill: currentColor; stroke: none; }
+-  .nav-drawer-link.coming {
+-    color: var(--muted);
+-  }
+-  .nav-drawer-link.coming .nav-soon {
+-    margin-left: auto; font-size: 9px; font-weight: 700;
+-    letter-spacing: 0.08em; text-transform: uppercase;
+-    background: var(--surface2); color: var(--muted);
+-    padding: 2px 7px; border-radius: 9px;
+-  }
+-  .nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
+-  .version-stamp {
+-    margin-top: auto;
+-    padding: 10px 12px 4px;
+-    font-size: 10px;
+-    color: var(--muted);
+-    letter-spacing: 0.02em;
+-    border-top: 1px solid var(--line);
+-  }
+-  .nav-backdrop {
+-    position: fixed; inset: 0; background: rgba(15,20,30,.45);
+-    z-index: 99; opacity: 0; pointer-events: none;
+-    transition: opacity 200ms ease;
+-  }
+-  .nav-backdrop.open { opacity: 1; pointer-events: auto; }
+-
+-  /* Mobile tab bar (bottom) — desktop hides via media query */
+-  .tab-bar {
+-    position: fixed; bottom: 0; left: 0; right: 0;
+-    display: flex; align-items: stretch;
+-    background: var(--surface); border-top: 1px solid var(--line);
+-    z-index: 90;
+-    padding: 6px 6px max(env(safe-area-inset-bottom, 6px), 6px);
+-    box-shadow: 0 -8px 22px -16px rgba(15,20,40,.16);
+-  }
+-  .tab-bar a {
+-    flex: 1; display: flex; flex-direction: column;
+-    align-items: center; justify-content: center; gap: 2px;
+-    padding: 7px 4px; border-radius: 10px;
+-    font-size: 10px; font-weight: 600;
+-    color: var(--muted); text-decoration: none;
+-    transition: color .15s ease;
+-  }
+-  .tab-bar a.active { color: var(--accent); }
+-  .tab-bar a .tab-icon { width: 22px; height: 22px; }
+-  .tab-bar a.coming { opacity: .55; }
+-
+-  /* ============================================================
+-     Filters (segmented control, spec §6)
+-     ============================================================ */
+-  .filter-toggle {
+-    display: flex; align-items: center; gap: 10px;
+-    width: 100%; padding: 10px 14px;
+-    background: var(--surface); border: 1px solid var(--line);
+-    border-radius: var(--r-btn); color: var(--ink);
+-    font-size: 13px; font-weight: 700;
+-    cursor: pointer; font-family: inherit;
+-    margin-bottom: 10px;
+-    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .filter-toggle:hover { background: var(--surface2); }
+-  .filter-toggle .filter-badge {
+-    margin-left: auto;
+-    font-size: 12px; color: var(--muted); font-weight: 500;
+-  }
+-  .filter-toggle .filter-caret { font-size: 10px; color: var(--muted); }
+-  .filter-toggle.open .filter-caret { transform: rotate(180deg); display: inline-block; }
+-
+-  .filter-panel {
+-    padding: 14px; background: var(--surface);
+-    border: 1px solid var(--line); border-radius: var(--r-panel);
+-    margin-bottom: 12px;
+-    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+-  }
+-  .filter-panel.hidden { display: none; }
+-  .filter-group { margin-bottom: 12px; }
+-  .filter-group:last-child { margin-bottom: 0; }
+-  .filter-group-label {
+-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+-    text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+-  }
+-  .filter-tabs, .cat-tabs {
+-    display: inline-flex; padding: 3px; gap: 2px;
+-    background: var(--surface2); border-radius: 11px;
+-    width: 100%;
+-  }
+-  .filter-tab, .cat-tab, .tried-tab {
+-    flex: 1; border: none; background: transparent;
+-    cursor: pointer; color: var(--muted);
+-    font: inherit; font-size: 11px; font-weight: 600;
+-    padding: 7px 10px; border-radius: 8px;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; white-space: nowrap;
+-    text-align: center;
+-  }
+-  .filter-tab.active {
+-    background: var(--surface); color: var(--ink);
+-    box-shadow: 0 1px 3px rgba(0,0,0,.13);
+-  }
+-  .cat-tab.active {
+-    background: var(--accent); color: #fff;
+-    box-shadow: 0 2px 6px -2px var(--accent);
+-  }
+-  .tried-tab.active {
+-    background: var(--surface); color: var(--ink);
+-    box-shadow: 0 1px 3px rgba(0,0,0,.13);
+-  }
+-  .filter-tab.empty, .cat-tab.empty, .tried-tab.empty { opacity: 0.45; cursor: not-allowed; }
+-  .filter-tab .count, .cat-tab .count, .tried-tab .count {
+-    display: inline-block; background: rgba(0,0,0,.1);
+-    border-radius: 8px; padding: 1px 6px; margin-left: 4px;
+-    font-family: "Spline Sans Mono", monospace; font-size: 10px;
+-    font-weight: 500;
+-  }
+-  .filter-tab.active .count, .tried-tab.active .count { background: var(--surface2); }
+-
+-  /* Spec 02 — Theme collapsible row + Drill this theme */
+-  .theme-toggle {
+-    display: flex; align-items: center; gap: 10px;
+-    width: 100%; padding: 9px 12px;
+-    background: var(--surface2); border: 1px solid transparent;
+-    border-radius: 11px; cursor: pointer; font-family: inherit;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .theme-toggle:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
+-  .theme-toggle .theme-current {
+-    margin-left: auto; font-size: 12px; color: var(--ink);
+-    font-weight: 600;
+-  }
+-  .theme-toggle .filter-caret {
+-    font-size: 10px; color: var(--muted); transition: transform .15s ease;
+-  }
+-  .theme-toggle.open .filter-caret { transform: rotate(180deg); }
+-  .theme-panel {
+-    margin-top: 8px; padding: 10px;
+-    background: var(--surface); border: 1px solid var(--line);
+-    border-radius: var(--r-panel);
+-  }
+-  .theme-panel.hidden { display: none; }
+-  .theme-pills {
+-    display: flex; flex-wrap: wrap; gap: 5px;
+-    max-height: 170px; overflow-y: auto;
+-    margin-bottom: 10px;
+-  }
+-  .theme-pill {
+-    padding: 5px 11px; background: var(--surface2);
+-    border: 1px solid transparent; border-radius: var(--r-pill);
+-    color: var(--ink); font-size: 11px; font-weight: 600;
+-    cursor: pointer; font-family: inherit;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .theme-pill:hover { background: color-mix(in srgb, var(--surface2) 75%, var(--accent) 25%); }
+-  .theme-pill.active {
+-    background: var(--accent); color: #fff; border-color: var(--accent);
+-    box-shadow: 0 2px 6px -2px var(--accent);
+-  }
+-  .theme-pill.empty { opacity: .4; cursor: not-allowed; }
+-  .theme-pill .count {
+-    margin-left: 4px; font-size: 10px; opacity: .8;
+-    font-family: "Spline Sans Mono", monospace;
+-  }
+-  .drill-cta { width: 100%; margin: 0; padding: 9px 12px; font-size: 13px; }
+-  .drill-cta:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; }
+-
+-  .drill-banner {
+-    display: flex; align-items: center; gap: 10px;
+-    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+-    border-radius: var(--r-btn); padding: 8px 12px; margin-bottom: 10px;
+-    box-shadow: 0 4px 10px -6px rgba(47,158,118,.35);
+-  }
+-  .drill-banner.hidden { display: none; }
+-  .drill-banner .drill-label {
+-    flex: 1; font-size: 13px; font-weight: 700; color: var(--accent);
+-  }
+-  .drill-banner .drill-end {
+-    padding: 5px 10px; font-size: 11px; font-weight: 700;
+-    background: transparent; border: 1px solid var(--accent); color: var(--accent);
+-    border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .drill-banner .drill-end:hover { background: var(--accent); color: #fff; }
+-  .cat-tab.active .count { background: rgba(255,255,255,.22); color: #fff; }
+-
+-  /* ============================================================
+-     Puzzle meta + status
+-     ============================================================ */
+-  .puzzle-meta {
+-    font-size: 12px; color: var(--muted);
+-    margin-bottom: 8px;
+-  }
+-  .puzzle-meta.hidden { display: none; }
+-  .repeat-badge {
+-    display: inline-block;
+-    padding: 4px 10px; background: var(--bad);
+-    color: #fff; border-radius: var(--r-pill);
+-    font-size: 10px; font-weight: 700;
+-    letter-spacing: 0.06em; text-transform: uppercase;
+-    margin-bottom: 8px;
+-    box-shadow: 0 2px 6px -2px var(--bad);
+-  }
+-  .repeat-badge.hidden { display: none; }
+-  .inline-status {
+-    font-size: 12px; color: var(--muted);
+-    margin-bottom: 8px;
+-  }
+-  .inline-status.error { color: var(--bad); }
+-  .inline-status.thinking { color: var(--warn); }
+-  .inline-status.hidden { display: none; }
+-  /* v0.23 — user-correct-sq: subtle green tint on from/to when move was engine best */
+-  .square.user-correct-sq { background-color: rgba(60, 180, 100, 0.35) !important; }
+-  /* v0.23 — "Show Follow-up" button: accent tint, sits beside Restart */
+-  .btn.btn-followup { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+-  .btn.btn-followup:hover { background: var(--accent-soft); }
+-
+-  /* Thinking gate (Deep mode) styles moved to css/gate.css (v0.53b) — it is
+-     now its own component, decoupled from the right column so its height can
+-     never squeeze the coach. */
+-
+-  /* ============================================================
+-     Board (spec §5) — warm wood
+-     ============================================================ */
+-  .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+-  .material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
+-  .mb-piece { width: 18px; height: 18px; display: inline-block; }
+-  .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
+-  /* ============================================================
+-     Controls (buttons) — spec §6
+-     ============================================================ */
+-  .controls {
+-    display: flex; flex-wrap: wrap; gap: 8px;
+-    margin-bottom: 12px;
+-  }
+-  .btn {
+-    flex: 1; min-width: 110px;
+-    padding: 11px 14px;
+-    font-family: inherit; font-weight: 700; font-size: 14px;
+-    border: 1px solid var(--line);
+-    border-radius: var(--r-btn);
+-    background: var(--surface); color: var(--ink);
+-    cursor: pointer;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+-  }
+-  .btn:hover { background: var(--surface2); }
+-  .btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
+-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+-  .btn.btn-primary {
+-    background: var(--accent); color: #fff; border-color: transparent;
+-    box-shadow: 0 8px 18px -8px var(--accent);
+-  }
+-  .btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
+-
+-  /* ============================================================
+-     Post-resolution navigation
+-     ============================================================ */
+-  .nav-arrows {
+-    display: flex; align-items: center; gap: 10px;
+-    background: var(--surface); border: 1px solid var(--line);
+-    border-radius: var(--r-btn); padding: 6px 10px;
+-    margin-bottom: 12px;
+-    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+-  }
+-  .nav-arrows.hidden { display: none; }
+-  .nav-arrows .nav-step {
+-    background: transparent; border: none;
+-    cursor: pointer; font-size: 15px; line-height: 1;
+-    padding: 4px 10px; color: var(--ink);
+-    border-radius: 8px;
+-    /* §53 — pin the arrow glyphs to the UI font so they don't fall back to a
+-       serif/system glyph (Jorge flagged the nav-arrows font). */
+-    font-family: var(--font-body, "Inter", system-ui, sans-serif);
+-    transition: background .15s ease;
+-  }
+-  .nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
+-  .nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
+-  .nav-label {
+-    flex: 1; text-align: center;
+-    /* §53 — use the type system (Inter body), readable size + weight. */
+-    font-family: var(--font-body, "Inter", system-ui, sans-serif);
+-    font-size: 13px; font-weight: 600; color: var(--muted);
+-    letter-spacing: 0.01em;
+-  }
+-
+-  /* ============================================================
+-     Result panel = verdict card (spec §6)
+-     ============================================================ */
+-  @keyframes slide-down-fade {
+-    from { opacity: 0; transform: translateY(-8px); }
+-    to { opacity: 1; transform: translateY(0); }
+-  }
+-  .result {
+-    padding: 14px 16px;
+-    border: 1px solid var(--line);
+-    border-radius: var(--r-panel);
+-    background: var(--surface);
+-    margin-bottom: 12px;
+-    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+-    animation: slide-down-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+-  }
+-  .result.hidden { display: none; animation: none; }
+-  .result-headline {
+-    display: flex; align-items: center; gap: 10px;
+-    font-weight: 700; font-size: 14px;
+-    margin-bottom: 4px;
+-  }
+-  .result-headline::before {
+-    content: ""; flex-shrink: 0;
+-    width: 22px; height: 22px; border-radius: 50%;
+-    display: inline-block;
+-    background: var(--muted);
+-    background-image: var(--badge-symbol);
+-    background-repeat: no-repeat; background-position: center;
+-    background-size: 14px 14px;
+-  }
+-  .result.pass .result-headline { color: var(--pos); }
+-  .result.pass .result-headline::before {
+-    background-color: var(--pos);
+-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3.5,8.5 6.5,11.5 12.5,5'/></svg>");
+-  }
+-  .result.warn .result-headline { color: var(--warn); }
+-  .result.warn .result-headline::before {
+-    background-color: var(--warn);
+-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><rect x='7' y='3' width='2' height='6' rx='1'/><circle cx='8' cy='12' r='1.2'/></svg>");
+-  }
+-  .result.fail .result-headline { color: var(--bad); }
+-  .result.fail .result-headline::before {
+-    background-color: var(--bad);
+-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><line x1='4' y1='4' x2='12' y2='12'/><line x1='12' y1='4' x2='4' y2='12'/></svg>");
+-  }
+-  .result.pass { background: #F1F8F4; border-color: #D4E9DC; }
+-  .result.warn { background: #FBF5EA; border-color: #EBDDC2; }
+-  .result.fail { background: #FBF0ED; border-color: #EDD2CB; }
+-  .result-body { font-size: 13px; color: var(--ink); line-height: 1.5; }
+-  /* Motif chip on the post-resolution result panel (v0.7). Hidden until the
+-     reveal is earned — same gate as the engine column on the comparison
+-     table. Spec-02 motif tag was previously invisible because nothing rendered
+-     it outside the Filters → Theme submenu. */
+-  .result-motif {
+-    display: inline-flex; align-items: center; gap: 5px;
+-    margin-top: 9px;
+-    padding: 4px 10px;
+-    background: var(--accent-soft);
+-    color: var(--accent);
+-    border-radius: var(--r-pill);
+-    font-size: 11px; font-weight: 600;
+-    letter-spacing: 0.02em;
+-  }
+-  .result-motif.hidden { display: none; }
+-  .result-motif .label { color: var(--muted); font-weight: 500; }
+-  /* Post-puzzle component picker (Deep mode only, v0.7). Capture #2 §component:
+-     the student taps the training component they think this puzzle was about.
+-     Stored on the just-finished attempt log entry via setAttemptComponent().
+-     Drill mode hides this row per coaching-style.md "Drill skips reflection". */
+-  .result-components {
+-    margin-top: 12px;
+-    display: flex; flex-wrap: wrap; gap: 6px;
+-  }
+-  .result-components.hidden { display: none; }
+-  .result-components-label {
+-    width: 100%;
+-    font-size: 11px; font-weight: 700;
+-    letter-spacing: 0.08em; text-transform: uppercase;
+-    color: var(--muted);
+-    margin-bottom: 4px;
+-  }
+-  .component-pill {
+-    padding: 5px 10px;
+-    background: var(--surface);
+-    border: 1px solid var(--line);
+-    border-radius: var(--r-pill);
+-    color: var(--ink);
+-    font-size: 12px; font-weight: 600;
+-    cursor: pointer;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-    font-family: inherit;
+-  }
+-  .component-pill:hover { background: var(--surface2); }
+-  .component-pill.active {
+-    background: var(--accent);
+-    color: #fff;
+-    border-color: var(--accent);
+-  }
+-  .result-repeat {
+-    margin-top: 6px; font-size: 11px; color: var(--muted);
+-    font-style: italic;
+-  }
+-  .result-repeat.hidden { display: none; }
+-
+-  /* ============================================================
+-     §29/§30 result card — verdict banner, pips, reveal, card actions
+-     ============================================================ */
+-  .task-prompt { font-size: 13px; color: var(--muted); margin: -2px 0 10px; font-weight: 600; }
+-  .task-prompt.hidden { display: none; }
+-
+-  /* One card border around the whole result block (§30.1) */
+-  #result { display: flex; flex-direction: column; gap: 10px; }
+-  .result-verdict { display: flex; align-items: center; gap: 11px; }
+-  .verdict-icon {
+-    width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+-    display: inline-flex; align-items: center; justify-content: center;
+-    font-size: 21px; font-weight: 800; color: #fff;
+-  }
+-  .result.pass .verdict-icon, .result.warn .verdict-icon { background: var(--pos); }
+-  .result.fail .verdict-icon { background: var(--bad); }
+-  .verdict-word {
+-    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+-    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+-  }
+-  .result.pass .verdict-word, .result.warn .verdict-word { color: var(--pos); }
+-  .result.fail .verdict-word { color: var(--bad); }
+-
+-  /* Attempt pips — three dots; spent ones hollow (§29.2) */
+-  .result-pips { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+-  .result-pips.hidden { display: none; }
+-  .result-pips .pip {
+-    width: 11px; height: 11px; border-radius: 50%;
+-    background: var(--bad); border: 2px solid var(--bad); box-sizing: border-box;
+-  }
+-  .result-pips .pip.spent { background: transparent; }
+-
+-  .result-subline { font-size: 13px; color: var(--muted); line-height: 1.45; }
+-  .result-subline.hidden { display: none; }
+-  .result-nudge { font-size: 13px; color: var(--ink); font-weight: 600; }
+-  .result-nudge.hidden { display: none; }
+-
+-  /* One-line contrast: "You Bd6 · Best Nxd5" (§29.3) */
+-  .result-contrast {
+-    font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 13px;
+-    color: var(--ink); background: var(--surface2); border-radius: 8px;
+-    padding: 7px 11px;
+-  }
+-  .result-contrast.hidden { display: none; }
+-  .result-contrast .c-best { color: var(--pos); font-weight: 600; }
+-  .result-contrast .c-you  { color: var(--bad); font-weight: 600; }
+-
+-  /* Engine best line at the stop point (§30.3 + US-13). Reads as a quiet
+-     labelled line, not a separate alert box — the contrast line above already
+-     carries the verdict colour. */
+-  .result-answer {
+-    font-size: 13px; color: var(--ink);
+-    background: var(--accent-soft); border-left: 3px solid var(--accent);
+-    border-radius: 6px; padding: 8px 12px; line-height: 1.5;
+-  }
+-  .result-answer .answer-label {
+-    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+-    text-transform: uppercase; color: var(--accent); margin-right: 6px;
+-  }
+-  .result-answer .answer-line {
+-    font-family: "Spline Sans Mono", ui-monospace, monospace; font-weight: 600;
+-  }
+-  .result-answer.hidden { display: none; }
+-
+-  /* Card action row — one dominant action per state (§29.4/§30.2) */
+-  .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+-  .result-actions .btn { flex: 1 1 auto; min-width: 120px; }
+-  .result-actions .btn.hidden { display: none; }
+-  .btn.btn-review { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+-  .btn.btn-review:hover { background: var(--accent-soft); }
+-
+-  /* Quiet "Show me the answer" escape (from the 2nd miss, §30.6 #3) */
+-  .result-escape {
+-    align-self: flex-start; background: none; border: none; padding: 2px 0;
+-    color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer;
+-    text-decoration: underline; text-underline-offset: 2px;
+-  }
+-  .result-escape:hover { color: var(--ink); }
+-  .result-escape.hidden { display: none; }
+-
+-  .controls.hidden { display: none; }
+-
+-  /* ============================================================
+-     §29.3 / §30.1 — iPhone progressive disclosure (accordions).
+-     Comparison + coach collapse to one-tap headers on mobile; desktop
+-     (>=880px) ignores .acc-collapsed and keeps them expanded.
+-     ============================================================ */
+-  .acc-head { display: none; }   /* shown only on mobile (below) */
+-  @media (max-width: 879px) {
+-    .acc-head {
+-      display: flex; align-items: center; gap: 6px; cursor: pointer;
+-      font-size: 13px; font-weight: 700; color: var(--ink); user-select: none;
+-      list-style: none;
+-    }
+-    .acc-head .acc-caret { transition: transform .15s ease; color: var(--muted); }
+-    .acc-collapsed .acc-caret { transform: rotate(0deg); }
+-    .acc-head .acc-preview { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+-    .comparison.acc-collapsed table,
+-    .comparison.acc-collapsed .comparison-title { display: none; }
+-    .coach-card.acc-collapsed .coach-log,
+-    .coach-card.acc-collapsed .coach-input-row { display: none; }
+-    .coach-card .acc-head { padding: 2px 0; }
+-  }
+-
+-  /* ============================================================
+-     Move-by-move comparison
+-     ============================================================ */
+-  .comparison {
+-    padding: 14px 16px;
+-    background: var(--surface);
+-    border: 1px solid var(--line);
+-    border-radius: var(--r-panel);
+-    margin-bottom: 12px;
+-    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+-  }
+-  .comparison.hidden { display: none; }
+-  .comparison-title {
+-    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+-    text-transform: uppercase; color: var(--muted);
+-    margin-bottom: 8px;
+-  }
+-  .comparison table { width: 100%; border-collapse: collapse; }
+-  .comparison th {
+-    font-size: 10px; font-weight: 700; text-align: left;
+-    padding: 5px 7px; color: var(--muted);
+-    letter-spacing: 0.06em; text-transform: uppercase;
+-    border-bottom: 1px solid var(--line);
+-  }
+-  .comparison td {
+-    padding: 7px 7px; font-size: 13px;
+-    border-bottom: 1px solid var(--line);
+-  }
+-  .comparison tr:last-child td { border-bottom: none; }
+-  .comparison .col-yours { color: var(--ink); font-weight: 600; }
+-  .comparison .col-engine {
+-    color: var(--accent);
+-    font-family: "Spline Sans Mono", monospace; font-size: 12px;
+-  }
+-  .comparison tr { cursor: pointer; transition: background .15s ease; }
+-  .comparison tr:hover td { background: var(--surface2); }
+-  .comparison tr.active td { background: var(--accent-soft); }
+-
+-  .rank-badge {
+-    display: inline-block; padding: 2px 8px;
+-    border-radius: var(--r-pill);
+-    font-size: 10px; font-weight: 800;
+-    letter-spacing: 0.05em; color: #fff;
+-    margin-left: 4px; vertical-align: middle;
+-    font-family: "Spline Sans Mono", monospace;
+-  }
+-  .rank-badge.rank-1 { background: var(--pos); }
+-  .rank-badge.rank-2,
+-  .rank-badge.rank-3 { background: var(--warn); }
+-  .rank-badge.rank-4,
+-  .rank-badge.rank-5 { background: var(--bad); }
+-  .rank-badge.rank-off { background: var(--bad); }
+-  .cp-loss-small {
+-    display: inline-block; padding: 2px 7px;
+-    border-radius: var(--r-pill);
+-    font-size: 10px; font-weight: 800;
+-    letter-spacing: 0.05em; color: #fff;
+-    margin-left: 4px; vertical-align: middle;
+-    font-family: "Spline Sans Mono", monospace;
+-    background: var(--warn);
+-  }
+-  .cp-loss-small.cp-mid { background: var(--bad); }
+-  .cp-loss-small.cp-big { background: #8E2A1B; }
+-
+-  /* Generic utility — any element with .hidden disappears. Page-specific
+-     rules (e.g. .result.hidden) already had this, but a generic rule is
+-     needed for ad-hoc toggles like buttons. */
+-  .hidden { display: none !important; }
+-
+-  /* Hide engine + game cols during live play (in-progress comparison). */
+-  .comparison[data-mode="live"] th.col-game,
+-  .comparison[data-mode="live"] th.col-engine,
+-  .comparison[data-mode="live"] td.col-game,
+-  .comparison[data-mode="live"] td.col-engine { display: none; }
+-  .comparison[data-mode="live"] tr { cursor: default; }
+-  .comparison[data-mode="live"] tr:hover td { background: transparent; }
+-  /* Resolved but engine reveal not yet earned (single failed attempt, sessionFails<3).
+-     Hide the engine column. The "Your move + rank badge" column stays so the
+-     player can still see how they performed without spoiling the engine line. */
+-  .comparison[data-mode="resolved-locked"] th.col-engine,
+-  .comparison[data-mode="resolved-locked"] td.col-engine { display: none; }
+-
+-  /* ============================================================
+-     Coach panel (spec §6)
+-     ============================================================ */
+-  .coach-card {
+-    background: var(--surface);
+-    border: 1px solid var(--line);
+-    border-radius: var(--r-panel);
+-    overflow: hidden;
+-    margin-bottom: 12px;
+-    display: flex; flex-direction: column;
+-    box-shadow: 0 16px 36px -22px rgba(30,40,70,.4);
+-  }
+-  .coach-header {
+-    padding: 13px 15px;
+-    display: flex; align-items: center; gap: 10px;
+-    border-bottom: 1px solid var(--line);
+-    background: #FAFBFC;
+-  }
+-  .coach-avatar {
+-    width: 26px; height: 26px; border-radius: 9px;
+-    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+-    display: flex; align-items: center; justify-content: center;
+-    color: #fff; font-weight: 700; font-size: 13px;
+-    box-shadow: 0 3px 9px -3px var(--accent);
+-  }
+-  .coach-title { font-weight: 700; font-size: 14px; }
+-  .coach-status {
+-    margin-left: auto;
+-    display: flex; align-items: center; gap: 6px;
+-    font-size: 11px; color: var(--muted);
+-  }
+-  .coach-status::before {
+-    content: ""; width: 7px; height: 7px; border-radius: 50%;
+-    background: var(--pos);
+-    box-shadow: 0 0 0 3px rgba(31,157,87,.18);
+-  }
+-  .coach-log {
+-    padding: 14px 15px;
+-    display: flex; flex-direction: column; gap: 11px;
+-    max-height: 320px;
+-    overflow-y: auto;
+-    flex: 1;
+-    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+-    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+-  }
+-  .msg {
+-    font-size: 13px; line-height: 1.5;
+-    padding: 10px 13px; border-radius: 14px;
+-    max-width: 90%;
+-    word-wrap: break-word;
+-  }
+-  .msg.system {
+-    color: var(--muted); font-size: 12px; padding: 4px 0;
+-    background: transparent; max-width: 100%;
+-    font-style: italic;
+-  }
+-  .msg.coach {
+-    align-self: flex-start;
+-    background: var(--surface2);
+-    border-bottom-left-radius: 4px;
+-  }
+-  .msg.user {
+-    align-self: flex-end;
+-    background: var(--accent); color: #fff;
+-    border-bottom-right-radius: 4px;
+-  }
+-  .msg.error {
+-    align-self: flex-start;
+-    background: #FBF0ED; color: var(--bad);
+-    border: 1px solid #EDD2CB;
+-    font-size: 12px;
+-  }
+-  /* ────────────────────────────────────────────────────────────────────
+-     §17 Structured review bubble (the post-puzzle review, per-game "how
+-     you played", aggregated coach read all share this shape — never a
+-     paragraph). max-width matches .msg, but the inner content uses the
+-     fixed-column label layout from the spec.
+-     ──────────────────────────────────────────────────────────────────── */
+-  .msg.review {
+-    align-self: flex-start;
+-    background: var(--surface2);
+-    border-bottom-left-radius: 4px;
+-    padding: 13px 15px;
+-    max-width: 92%;
+-    font-size: 13.5px; line-height: 1.5;
+-  }
+-  .msg.review .rv-lead {
+-    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+-    font-weight: 800;
+-    font-size: 15px; line-height: 1.3;
+-    color: var(--ink);
+-    margin-bottom: 11px;
+-  }
+-  .msg.review .rv-points {
+-    display: flex; flex-direction: column; gap: 8px;
+-    margin-bottom: 10px;
+-  }
+-  .msg.review .rv-point {
+-    display: grid;
+-    grid-template-columns: 70px 1fr;
+-    gap: 10px;
+-    align-items: baseline;
+-  }
+-  .msg.review .rv-label {
+-    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+-    font-weight: 700;
+-    font-size: 11px;
+-    letter-spacing: 0.04em;
+-    text-transform: uppercase;
+-    color: var(--muted);
+-    line-height: 1.3;
+-  }
+-  /* Sentiment-tinted labels (§17 — colour = --muted / --pos (good) /
+-     --warn (mid) / --bad (bad)). The renderer applies the class. */
+-  .msg.review .rv-point.tone-pos .rv-label { color: var(--pos); }
+-  .msg.review .rv-point.tone-warn .rv-label { color: var(--warn); }
+-  .msg.review .rv-point.tone-bad .rv-label { color: var(--bad); }
+-  .msg.review .rv-text {
+-    font-size: 13px; line-height: 1.45;
+-    color: var(--ink);
+-  }
+-  .msg.review .rv-turn {
+-    background: var(--surface);
+-    border: 1px solid var(--line);
+-    border-radius: 10px;
+-    padding: 9px 12px;
+-    font-size: 12.5px;
+-    color: var(--ink);
+-    margin-bottom: 10px;
+-  }
+-  .msg.review .rv-turn .rv-turn-label {
+-    font-weight: 700;
+-    color: var(--muted);
+-    margin-right: 4px;
+-  }
+-  .msg.review .rv-question {
+-    border-top: 1px solid var(--line);
+-    padding-top: 10px;
+-    font-style: italic;
+-    font-size: 13px;
+-    color: var(--ink);
+-  }
+-  .msg.review .rv-cta {
+-    display: flex; gap: 9px;
+-    margin-top: 11px;
+-  }
+-  .msg.review .rv-cta button {
+-    flex: 1;
+-    padding: 8px 12px;
+-    background: var(--surface);
+-    border: 1px solid var(--line);
+-    border-radius: 10px;
+-    color: var(--ink);
+-    font-family: inherit;
+-    font-size: 13px; font-weight: 600;
+-    cursor: pointer;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .msg.review .rv-cta button:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
+-  .msg.review .rv-cta button.primary {
+-    background: var(--accent);
+-    color: #fff;
+-    border-color: var(--accent);
+-  }
+-  .msg.review .rv-grounded {
+-    margin-top: 10px;
+-    font-size: 11px;
+-    color: var(--muted);
+-    font-style: italic;
+-  }
+-  .coach-input-row {
+-    display: flex; gap: 8px;
+-    padding: 11px 12px;
+-    border-top: 1px solid var(--line);
+-    background: var(--surface);
+-  }
+-  .coach-input {
+-    flex: 1; padding: 9px 12px;
+-    font-size: 13px; font-family: inherit;
+-    border: 1px solid var(--line); border-radius: 11px;
+-    background: var(--surface); color: var(--ink);
+-    outline: none;
+-    transition: border-color .15s ease, box-shadow .15s ease;
+-  }
+-  .coach-input:focus {
+-    border-color: var(--accent);
+-    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
+-  }
+-  .coach-send {
+-    padding: 9px 16px;
+-    background: var(--accent); color: #fff;
+-    border: none; border-radius: 11px;
+-    cursor: pointer;
+-    font-size: 13px; font-weight: 700; font-family: inherit;
+-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+-  }
+-  .coach-send:hover:not(:disabled) { filter: brightness(1.07); }
+-  .coach-send:active { transform: translateY(1px); }
+-  .coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
+-
+-  /* ============================================================
+-     Layout — now provided by the SHARED training-screen shell
+-     (css/screen.css, v0.55): .layout-grid mobile single-column +
+-     desktop two-column (board left / rail right), .lg-head / .lg-left /
+-     .lg-right, canonical board sizing, full-width #gate-card + .session-wrap
+-     bands. puzzle.html consumes that shell unchanged; only the puzzle-SPECIFIC
+-     extras that the shell does not own stay here (material rows that must track
+-     the board width, coach-card sizing, desktop body padding + type touch-ups).
+-     The v0.54 appearance is preserved: the shell's desktop grid + 640px board +
+-     gate-band match what puzzle.html shipped, so this is a no-visual-change
+-     extraction (project rule: one source for shared components).
+-     ============================================================ */
+-  @media (min-width: 880px) {
+-    body {
+-      padding-left: 248px;     /* room for the fixed sidebar */
+-      padding-right: 28px;
+-      padding-bottom: 28px;
+-      font-size: 15px;
+-    }
+-    /* v0.55a — desktop nav restore. The screen.css extraction kept the body
+-       padding for the sidebar gutter but dropped the two rules that actually
+-       convert the off-canvas mobile drawer into the fixed desktop sidebar and
+-       hide the bottom tab-bar. Without them puzzle.html showed the mobile
+-       tab-bar and no sidebar at >=880px (recognition kept these, hence the
+-       drift). Mirrors endgame-recognition.html's >=880px block. */
+-    .tab-bar { display: none; }
+-    .nav-backdrop { display: none !important; }
+-    .nav-drawer {
+-      position: fixed !important; top: 0; left: 0;
+-      width: 224px !important; max-width: 224px !important; height: 100vh;
+-      transform: none !important; border-right: 1px solid var(--line);
+-      background: var(--surface); padding: 22px 14px 18px; z-index: 10;
+-    }
+-    /* Left-align content against the sidebar gutter (the base rule centres a
+-       narrow mobile column; on desktop the body reserves 248px for the fixed
+-       sidebar, so centring a capped column opened a dead band — hug the gutter). */
+-    .container { max-width: 1100px; margin-left: 0; margin-right: auto; }
+-
+-    /* Material rows track the desktop board width so captured-piece rows stay
+-       flush with the board (the shell sizes the board itself to 640px). */
+-    .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
+-    .mb-piece { width: 22px; height: 22px; }
+-    .mb-score { font-size: 13px; }
+-
+-    /* Coach fills the remaining right-column space; only its own log scrolls. */
+-    .lg-right > .coach-card {
+-      align-self: stretch; flex: 1 1 auto;
+-      min-height: 0; max-height: calc(100vh - 56px);
+-    }
+-    .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+-    .lg-right > .coach-card { margin-bottom: 0; }
+-
+-    /* Touch up desktop type */
+-    h1 { font-size: 30px; }
+-    .puzzle-meta { font-size: 13px; }
+-    .msg { font-size: 14px; }
+-    .coach-input { font-size: 14px; }
+-  }
+-  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
+-  .nav-drawer-link.secondary:hover { background:var(--surface2); }
+-  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
+-  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
+-
+-  /* ============================================================
+-     §53 (v0.53) — PUZZLE SCREEN: single composition (no variants)
+-     ------------------------------------------------------------
+-     One final hybrid: compact card proportions + the move-by-move
+-     comparison embedded NATIVELY inside the feedback card, with an
+-     eval-change column gated to the earned reveal. Compact icon action
+-     buttons; Try-again always available.
+-     ============================================================ */
+-
+-  /* ---- Compact icon action buttons (smaller than the full-width .btn) ---- */
+-  .btn.btn-action {
+-    flex: 0 1 auto; min-width: 0;
+-    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+-    padding: 8px 14px; font-size: 13px; font-weight: 700;
+-    line-height: 1.1;
+-  }
+-  .btn.btn-action .btn-ico { flex: 0 0 auto; vertical-align: middle; }
+-  .btn.btn-action .btn-label { white-space: nowrap; }
+-  /* The dominant (primary) action reads slightly stronger; the secondary
+-     Try-again is quieter but always present. */
+-  .result-actions .btn.btn-action { flex: 0 1 auto; min-width: 0; }
+-  .result-actions .btn.btn-primary.btn-action { flex: 1 1 auto; }
+-
+-  /* ---- Embedded comparison: a NATIVE section of the feedback card.
+-     Drop the standalone card chrome (border/shadow/background) so it reads as
+-     part of #result; a light divider + the card's own internal padding tie it
+-     in. Same type as the card. ---- */
+-  #result > .comparison {
+-    margin: 0; padding: 0; border: none; box-shadow: none; background: transparent;
+-    border-top: 1px solid var(--line); padding-top: 11px; margin-top: 2px;
+-  }
+-  #result > .comparison.hidden { display: none; }
+-  #result > .comparison .comparison-title { margin-bottom: 6px; }
+-  #result > .comparison table { width: 100%; }
+-
+-  /* ---- Eval-change chips ---- */
+-  .col-eval { text-align: right; white-space: nowrap; }
+-  .comparison th.col-eval { text-align: right; }
+-  .eval-chip {
+-    display: inline-block; min-width: 40px; text-align: center;
+-    padding: 2px 8px; border-radius: var(--r-pill);
+-    font-family: "Spline Sans Mono", ui-monospace, monospace;
+-    font-size: 11px; font-weight: 700; letter-spacing: .02em;
+-  }
+-  .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }
+-  .eval-chip.eval-mid  { background: #FBF5EA; color: var(--warn); }
+-  .eval-chip.eval-bad  { background: #FBF0ED; color: var(--bad); }
+-  .eval-chip.eval-na   { background: var(--surface2); color: var(--muted); font-weight: 600; }
+-
+-  /* ---- No-spoiler gate for the eval column: hidden during live play AND
+-     while the answer isn't yet earned (resolved-locked), exactly like the
+-     engine column. Only the fully-resolved (earned) state shows it. ---- */
+-  .comparison[data-mode="live"] th.col-eval,
+-  .comparison[data-mode="live"] td.col-eval,
+-  .comparison[data-mode="resolved-locked"] th.col-eval,
+-  .comparison[data-mode="resolved-locked"] td.col-eval { display: none; }
+-
+-  /* ---- PENDING feedback card (calm pre-move / mid-solve face) ---- */
+-  .result.pending {
+-    background: var(--surface); border-color: var(--line);
+-    box-shadow: 0 6px 16px -10px rgba(20,30,55,.16);
+-  }
+-  .result.pending .verdict-icon {
+-    background: var(--accent-soft); color: var(--accent);
+-    font-size: 20px; font-weight: 700;
+-  }
+-  .result.pending .verdict-word { color: var(--ink); font-size: 18px; }
+-  .result.pending .result-subline { color: var(--ink); font-weight: 600; }
+-  .result.pending .result-nudge { color: var(--muted); font-weight: 500; }
+-
+-  /* ---- Mobile: embedded comparison + coach never impose a tiny inner scroll. ---- */
+-  @media (max-width: 879px) {
+-    #result > .comparison { max-height: none; overflow: visible; }
+-    .coach-card { max-height: none; }
+-  }
+-
+-  /* Honour prefers-reduced-motion — drop the verdict-card slide-in. */
+-  @media (prefers-reduced-motion: reduce) {
+-    .result { animation: none !important; }
+-  }
+-
+-/* Phase 2: per-move cp progress bar */
+-.cp-bar {
+-  display: flex;
+-  align-items: center;
+-  gap: 6px;
+-  margin: 8px 0;
+-  padding: 0 2px;
+-}
+-.cp-bar.hidden { display: none !important; }
+-.cp-seg {
+-  flex: 1;
+-  border-radius: 3px;
+-  background: var(--surface3);
+-  font-size: 11px;
+-  font-weight: 700;
+-  text-align: center;
+-  line-height: 1;
+-  padding: 8px 4px 4px;
+-  min-height: 22px;
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+-  border: 1px solid var(--line);
+-  transition: background 0.2s, color 0.2s;
+-  color: var(--muted);
+-}
+-.cp-seg--pending { background: var(--surface2); }
+-.cp-seg--ok { background: var(--accent-soft); color: var(--pos); border-color: var(--accent); }
+-.cp-seg--red { background: #FEE2E0; color: var(--bad); border-color: var(--bad); }
+-.cp-bar-label {
+-  font-size: 11px;
+-  color: var(--muted);
+-  white-space: nowrap;
+-  min-width: 90px;
+-  text-align: right;
+-}
+-</style>
++<link rel="stylesheet" href="/css/puzzle.css">
+ </head>
+ <body>
+ <div class="container">
