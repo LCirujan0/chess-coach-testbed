@@ -1,0 +1,366 @@
+/* ============================================================================
+   train.css — THE shared training-screen COMPONENT sheet.
+   ----------------------------------------------------------------------------
+   Board frame + material rows, board nav arrows, controls, buttons (.btn*),
+   the eval / cp progress bar, and the always-present Coach card + message
+   bubbles. Used by every board-exercise page (recognition, endgames, and
+   eventually puzzle) on top of: tokens.css (variables) + screen.css (the
+   .layout-grid / .lg-head / .lg-left / .lg-right layout).
+
+   HARD RULE: change a training component HERE, once. Page sheets
+   (recognition.css / endgames.css / puzzle.css) may ADD page-specific widgets
+   in .lg-right but must not redefine these shared components.
+
+   NOTE: values mirror puzzle.css (the reference screen) so the screens match.
+   puzzle.html still links its own puzzle.css copy for now; migrating it onto
+   train.css is a tracked follow-up (see docs/training-screen-pattern.md).
+   ============================================================================ */
+
+/* Thinking gate (Deep mode) styles moved to css/gate.css (v0.53b) — it is
+     now its own component, decoupled from the right column so its height can
+     never squeeze the coach. */
+
+  /* ============================================================
+     Board (spec §5) — warm wood
+     ============================================================ */
+  .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+
+.material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
+
+/* ============================================================
+     Controls (buttons) — spec §6
+     ============================================================ */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 12px;
+  }
+
+.btn {
+    flex: 1; min-width: 110px;
+    padding: 11px 14px;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-btn);
+    background: var(--surface); color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+  }
+
+.btn:hover { background: var(--surface2); }
+
+.btn:active:not(:disabled) { transform: scale(0.96) translateY(1px); }
+
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn.btn-primary {
+    background: var(--accent); color: #fff; border-color: transparent;
+    box-shadow: 0 8px 18px -8px var(--accent);
+  }
+
+.btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
+
+/* ============================================================
+     Post-resolution navigation
+     ============================================================ */
+  .nav-arrows {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-btn); padding: 6px 10px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.03);
+  }
+
+.nav-arrows.hidden { display: none; }
+
+.nav-arrows .nav-step {
+    background: transparent; border: none;
+    cursor: pointer; font-size: 15px; line-height: 1;
+    padding: 4px 10px; color: var(--ink);
+    border-radius: 8px;
+    /* §53 — pin the arrow glyphs to the UI font so they don't fall back to a
+       serif/system glyph (Jorge flagged the nav-arrows font). */
+    font-family: var(--font-body, "Inter", system-ui, sans-serif);
+    transition: background .15s ease;
+  }
+
+.nav-arrows .nav-step:hover:not(:disabled) { background: var(--surface2); }
+
+.nav-arrows .nav-step:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.nav-label {
+    flex: 1; text-align: center;
+    /* §53 — use the type system (Inter body), readable size + weight. */
+    font-family: var(--font-body, "Inter", system-ui, sans-serif);
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+
+.btn.btn-review { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+
+.btn.btn-review:hover { background: var(--accent-soft); }
+
+.controls.hidden { display: none; }
+
+/* ============================================================
+     §29.3 / §30.1 — iPhone progressive disclosure (accordions).
+     Comparison + coach collapse to one-tap headers on mobile; desktop
+     (>=880px) ignores .acc-collapsed and keeps them expanded.
+     ============================================================ */
+  .acc-head { display: none; }
+
+@media (max-width: 879px) {
+  .acc-head {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--ink); user-select: none;
+      list-style: none;
+    }
+  .acc-head .acc-caret { transition: transform .15s ease; color: var(--muted); }
+  .acc-collapsed .acc-caret { transform: rotate(0deg); }
+  .acc-head .acc-preview { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .coach-card.acc-collapsed .coach-log,
+    .coach-card.acc-collapsed .coach-input-row { display: none; }
+  .coach-card .acc-head { padding: 2px 0; }
+}
+
+.cp-loss-small {
+    display: inline-block; padding: 2px 7px;
+    border-radius: var(--r-pill);
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.05em; color: #fff;
+    margin-left: 4px; vertical-align: middle;
+    font-family: "Spline Sans Mono", monospace;
+    background: var(--warn);
+  }
+
+.cp-loss-small.cp-mid { background: var(--bad); }
+
+.cp-loss-small.cp-big { background: #8E2A1B; }
+
+/* Generic utility — any element with .hidden disappears. Page-specific
+     rules (e.g. .result.hidden) already had this, but a generic rule is
+     needed for ad-hoc toggles like buttons. */
+  .hidden { display: none !important; }
+
+/* ============================================================
+     Coach panel (spec §6)
+     ============================================================ */
+  .coach-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    margin-bottom: 12px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 16px 36px -22px rgba(30,40,70,.4);
+  }
+
+.coach-header {
+    padding: 13px 15px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--line);
+    background: #FAFBFC;
+  }
+
+.coach-avatar {
+    width: 26px; height: 26px; border-radius: 9px;
+    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px;
+    box-shadow: 0 3px 9px -3px var(--accent);
+  }
+
+.coach-title { font-weight: 700; font-size: 14px; }
+
+.coach-status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+
+.coach-status::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--pos);
+    box-shadow: 0 0 0 3px rgba(31,157,87,.18);
+  }
+
+.coach-log {
+    padding: 14px 15px;
+    display: flex; flex-direction: column; gap: 11px;
+    max-height: 320px;
+    overflow-y: auto;
+    flex: 1;
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+
+.msg {
+    font-size: 13px; line-height: 1.5;
+    padding: 10px 13px; border-radius: 14px;
+    max-width: 90%;
+    word-wrap: break-word;
+  }
+
+.msg.system {
+    color: var(--muted); font-size: 12px; padding: 4px 0;
+    background: transparent; max-width: 100%;
+    font-style: italic;
+  }
+
+.msg.coach {
+    align-self: flex-start;
+    background: var(--surface2);
+    border-bottom-left-radius: 4px;
+  }
+
+.msg.user {
+    align-self: flex-end;
+    background: var(--accent); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+.msg.error {
+    align-self: flex-start;
+    background: #FBF0ED; color: var(--bad);
+    border: 1px solid #EDD2CB;
+    font-size: 12px;
+  }
+
+.coach-input-row {
+    display: flex; gap: 8px;
+    padding: 11px 12px;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+.coach-input {
+    flex: 1; padding: 9px 12px;
+    font-size: 13px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 11px;
+    background: var(--surface); color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+.coach-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47,158,118,.16);
+  }
+
+.coach-send {
+    padding: 9px 16px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 11px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+
+.coach-send:hover:not(:disabled) { filter: brightness(1.07); }
+
+.coach-send:active { transform: translateY(1px); }
+
+.coach-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (min-width: 880px) {
+  .msg { font-size: 14px; }
+  .coach-input { font-size: 14px; }
+}
+
+/* ============================================================
+     §53 (v0.53) — PUZZLE SCREEN: single composition (no variants)
+     ------------------------------------------------------------
+     One final hybrid: compact card proportions + the move-by-move
+     comparison embedded NATIVELY inside the feedback card, with an
+     eval-change column gated to the earned reveal. Compact icon action
+     buttons; Try-again always available.
+     ============================================================ */
+
+  /* ---- Compact icon action buttons (smaller than the full-width .btn) ---- */
+  .btn.btn-action {
+    flex: 0 1 auto; min-width: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 8px 14px; font-size: 13px; font-weight: 700;
+    line-height: 1.1;
+  }
+
+.btn.btn-action .btn-ico { flex: 0 0 auto; vertical-align: middle; }
+
+.btn.btn-action .btn-label { white-space: nowrap; }
+
+@media (max-width: 879px) {
+  .coach-card { max-height: none; }
+}
+
+/* Phase 2: per-move cp progress bar */
+.cp-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0 2px;
+}
+
+.cp-bar.hidden { display: none !important; }
+
+.cp-seg {
+  flex: 1;
+  border-radius: 3px;
+  background: var(--surface3);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1;
+  padding: 8px 4px 4px;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  transition: background 0.2s, color 0.2s;
+  color: var(--muted);
+}
+
+.cp-seg--pending { background: var(--surface2); }
+
+.cp-seg--ok { background: var(--accent-soft); color: var(--pos); border-color: var(--accent); }
+
+.cp-seg--red { background: #FEE2E0; color: var(--bad); border-color: var(--bad); }
+
+.cp-bar-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 90px;
+  text-align: right;
+}
+
+/* Material-difference chip (js/material.js) — net on-board advantage. */
+.material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
+.material-row .mb-score.mb-even { color: var(--muted); }
+
+/* Shared button variants (used by exercise panels: play-out, primary actions). */
+.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); border: none; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+.btn.ghost:hover { background: var(--surface2); }
+.btn.ghost:disabled { opacity: .45; cursor: default; }
+
+/* ----------------------------------------------------------------------------
+   Desktop (>=880px) layout/component parity with the reference (puzzle) screen.
+   These rules live in puzzle.css's desktop @media; mirrored here so recognition
+   + endgames render IDENTICALLY on desktop (board-flush material rows, a coach
+   card that fills + scrolls its column, matched type sizes).
+   ---------------------------------------------------------------------------- */
+@media (min-width: 880px) {
+  .lg-left > .board-wrap .material-row { width: 640px; max-width: 640px; }
+  .material-row .mb-piece, .mb-piece { width: 22px; height: 22px; }
+  .material-row .mb-score { font-size: 13px; }
+  .lg-right > .coach-card {
+    align-self: stretch; flex: 1 1 auto;
+    min-height: 0; max-height: calc(100vh - 56px); margin-bottom: 0;
+  }
+  .lg-right > .coach-card .coach-log { flex: 1; min-height: 0; overflow-y: auto; }
+  .msg { font-size: 14px; }
+  .coach-input { font-size: 14px; }
+}

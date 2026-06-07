@@ -5,153 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="puzzle-type-filter" content="endgame">
 <title>KnightPath — Endgames</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/shell.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/board.css">
+  <link rel="stylesheet" href="/css/type.css">
+  <link rel="stylesheet" href="/css/screen.css">
+  <link rel="stylesheet" href="/css/train.css">
+  <link rel="stylesheet" href="/css/session-wrap.css">
+  <link rel="stylesheet" href="/css/endgames.css">
+
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
-<link rel="stylesheet" href="/css/tokens.css">
-<link rel="stylesheet" href="/css/screen.css">
-<link rel="stylesheet" href="/css/nav.css">
-<link rel="stylesheet" href="/css/board.css">
-<link rel="stylesheet" href="/css/session-wrap.css">
-<link rel="stylesheet" href="/css/type.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  html, body {
-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
-    background-attachment:fixed; min-height:100vh;
-  }
-  body {
-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-    color:var(--ink);
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(90px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    line-height:1.5; -webkit-font-smoothing:antialiased;
-  }
-  .container { max-width:640px; margin:0 auto; }
-  h1, .page-title, .nav-brand-name { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
-
-  /* Header bar */
-  .header-bar {
-    display:flex; align-items:center; gap:12px; margin-bottom:14px;
-    position:sticky; top:calc(-1 * max(12px, env(safe-area-inset-top))); z-index:50;
-    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-    padding:max(12px, env(safe-area-inset-top)) 0 12px 0;
-    margin-top:calc(-1 * max(12px, env(safe-area-inset-top)));
-  }
-  .hamburger-btn {
-    background:none; border:none; padding:4px; cursor:pointer; color:var(--ink);
-    display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
-    transition:background .15s;
-  }
-  .hamburger-btn:hover { background:var(--surface2); }
-  .page-title { font-size:18px; font-weight:700; letter-spacing:-.01em; }
-
-  /* Nav drawer */
-  .nav-drawer { position:fixed; top:0; left:0; width:288px; max-width:84vw; height:100vh; background:var(--surface); border-right:1px solid var(--line); transform:translateX(-100%); transition:transform 200ms ease; z-index:100; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; box-shadow:0 20px 40px -22px rgba(20,30,55,.25); }
-  .nav-drawer.open { transform:translateX(0); }
-  .nav-brand { display:flex; align-items:center; gap:10px; padding:6px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); }
-  .nav-brand-mark { width:30px; height:30px; border-radius:0; background:none; box-shadow:none; object-fit:contain; flex-shrink:0; }
-  .nav-brand-name { font-weight:700; font-size:15px; }
-  .nav-group-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:12px 10px 4px; }
-  .nav-drawer-link { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .15s ease; }
-  .nav-drawer-link:hover { background:var(--surface2); }
-  .nav-drawer-link.active { background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px var(--accent); }
-  .nav-drawer-link .nav-icon { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
-  .nav-drawer-link svg.nav-icon { stroke:currentColor; fill:none; }
-  .nav-drawer-link svg.nav-icon .filldot { fill:currentColor; stroke:none; }
-  .nav-drawer-link.coming { color:var(--muted); }
-  .version-stamp { margin-top:auto; padding:10px 12px 4px; font-size:10px; color:var(--muted); font-family:"Spline Sans Mono",ui-monospace,monospace; letter-spacing:.02em; border-top:1px solid var(--line); }
-  .nav-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 200ms ease; }
-  .nav-backdrop.open { opacity:1; pointer-events:auto; }
-  .tab-bar { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--surface); border-top:1px solid var(--line); z-index:90; padding:6px 6px max(env(safe-area-inset-bottom, 6px), 6px); box-shadow:0 -8px 22px -16px rgba(15,20,40,.16); }
-  .tab-bar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; border-radius:10px; font-size:10px; font-weight:600; color:var(--muted); text-decoration:none; transition:color .15s ease; }
-  .tab-bar a.active { color:var(--accent); }
-  .tab-bar a .tab-icon { width:22px; height:22px; }
-  .tab-bar a svg.tab-icon { stroke:currentColor; fill:none; }
-  .tab-bar a svg.tab-icon .filldot { fill:currentColor; stroke:none; }
-  @media (min-width: 880px) {
-    body { padding-left:248px; padding-right:28px; padding-bottom:28px; font-size:15px; }
-    .container { max-width:780px; }
-    .tab-bar { display:none; }
-    .nav-drawer { position:fixed !important; top:0; left:0; width:224px !important; max-width:224px !important; height:100vh; transform:none !important; border-right:1px solid var(--line); background:var(--surface); padding:22px 14px 18px; z-index:10; }
-    .nav-backdrop { display:none !important; }
-  }
-
-  /* Lesson card */
-  .lesson-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 8px 22px -14px rgba(30,40,70,.3); }
-  .lesson-group-badge { display:inline-flex; align-items:center; padding:3px 9px; background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; border-radius:var(--r-pill); margin-bottom:8px; }
-  .lesson-title { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:18px; line-height:1.25; margin-bottom:5px; }
-  .lesson-stm { font-size:13px; color:var(--muted); margin-bottom:10px; }
-  .lesson-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .technique-btn { padding:7px 13px; background:var(--surface2); border:1px solid var(--line); border-radius:var(--r-btn); font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; font-family:inherit; transition:background .12s ease; }
-  .technique-btn:hover { background:var(--surface3); }
-  .technique-text { margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; font-size:13px; line-height:1.5; color:var(--ink); }
-  .advanced-badge { display:inline-flex; padding:3px 8px; background:#FFF3E0; color:var(--warn); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:var(--r-pill); }
-
-  /* Board */
-  .board-wrap { position:relative; width:100%; max-width:380px; margin:0 auto 12px; aspect-ratio:1/1; }
-
-  /* Status + verdict */
-  #status-text { min-height:22px; font-size:13px; color:var(--muted); text-align:center; margin-bottom:8px; font-style:italic; }
-  .verdict-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; margin-bottom:12px; box-shadow:0 4px 14px -10px rgba(30,40,70,.3); }
-  .verdict-headline { font-family:"Plus Jakarta Sans","Inter",sans-serif; font-weight:800; font-size:16px; margin-bottom:8px; }
-  .verdict-headline.pass { color:var(--pos); }
-  .verdict-headline.fail { color:var(--bad); }
-
-  /* Controls */
-  .controls-row { display:flex; gap:8px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
-  .ctrl-btn { padding:9px 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-btn); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink); transition:transform .15s cubic-bezier(.34,1.56,.64,1), background .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-  .ctrl-btn:hover:not(:disabled) { background:var(--surface2); }
-  .ctrl-btn:active { transform:translateY(1px); }
-  .ctrl-btn:disabled { opacity:.45; cursor:not-allowed; }
-  .ctrl-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px -6px var(--accent); }
-  .ctrl-btn.primary:hover:not(:disabled) { filter:brightness(1.07); }
-
-  /* Lesson list */
-  .lesson-list-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-panel); overflow:hidden; margin-bottom:14px; }
-  .lesson-list-header { padding:10px 14px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); background:var(--surface2); }
-  .lesson-list-group { padding:8px 0 4px; }
-  .lesson-list-group-label { padding:4px 14px 2px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
-  .lesson-list-item { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; transition:background .12s ease; border-bottom:1px solid var(--line); }
-  .lesson-list-item:last-child { border-bottom:none; }
-  .lesson-list-item:hover { background:var(--surface2); }
-  .lesson-list-item.active { background:var(--accent-soft); }
-  .lesson-list-name { flex:1; font-size:13px; font-weight:600; }
-  .lesson-list-result { font-size:11px; color:var(--muted); }
-  .mastery-pips { display:flex; gap:3px; }
-  .pip { width:7px; height:7px; border-radius:50%; background:var(--surface3); border:1px solid var(--line); }
-  .pip.filled { background:var(--accent); border-color:var(--accent); }
-  .pip.mastered { background:var(--warn); border-color:var(--warn); }
-  .hidden { display:none !important; }
-  .nav-drawer-link.secondary { font-size:13px; padding:7px 12px; color:var(--muted); }
-  .nav-drawer-link.secondary:hover { background:var(--surface2); }
-  .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
-  .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
-</style>
-<style>
-  /* Coarse pawns eval bar (Spec 21 endgame interim — §31 pixel polish deferred to Design). */
-  .eg-evalbar { display:flex; align-items:center; gap:10px; max-width:420px; margin:8px auto 0; }
-  .eg-evalbar.hidden { display:none; }
-  .eg-evalbar-track { position:relative; flex:1; height:10px; border-radius:6px; overflow:hidden;
-    background:linear-gradient(90deg, var(--surface3, #2a2a2a) 0%, var(--surface2, #1c1c1c) 100%); }
-  .eg-evalbar-fill { position:absolute; left:50%; top:0; bottom:0; width:0; transform:translateX(0);
-    background:var(--accent, #34d399); transition:width .25s ease, left .25s ease, background .25s ease; }
-  .eg-evalbar-fill.neg { background:var(--danger, #ef4444); }
-  .eg-evalbar-num { min-width:46px; text-align:right; font-family:"Spline Sans Mono", ui-monospace, monospace;
-    font-size:14px; font-weight:600; color:var(--ink, #e8e8e8); }
-</style>
 </head>
 <body>
 <div class="container">
-  <!-- Persistent in-session wrapper (Spec 21 — endgame play-out folded into
-       the session host). Hidden + no-op unless opened via
-       ?session=today&block=endgames. -->
-  <div class="session-wrap hidden" id="session-wrap"></div>
   <div class="header-bar">
     <button class="hamburger-btn" id="hamburger" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -161,49 +36,68 @@
     <span class="page-title">Endgames</span>
   </div>
 
-  <!-- Lesson header -->
-  <div class="lesson-card" id="lesson-card">
-    <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
-    <div id="lesson-title" class="lesson-title">—</div>
-    <div id="lesson-stm" class="lesson-stm">—</div>
-    <div class="lesson-meta-row">
-      <button id="show-technique-btn" class="technique-btn">Show technique</button>
-      <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
+  <div class="layout-grid">
+    <div class="session-wrap hidden" id="session-wrap"></div>
+
+    <div class="lg-head">
+      <div class="lesson-card" id="lesson-card">
+        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
+        <div id="lesson-title" class="lesson-title">—</div>
+        <div id="lesson-stm" class="lesson-stm">—</div>
+      </div>
+      <div id="status-text" class="inline-status"></div>
     </div>
-    <div id="technique-text" class="technique-text hidden"></div>
+
+    <div class="lg-left">
+      <div class="board-wrap">
+        <div class="material-row material-top" id="material-top"></div>
+        <div id="board" class="board"></div>
+        <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
+        <div class="material-row material-bottom" id="material-bottom"></div>
+      </div>
+      <div id="eval-bar" class="eg-evalbar hidden" aria-hidden="true">
+        <div class="eg-evalbar-track"><div id="eval-bar-fill" class="eg-evalbar-fill"></div></div>
+        <div id="eval-bar-num" class="eg-evalbar-num">0.0</div>
+      </div>
+      <div class="controls" id="controls-row">
+        <button id="retry-btn" class="btn" disabled>Retry</button>
+        <button id="prev-btn" class="btn">← Prev</button>
+        <button id="next-btn" class="btn">Next →</button>
+      </div>
+    </div>
+
+    <div class="lg-right">
+      <!-- PAGE-SPECIFIC exercise panel: show technique + verdict + lesson list -->
+      <div class="endgame-panel">
+        <div class="lesson-meta-row">
+          <button id="show-technique-btn" class="technique-btn">Show technique</button>
+          <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
+        </div>
+        <div id="technique-text" class="technique-text hidden"></div>
+        <div id="verdict-card" class="verdict-card hidden">
+          <div id="verdict-headline" class="verdict-headline"></div>
+          <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+        </div>
+        <div class="lesson-list-card" id="lesson-list"></div>
+      </div>
+
+      <!-- ALWAYS-PRESENT coach -->
+      <div class="coach-card">
+        <div class="coach-header">
+          <span class="coach-avatar">C</span>
+          <span class="coach-title">Coach</span>
+          <span class="coach-status">Online</span>
+        </div>
+        <div class="coach-log" id="coach-log">
+          <div class="msg system">Working an endgame? Ask the coach for the plan — no spoilers.</div>
+        </div>
+        <form class="coach-input-row" id="coach-form">
+          <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
+          <button type="submit" class="coach-send" id="coach-send" disabled>Send</button>
+        </form>
+      </div>
+    </div>
   </div>
-
-  <!-- Board -->
-  <div class="board-wrap">
-    <div id="board" class="board"></div>
-    <svg id="board-annotations" class="board-annotations" viewBox="0 0 800 800" preserveAspectRatio="none"></svg>
-  </div>
-
-  <!-- Coarse pawns eval bar (Spec 21 §2.1 endgame interim; §31). One-decimal
-       pawns, e.g. "+3.4". No-spoiler: shows the running eval only, never the
-       engine's move or line. -->
-  <div id="eval-bar" class="eg-evalbar hidden" aria-hidden="true">
-    <div class="eg-evalbar-track"><div id="eval-bar-fill" class="eg-evalbar-fill"></div></div>
-    <div id="eval-bar-num" class="eg-evalbar-num">0.0</div>
-  </div>
-
-  <div id="status-text"></div>
-
-  <!-- Verdict (shown after each lesson ends) -->
-  <div id="verdict-card" class="verdict-card hidden">
-    <div id="verdict-headline" class="verdict-headline"></div>
-    <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
-  </div>
-
-  <!-- Controls -->
-  <div class="controls-row" id="controls-row">
-    <button id="retry-btn" class="ctrl-btn" disabled>Retry</button>
-    <button id="prev-btn" class="ctrl-btn">← Prev</button>
-    <button id="next-btn" class="ctrl-btn">Next →</button>
-  </div>
-
-  <!-- Lesson list -->
-  <div class="lesson-list-card" id="lesson-list"></div>
 </div>
 
 <!-- Nav drawer -->
@@ -240,5 +134,17 @@
 </nav>
 
 <script type="module" src="/js/puzzle/playout.js"></script>
+<script type="module">
+  import { mountCoachWidget } from '/js/coach-widget.js';
+  import { mountMaterial } from '/js/material.js';
+  mountCoachWidget({
+    logEl: document.getElementById('coach-log'),
+    formEl: document.getElementById('coach-form'),
+    inputEl: document.getElementById('coach-input'),
+    sendEl: document.getElementById('coach-send'),
+    context: 'The user is playing out a chess endgame technique against the engine.'
+  });
+  mountMaterial(document.getElementById('board'), document.getElementById('material-top'));
+</script>
 </body>
 </html>

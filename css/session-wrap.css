@@ -67,3 +67,9 @@
   color: var(--muted); border: 1px solid var(--line); border-radius: 14px;
   padding: 4px 10px; flex-shrink: 0;
 }
+
+/* Outcome-coloured progress pips: green = solved first try (no hint),
+   orange = solved with a hint or on a retry, red = not solved. */
+.session-wrap .sw-pip.first  { background: var(--pos); }
+.session-wrap .sw-pip.hinted { background: var(--warn); }
+.session-wrap .sw-pip.fail   { background: var(--bad); }

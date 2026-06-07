@@ -311,7 +311,17 @@
   .nav-drawer-link.secondary:hover { background:var(--surface2); }
   .nav-drawer-link.secondary.active { background:none; color:var(--accent); box-shadow:none; font-weight:700; }
   .nav-separator { border:none; border-top:1px solid var(--line); margin:8px 0; }
-</style>
+
+    /* Game review + drill controls (coach review experience) */
+    .game-review-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .btn-review-game, .btn-drill-game, .btn-drill-one { font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; border-radius:var(--r-btn,12px); padding:6px 12px; border:1px solid var(--line); }
+    .btn-review-game { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .btn-drill-game, .btn-drill-one { background:var(--surface); color:var(--accent); }
+    .btn-drill-one { display:inline-block; margin-top:8px; }
+    .game-review-out { margin-top:10px; font-size:13px; line-height:1.55; color:var(--ink); }
+    .coach-review-text { background:var(--surface2); border-radius:var(--r-panel,14px); padding:10px 12px; }
+    .coach-review-drills { display:flex; flex-direction:column; gap:4px; margin-top:8px; align-items:flex-start; }
+  </style>
 </head>
 <body>
 <div class="container">
@@ -995,6 +1005,7 @@ async function ingest(username, numGames, depth, onProgress) {
       const gameKey = game.url || game.uuid || `game-${gameIndex}-${Date.now()}`;
       newScorecards[gameKey] = finalCard;
     }
+    const userRatingForGame = userIsWhite ? (game.white && game.white.rating) : (game.black && game.black.rating);
     perGameSummary.push({
       gameUrl: game.url || game.uuid || '',
       opponent,
@@ -1005,6 +1016,8 @@ async function ingest(username, numGames, depth, onProgress) {
       analysed: userMovesInGame, // every user move was analysed
       candidates: gameCandidates.length,
       mistakes: thinned.length,
+      rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
+      endTime: game.end_time || null,
     });
   }
 
@@ -1027,11 +1040,17 @@ function renderMistakeList(mistakes, perGameSummary) {
       const thinning = (typeof g.candidates === 'number' && g.candidates > g.mistakes)
         ? ` · thinned from ${g.candidates}`
         : '';
+      const ratingTxt = (typeof g.rating === 'number') ? ` · ${g.rating}` : '';
       div.innerHTML = `
         <div class="top">
-          <span class="src">vs ${escapeHtml(g.opponent)} (${escapeHtml(g.dateStr)}, ${escapeHtml(g.userColorName)}, result ${escapeHtml(g.result)})</span>
+          <span class="src">vs ${escapeHtml(g.opponent)} (${escapeHtml(g.dateStr)}, ${escapeHtml(g.userColorName)}, result ${escapeHtml(g.result)}${ratingTxt})</span>
           <span class="cat">${g.analysed} moves · ${g.mistakes} saved${thinning}</span>
         </div>
+        ${g.mistakes ? `<div class="game-review-actions">
+            <button class="btn-review-game" data-gameurl="${escapeHtml(g.gameUrl)}">Review with coach</button>
+            <a class="btn-drill-game" href="/puzzle.html?drill=${encodeURIComponent(g.gameUrl)}|all">Drill all ${g.mistakes}</a>
+          </div>
+          <div class="game-review-out hidden" data-out="${escapeHtml(g.gameUrl)}"></div>` : ''}
       `;
       listEl.appendChild(div);
     }
@@ -1051,10 +1070,12 @@ function renderMistakeList(mistakes, perGameSummary) {
       </div>
       <div class="moves">you: ${escapeHtml(m.userMoveSan)} (${m.cpLoss}cp loss)</div>
       <div class="cat">${m.category}</div>
+      <a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill this →</a>
     `;
     listEl.appendChild(div);
   }
   $('list-panel').classList.remove('hidden');
+  wireReviewHandlers();
   const counts = {
     opening: mistakes.filter((m) => m.category === 'opening').length,
     middlegame: mistakes.filter((m) => m.category === 'middlegame').length,
@@ -1062,6 +1083,86 @@ function renderMistakeList(mistakes, perGameSummary) {
   };
   $('list-summary').textContent =
     `${mistakes.length} new mistakes found — ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
+}
+
+// ---- Coach game review + drill (per-game) -------------------------------
+async function reviewGameWithCoach(gameUrl, outEl, btn) {
+  let all = [];
+  try { all = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1') || '[]') || []; } catch {}
+  const ms = all.filter((m) => m.gameUrl === gameUrl || (m.id || '').startsWith(gameUrl + '|'));
+  outEl.classList.remove('hidden');
+  if (!ms.length) { outEl.textContent = 'No saved mistakes for this game.'; return; }
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Reviewing…';
+  outEl.textContent = 'Coach is reviewing this game…';
+  const digest = ms.map((m) => ({ move: m.fullmove, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
+  const SYS = [
+    "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON).",
+    'Give a short review (3-5 sentences): name the recurring theme across these mistakes, the single most costly moment, and one thing to work on next.',
+    'Refer to moves by their move number and SAN. Use only the data given; do not invent moves. Plain prose only — no markdown, no lists, no em-dashes.',
+  ].join('\n');
+  try {
+    const r = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, system: SYS, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = ((data.content && data.content[0] && data.content[0].text) || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/[—–]/g, ',').trim();
+    const drills = ms.map((m) => `<a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill move ${m.fullmove}: ${escapeHtml(m.userMoveSan)}</a>`).join('');
+    outEl.innerHTML = `<div class="coach-review-text">${escapeHtml(txt || '(no review)')}</div><div class="coach-review-drills">${drills}</div>`;
+  } catch (e) { outEl.textContent = 'Coach unavailable right now.'; }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+function wireReviewHandlers() {
+  const listEl = $('mistakes-list');
+  if (!listEl || listEl.dataset.reviewWired) return;
+  listEl.dataset.reviewWired = '1';
+  listEl.addEventListener('click', (e) => {
+    const rb = e.target.closest('.btn-review-game');
+    if (!rb) return;
+    const gu = rb.getAttribute('data-gameurl');
+    const out = listEl.querySelector('.game-review-out[data-out="' + (window.CSS && CSS.escape ? CSS.escape(gu) : gu) + '"]');
+    if (out) reviewGameWithCoach(gu, out, rb);
+  });
+}
+
+// Persistent "Your games" list (from stored mistakes) so review + drill are
+// always available, not only right after an ingest run.
+function renderSavedGames() {
+  let all = [];
+  try { all = JSON.parse(localStorage.getItem('chess-coach-mistakes-v1') || '[]') || []; } catch {}
+  if (!all.length) return;
+  const groups = new Map();
+  for (const m of all) {
+    const k = m.gameUrl || (m.id || '').split('|')[0] || 'unknown';
+    if (!groups.has(k)) groups.set(k, { gameUrl: k, opponent: m.opponent || 'opponent', dateStr: m.dateStr || '', userColorName: m.userColorName || '', n: 0 });
+    groups.get(k).n++;
+  }
+  const listEl = $('mistakes-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'mistake-item';
+  head.innerHTML = '<div class="cat">Your games — tap “Review with coach” for the coach’s take, or drill the mistakes.</div>';
+  listEl.appendChild(head);
+  const arr = Array.from(groups.values()).sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
+  for (const gm of arr) {
+    const div = document.createElement('div');
+    div.className = 'mistake-item';
+    div.innerHTML = `
+      <div class="top">
+        <span class="src">vs ${escapeHtml(gm.opponent)} (${escapeHtml(gm.dateStr)}, ${escapeHtml(gm.userColorName)})</span>
+        <span class="cat">${gm.n} mistake${gm.n === 1 ? '' : 's'}</span>
+      </div>
+      <div class="game-review-actions">
+        <button class="btn-review-game" data-gameurl="${escapeHtml(gm.gameUrl)}">Review with coach</button>
+        <a class="btn-drill-game" href="/puzzle.html?drill=${encodeURIComponent(gm.gameUrl)}|all">Drill all ${gm.n}</a>
+      </div>
+      <div class="game-review-out hidden" data-out="${escapeHtml(gm.gameUrl)}"></div>`;
+    listEl.appendChild(div);
+  }
+  $('list-panel').classList.remove('hidden');
+  const sum = $('list-summary');
+  if (sum) sum.textContent = `${arr.length} game${arr.length === 1 ? '' : 's'} with saved mistakes — pick one to review or drill.`;
+  wireReviewHandlers();
 }
 
 function escapeHtml(s) {
@@ -1109,6 +1210,29 @@ async function handleIngestSubmit(e) {
       try { localStorage.setItem(KEY_SCORECARDS, JSON.stringify(existingCards)); }
       catch (e) { console.warn('saveScorecards failed:', e.message); }
     }
+
+    // Chess.com rating time-series -> populates the EXISTING Insights rating
+    // strip + trajectory (which previously had nothing writing to it). Uses the
+    // established shapes: user-rating-v1 {rating,fetchedAt}; rating-history-v1 [{rating,at}].
+    try {
+      const ratedRun = perGameSummary.filter((g) => typeof g.rating === 'number' && g.endTime);
+      if (ratedRun.length) {
+        const KEY_RH = 'chess-coach-rating-history-v1';
+        let hist = [];
+        try { hist = JSON.parse(localStorage.getItem(KEY_RH) || '[]') || []; } catch {}
+        const seen = new Set(hist.map((p) => p.at));
+        for (const g of ratedRun) {
+          const at = new Date(g.endTime * 1000).toISOString();
+          if (!seen.has(at)) { hist.push({ rating: g.rating, at }); seen.add(at); }
+        }
+        hist.sort((a, b) => new Date(a.at) - new Date(b.at));
+        localStorage.setItem(KEY_RH, JSON.stringify(hist));
+        const latest = hist[hist.length - 1];
+        if (latest && typeof latest.rating === 'number') {
+          localStorage.setItem('chess-coach-user-rating-v1', JSON.stringify({ rating: latest.rating, fetchedAt: new Date().toISOString() }));
+        }
+      }
+    } catch (e) { console.warn('rating history capture failed:', e.message); }
 
     // Persist the game URLs so they're skipped on the next run.
     const ingested = loadIngestedGameUrls();
@@ -1305,6 +1429,7 @@ initStockfish().catch((err) => {
   setProgress('Engine init failed: ' + err.message, 100, 'error');
 });
 renderSavedStats();
+renderSavedGames();
 </script>
 <script type="module" src="/js/puzzle/config.js"></script>
 </body>

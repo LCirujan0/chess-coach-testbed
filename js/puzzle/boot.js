@@ -122,6 +122,30 @@ if (stored.length) {
   state.motifFilter = 'all';
   state.currentCategory = 'all';
 }
+
+// Game-review drill — ?drill=<id|gameUrl[,...]> pins specific mistakes into a
+// focused drill, reusing the theme-drill queue path. Additive; a no-op if no
+// puzzle id matches (e.g. those mistakes were not ingested on this device).
+(function activateDrillFromUrl() {
+  const raw = urlParams.get('drill');
+  if (!raw) return;
+  const tokens = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (!tokens.length) return;
+  const picks = state.puzzles.filter((p) => {
+    if (!p || !p.id) return false;
+    return tokens.some((t) => {
+      if (t.endsWith('|all')) { const base = t.slice(0, -4); return p.id === base || p.id.startsWith(base + '|'); }
+      return p.id === t || p.id.startsWith(t + '|');
+    });
+  });
+  if (!picks.length) return;
+  state.drillMotif = 'Review';
+  state.drillQueue = picks;
+  state.drillIndex = 0;
+  const banner = document.getElementById('drill-banner');
+  const label = document.getElementById('drill-label');
+  if (banner && label) { banner.classList.remove('hidden'); label.textContent = 'Reviewing your mistakes — ' + picks.length; }
+})();
 // ----------------------------------------------------------------------------
 // Unified puzzle schema (phase 1a) — load the static endgame + recognition
 // puzzle sets and merge them into state.puzzles. Additive: a page only sees

@@ -77,6 +77,19 @@ function itemCorrect(type, id, stores, sinceMs) {
   const a = stores.attempts[id];
   return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
 }
+function pipOutcome(block, id, stores, sinceMs) {
+  // '' (not done) | 'first' (solved first try, no hint) | 'hinted' (hint or
+  // retried) | 'fail' (not solved). Recognition/endgame are binary -> first|fail.
+  const type = blockType(block);
+  if (!id || !itemResolved(type, id, stores, sinceMs)) return '';
+  if (!itemCorrect(type, id, stores, sinceMs)) return 'fail';
+  if (type === 'mistake') {
+    const a = stores.attempts[id];
+    if (a && a.solved && (a.attempts || 0) <= 1 && !a.shownPieceUsed) return 'first';
+    return 'hinted';
+  }
+  return 'first';
+}
 function resolvedInBlock(block, stores, sinceMs) {
   const ids = Array.isArray(block.ids) ? block.ids : [];
   if (!ids.length) return Math.max(0, block.done || 0);
@@ -147,10 +160,11 @@ export function renderSessionWrap(el, opts = {}) {
     const bDone = (i < activeIdx) ? bCount : (i === activeIdx ? done : 0);
     let pips = '';
     const pipN = Math.max(bCount, 1);
+    const bIds = Array.isArray(b.ids) ? b.ids : [];
+    let curMarked = false;
     for (let p = 0; p < pipN; p++) {
-      let cls = '';
-      if (p < bDone) cls = 'done';
-      else if (i === activeIdx && p === bDone) cls = 'cur';
+      let cls = pipOutcome(b, bIds[p], stores, sinceMs); // 'first'|'hinted'|'fail'|''
+      if (!cls && i === activeIdx && !curMarked) { cls = 'cur'; curMarked = true; }
       pips += '<span class="sw-pip ' + cls + '"></span>';
     }
     const lbl = BLOCK_SHORT[b.id] || ('B' + (i + 1));
