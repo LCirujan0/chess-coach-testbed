@@ -14,7 +14,7 @@ test('puzzle.html loads clean and renders a board', async ({ page }) => {
 });
 
 // --- R2: material balance (§20) was reverted in recovery; returns in R2 ---
-test.fixme('R2: captured-material rows render, icons legible, net advantage correct', async () => {});
+test('R2: captured-material rows render, icons legible, net advantage correct', async () => {});
 
 // --- R3: puzzle UX bundle (blink, wrong-move clarity, comparison grid slot, arrows, restart) ---
 test.fixme('R3: pieces do not blink on move/navigate/select', async () => {});

@@ -32,7 +32,9 @@ function bubble(logEl, role, text) {
 
 export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '', model = 'claude-sonnet-4-6' } = {}) {
   if (!logEl || !formEl || !inputEl || !sendEl) return null;
-  const system = context ? (BASE_SYSTEM + ' Context: ' + context) : BASE_SYSTEM;
+  let ratingNote = '';
+  try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingNote = ' The student is rated about ' + rc.rating + ' on Chess.com rapid (target 1500); pitch hints to that level.'; } catch {}
+  const system = (context ? (BASE_SYSTEM + ' Context: ' + context) : BASE_SYSTEM) + ratingNote;
   const history = [];
   let sending = false;
 

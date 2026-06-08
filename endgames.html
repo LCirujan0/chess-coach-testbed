@@ -33,18 +33,15 @@
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </button>
-    <span class="page-title">Endgames</span>
+    <img class="brand-mark" src="/brand-icons/knight-mark.png" alt="" aria-hidden="true">
+    <span class="brand-word">KnightPath</span>
+    <span class="screen-chip">Endgames</span>
   </div>
 
   <div class="layout-grid">
     <div class="session-wrap hidden" id="session-wrap"></div>
 
     <div class="lg-head">
-      <div class="lesson-card" id="lesson-card">
-        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
-        <div id="lesson-title" class="lesson-title">—</div>
-        <div id="lesson-stm" class="lesson-stm">—</div>
-      </div>
       <div id="status-text" class="inline-status"></div>
     </div>
 
@@ -67,19 +64,22 @@
     </div>
 
     <div class="lg-right">
-      <!-- PAGE-SPECIFIC exercise panel: show technique + verdict + lesson list -->
-      <div class="endgame-panel">
+      <!-- PAGE-SPECIFIC: lesson "feedback" card — same position as puzzle's result card -->
+      <div class="lesson-card" id="lesson-card">
+        <div id="lesson-group-badge" class="lesson-group-badge">Loading…</div>
+        <div id="lesson-title" class="lesson-title">—</div>
+        <div id="lesson-stm" class="lesson-stm">—</div>
         <div class="lesson-meta-row">
           <button id="show-technique-btn" class="technique-btn">Show technique</button>
           <span id="advanced-badge" class="advanced-badge hidden">Advanced</span>
         </div>
         <div id="technique-text" class="technique-text hidden"></div>
-        <div id="verdict-card" class="verdict-card hidden">
-          <div id="verdict-headline" class="verdict-headline"></div>
-          <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
-        </div>
-        <div class="lesson-list-card" id="lesson-list"></div>
       </div>
+      <div id="verdict-card" class="verdict-card hidden">
+        <div id="verdict-headline" class="verdict-headline"></div>
+        <div id="verdict-detail" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+      </div>
+      <div class="lesson-list-card" id="lesson-list"></div>
 
       <!-- ALWAYS-PRESENT coach -->
       <div class="coach-card">
@@ -107,7 +107,7 @@
     <span class="nav-brand-name">KnightPath</span>
   </div>
   <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
-  <a href="/practice.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
+  <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
     <a href="/endgames.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
@@ -144,7 +144,7 @@
     sendEl: document.getElementById('coach-send'),
     context: 'The user is playing out a chess endgame technique against the engine.'
   });
-  mountMaterial(document.getElementById('board'), document.getElementById('material-top'));
+  mountMaterial(document.getElementById('board'), document.getElementById('material-top'), document.getElementById('material-bottom'));
 </script>
 </body>
 </html>

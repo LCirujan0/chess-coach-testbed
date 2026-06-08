@@ -8,7 +8,7 @@
 .lesson-group-badge { display: inline-flex; align-items: center; padding: 3px 9px; background: var(--surface2); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: var(--r-pill); margin-bottom: 8px; }
 .lesson-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 18px; line-height: 1.25; margin-bottom: 5px; }
 .lesson-stm { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-.lesson-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lesson-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .technique-btn { padding: 7px 13px; background: var(--surface2); border: 1px solid var(--line); border-radius: var(--r-btn); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; transition: background .12s ease; }
 .technique-btn:hover { background: var(--surface3); }
 .technique-text { margin-top: 10px; padding: 10px 12px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 13px; line-height: 1.5; color: var(--ink); }

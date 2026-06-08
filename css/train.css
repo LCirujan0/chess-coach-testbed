@@ -336,6 +336,7 @@
 }
 
 /* Material-difference chip (js/material.js) — net on-board advantage. */
+.material-row .mb-piece { width: 18px; height: 18px; display: inline-block; }
 .material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
 .material-row .mb-score.mb-even { color: var(--muted); }
 

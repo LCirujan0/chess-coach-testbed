@@ -179,13 +179,14 @@
   function loadJson(key, fb) { try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; } catch (e) { return fb; } }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
 
-  var mistakes, attempts, ratingCache, ratingHistory, scorecards;
+  var mistakes, attempts, ratingCache, ratingHistory, scorecards, recognition;
   try {
     mistakes = loadJson(KEY_MISTAKES, []) || [];
     attempts = loadJson(KEY_ATTEMPTS, {}) || {};
     ratingCache = loadJson(KEY_RATING, null);
     ratingHistory = loadJson(KEY_RATING_HISTORY, []) || [];
     scorecards = loadJson(KEY_SCORECARDS, {}) || {};
+    recognition = loadJson('chess-coach-recognition-v1', {}) || {};
   } catch (e) {
     root.innerHTML = '<div class="ebanner"><div class="t">Insights could not read your saved data.</div><div class="raw">' + esc((e && e.stack) || String(e)) + '</div></div>';
     return;
@@ -361,6 +362,21 @@
     return '<div class="bands">' + bars + '</div>' + legendHtml() + note;
   }
 
+  function recognitionHtml() {
+    var seen = (recognition && recognition.seen) || {};
+    var ids = Object.keys(seen);
+    if (!ids.length) return '';
+    var correct = 0;
+    ids.forEach(function (id) { var r = seen[id]; if (r && (r.correct === true || r === true)) correct++; });
+    var pct = Math.round(100 * correct / ids.length);
+    return '<div class="panel"><div class="heat-h"><span class="t">Recognition</span>'
+      + '<span class="u">winning / drawn / losing judgement</span></div>'
+      + '<div style="display:flex;align-items:baseline;gap:10px;padding:6px 2px 2px;">'
+      + '<span class="anim-score" data-score="' + pct + '" style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:30px;font-weight:800;color:var(--ink);line-height:1;">' + pct + '</span>'
+      + '<span style="font-size:14px;font-weight:700;color:var(--muted);">% correct</span>'
+      + '<span style="margin-left:auto;font-size:12px;color:var(--muted);">' + correct + ' / ' + ids.length + ' positions</span></div></div>';
+  }
+
   // RENDER
   if (!phases) {
     root.innerHTML = ratingStripHtml() + '<div class="panel"><div class="empty-state">Stats module failed to load. Reload the page; if it persists, check the browser console.</div></div>';
@@ -381,6 +397,7 @@
     ahaHtml(leak) +
     phaseCardsHtml(leak) +
     detailHtml() +
+    recognitionHtml() +
     '<div class="panel"><div class="heat-h"><span class="t">Where you go wrong</span><span class="u">mistake rate per 5-move band · phase-coloured</span></div>' + heatmapHtml() + '</div>' +
     '<a href="/coach.html" class="review1"><span class="ava"></span><div class="tx"><b>Your leak, in detail.</b> The full strengths &amp; weaknesses read is in Coach.</div><span class="go">Open →</span></a>';
   renderTrajectory();

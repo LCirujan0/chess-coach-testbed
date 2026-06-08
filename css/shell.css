@@ -24,8 +24,12 @@ body {
 .container { max-width: 560px; margin: 0 auto; }
 h1, .page-title, .nav-brand-name, .nav-drawer-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
 
-/* Header bar — plain (matches puzzle.html; not sticky). */
-.header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+/* Branded app header — knight mark + KnightPath wordmark + screen chip, on a
+   subtle brand-accent bar. Identical across every training screen. */
+.header-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 12px; background: linear-gradient(100deg, var(--accent-soft) 0%, var(--surface) 60%); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 18px -14px rgba(20,30,55,.30); }
+.header-bar .brand-mark { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
+.header-bar .brand-word { font-family: "Plus Jakarta Sans","Inter",sans-serif; font-weight: 800; font-size: 16px; letter-spacing: -.01em; color: var(--accent); }
+.header-bar .screen-chip { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface2); border: 1px solid var(--line); padding: 4px 9px; border-radius: var(--r-pill); }
 .page-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .hamburger-btn { background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: background .15s; }
 .hamburger-btn:hover { background: var(--surface2); }
