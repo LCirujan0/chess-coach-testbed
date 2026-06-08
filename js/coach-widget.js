@@ -30,7 +30,7 @@ function bubble(logEl, role, text) {
   return div;
 }
 
-export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '', model = 'claude-sonnet-4-6' } = {}) {
+export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '', model = 'claude-sonnet-4-6', getLiveContext = null } = {}) {
   if (!logEl || !formEl || !inputEl || !sendEl) return null;
   let ratingNote = '';
   try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingNote = ' The student is rated about ' + rc.rating + ' on Chess.com rapid (target 1500); pitch hints to that level.'; } catch {}
@@ -49,11 +49,19 @@ export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '',
     inputEl.value = '';
     setSending(true);
     const typing = bubble(logEl, 'system', '…');
+    // Append a fresh snapshot of the live position/moves (if the host provides
+    // one) so the coach can discuss what the student actually played. Read at
+    // send time, never cached. No-spoiler rule (learnings.md v0.7): the host
+    // supplies played moves + FEN only — never engine evals or best-move IDs.
+    let liveSystem = system;
+    if (typeof getLiveContext === 'function') {
+      try { const extra = getLiveContext(); if (extra) liveSystem += extra; } catch {}
+    }
     try {
       const r = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, max_tokens: 280, system, messages: history })
+        body: JSON.stringify({ model, max_tokens: 280, system: liveSystem, messages: history })
       });
       const data = await r.json();
       typing.remove();

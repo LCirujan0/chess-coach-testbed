@@ -22,7 +22,8 @@
 .nav-drawer-link.nav-more-link { font-size: 13px; padding: 7px 10px; color: var(--muted); }
 .nav-drawer-link.nav-more-link:hover { background: var(--surface2); }
 
-/* §30.5 — the Practice sub-group shows only when the Practice section is active
- * (Practice parent highlighted). On other sections it collapses, so the sidebar
- * "extends into a sub-level" exactly when you're in Practice. */
-.nav-drawer:not(:has(.nav-drawer-link[href="/practice.html"].active)) .nav-subgroup { display: none; }
+/* §30.5 — the Practice sub-group (Puzzles / Endgames / Recognition) is always
+ * visible on the desktop sidebar so the training surfaces are reachable in one
+ * click from anywhere, not only while you're inside Practice. nav.css is
+ * desktop-scoped (mobile uses the tab-bar; the drawer is off-canvas), so this
+ * stays a desktop-only sub-level. */

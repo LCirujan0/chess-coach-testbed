@@ -961,6 +961,7 @@ async function ingest(username, numGames, depth, onProgress) {
 
           gameCandidates.push({
             id: `${game.url || game.uuid || 'game'}|${i}`,
+            type: 'mistake', // unified puzzle schema (phase 1a) — puzzle.html pins this type
             fen: fenBefore,
             category,
             brief: `From your ${userColorName.toLowerCase()} game vs ${opponent} (${dateStr}, result ${result}). At move ${fullmove}, you played ${move.san} (${rankText}); engine prefers ${lines[0].san}.`,

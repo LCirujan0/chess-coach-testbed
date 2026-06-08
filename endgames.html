@@ -137,12 +137,26 @@
 <script type="module">
   import { mountCoachWidget } from '/js/coach-widget.js';
   import { mountMaterial } from '/js/material.js';
+  import { state } from '/js/puzzle/state.js';
+  // Live snapshot of the play-out the student is in (shared state.chess set by
+  // playout.js). Played moves + FEN only — no engine evals (no-spoiler rule).
+  function liveEndgameContext() {
+    const g = state && state.chess;
+    if (!g || typeof g.history !== 'function') return '';
+    const moves = g.history();
+    const turn = g.turn() === 'w' ? 'White' : 'Black';
+    return ' Live position the student is playing out: FEN ' + g.fen()
+      + '. Moves played so far: ' + (moves.length ? moves.join(' ') : 'none yet')
+      + '. ' + turn + ' to move. Discuss the moves actually played; never reveal'
+      + ' engine evaluations or name the single best move.';
+  }
   mountCoachWidget({
     logEl: document.getElementById('coach-log'),
     formEl: document.getElementById('coach-form'),
     inputEl: document.getElementById('coach-input'),
     sendEl: document.getElementById('coach-send'),
-    context: 'The user is playing out a chess endgame technique against the engine.'
+    context: 'The user is playing out a chess endgame technique against the engine.',
+    getLiveContext: liveEndgameContext
   });
   mountMaterial(document.getElementById('board'), document.getElementById('material-top'), document.getElementById('material-bottom'));
 </script>

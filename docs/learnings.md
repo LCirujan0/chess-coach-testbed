@@ -4,6 +4,18 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.60 — Mistakes-not-loading regression, coach sees endgame moves, nav sub-themes always shown (2026-06-08)
+
+Three fixes, the first a regression introduced by the v0.59 combined bundle:
+
+- **Mistakes not loading (regression).** The unified puzzle schema (phase 1a) added a `type` discriminator, and `puzzle.html` pins its queue to `type: 'mistake'` (`queue.js` ~line 53: `pool.filter((p) => (p.type || p.puzzleType) === state.typeFilter)`). But `games.html` never stamped `type` on the mistake records it ingests, so **every** stored mistake failed the filter and the Puzzles page showed nothing despite ingested games. Fixed in two places: (1) `games.html` now stamps `type: 'mistake'` at ingest source; (2) `storage.js` `loadPuzzlesFromStorage()` stamps `type: 'mistake'` on any type-less record at load, so **existing** localStorage data surfaces without a re-ingest. Verified in-browser: a seeded old-schema mistake (no `type`) renders on the board. **Rule:** any new pinned-`type` page must ensure its source writer stamps the matching `type`, and the loader must back-fill legacy records.
+
+- **Coach can now see the moves played in the endgame.** `coach-widget.js` built its system prompt once at mount from a static `context` string — it never saw the live board. Added an optional `getLiveContext` callback read at send time; `endgames.html` and `endgame-recognition.html` pass one that reports `state.chess` FEN + `history()` + side-to-move. **No-spoiler rule (v0.7) preserved:** only the student's played moves + the position are sent — never engine evals or the best-move id; the injected text explicitly instructs the coach not to reveal them. Verified by capturing the outgoing `/api/coach` request: its system prompt contained the FEN and the played move (`Qe7`).
+
+- **Practice sub-themes always visible on the desktop sidebar.** Reverses the §30.5 behaviour in `css/nav.css` where `.nav-subgroup` was hidden unless the Practice parent link was `.active`. After the v0.59 nav-active fix (each page marks only its own link active), that rule also hid the sub-group on the child pages. Per user request, Puzzles/Endgames/Recognition are now always shown on the desktop sidebar (nav.css is desktop-scoped; mobile uses the tab-bar). **Do not re-add the collapse-unless-Practice-active rule.**
+
+---
+
 ## v0.59 — Polish bundle: material rewrite, coach Elo, recognition stats, branded headers (2026-06-08)
 
 Applied the parked `polish.patch` as a reviewed set of changes:

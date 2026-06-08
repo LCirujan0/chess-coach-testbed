@@ -14,7 +14,17 @@ export function loadJson(key, fallback) {
   try { const v = JSON.parse(localStorage.getItem(key) || ''); return v ?? fallback; }
   catch { return fallback; }
 }
-export function loadPuzzlesFromStorage() { const v = loadJson(STORAGE_KEY_MISTAKES, []); return Array.isArray(v) ? v : []; }
+export function loadPuzzlesFromStorage() {
+  const v = loadJson(STORAGE_KEY_MISTAKES, []);
+  if (!Array.isArray(v)) return [];
+  // Unified puzzle schema (phase 1a) added a `type` discriminator, and
+  // puzzle.html pins its queue to type 'mistake' (queue.js typeFilter). Every
+  // record in the mistakes store is, by definition, a mistake — but ingests
+  // that predate the discriminator carry no `type`, so the pinned filter would
+  // drop them all (the "mistakes not loading" bug). Stamp it on load so existing
+  // data surfaces without a re-ingest. games.html now also stamps it at source.
+  return v.map((p) => (p && typeof p === 'object' && !p.type && !p.puzzleType) ? { ...p, type: 'mistake' } : p);
+}
 export function loadAttempts() { const v = loadJson(STORAGE_KEY_ATTEMPTS, {}); return (v && typeof v === 'object') ? v : {}; }
 export function saveAttempts(a) { try { localStorage.setItem(STORAGE_KEY_ATTEMPTS, JSON.stringify(a)); } catch {} }
 export function saveLastCategory(cat) { try { localStorage.setItem(STORAGE_KEY_LAST_CAT, cat); } catch {} }
