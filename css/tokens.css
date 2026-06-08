@@ -32,6 +32,7 @@
   --dark-sq:  #B49A78;
   --hl-move:  rgba(47,158,118,.26);
   --hl-sel:   rgba(47,158,118,.36);
+  --hl-origin: rgba(201,138,46,.28); /* Board Vision origin square (amber) */
 
   /* Shape scale */
   --r-card:  16px;

@@ -4,7 +4,16 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
-## v0.61 — Games modularization (Spec 10) + interactive game review (Spec 11) (2026-06-08)
+## v0.62 — Board Vision: three procedural drills + hide-the-board tracker (Spec 14) (2026-06-08)
+
+The calculation/visualisation pillar — a daily ~3–4 min board-sight warm-up. New page `board-vision.html` + `js/board-vision/{generators,tracker,boot}.js` + `css/board-vision.css`. Built "Both" designs in one hub: three foundational drills (on-ramp) + a 6-level hide-the-board sequence tracker.
+
+- **Foundational drills (pure, data-free, node-testable):** Coordinate Snap, Knight Vision, Piece Walk in `generators.js`. Verified over 60k samples: every knight answer reachable + distractors never; every piece-walk landing exact + distractors bounded ±1/±2.
+- **Tracker (procedural, chess.js):** `tracker.js` starts from a small set of sparse base FENs, plays `level` random LEGAL moves, describes each move by distance/shape (never algebraic), and asks one of where/check/count/captured — all derived + graded from chess.js state. **No `data/board-vision.json` dataset** (the mockup's footnote); procedural keeps it infinite + maintenance-free. Verified in-browser: 36 samples across all 6 levels, every answer matched an independent chess.js recomputation. (chess.js is an esm.sh import, so the tracker is node-untestable — verify in the browser, not node.)
+- **Board reuse:** every drill renders through the canonical `js/board-static.js` `renderStaticBoard` + a delegated tap; **no `js/puzzle/board.js` change** (Spec 14 said to add a square-pick mode to the solve board, but the static renderer already existed — same lower-risk reuse as game review). New §22 highlight states (`.square.bv-option/.bv-correct/.bv-wrong/.bv-origin` + `.board.bv-hidden .pc-img{visibility:hidden}` for the tracker) live in `css/board.css` with a new `--hl-origin` token — single-sourced, not page-private.
+- **One key** `chess-coach-board-vision-v1` `{completedDate, streak, scores:{coord,knight,walk}, coordPerfectStreak, tracker:{level, levelScores}}`, written only on complete; daily streak + level-up (≥80%) logic at write time. No engine, no LLM, no `/api/coach`.
+- **Entry points:** un-locked the `practice.html` card; `today.html` Board Vision is now a live warm-up link; added a "Board Vision" nav-child to the `.nav-subgroup` across 10 shell pages; registered `/board-vision.html` in `qa/tests/pages.js`. Full QA suite 60 passed (board-vision adds shell-nav + smoke coverage; nav change kept the single-active-link assertion green).
+- **v1 scope notes / follow-ups:** the today.html link goes to the standalone page (not `?session=1`) — `board-vision.html` *supports* session mode, but it isn't wired into the `session.html` block sequence yet (no session-host plumbing this pass). today.html done-state (completedDate) not yet shown. On-device iPhone QA (touch + board sizing + the tracker hide/replay) is the spec's designated manual check.
 
 The roadmap's "deepen the loop" step (item 4). Two phases shipped together.
 
