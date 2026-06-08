@@ -4,6 +4,20 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.61 — Games modularization (Spec 10) + interactive game review (Spec 11) (2026-06-08)
+
+The roadmap's "deepen the loop" step (item 4). Two phases shipped together.
+
+- **Spec 10 — games.html modularized.** The 1,437-line inline module was split into 13 ES modules under `js/games/` (lib, config, state, dom, storage, analysis, chesscom, categorize, classify, ingest, list, narrate, boot), mirroring `js/puzzle/`. games.html dropped to ~465 lines. **Behaviour-preserving, proven mechanically:** the modules were produced by slicing exact source line-ranges (never retyped), and a multiset diff of code lines (original vs all modules, ignoring import/export scaffolding) was **911 = 911, identical**. One deliberate deviation from the spec's file map: `escapeHtml` lives in `dom.js` (not `list.js`) to keep the import graph acyclic, because drift functions added after the spec baseline (`reviewGameWithCoach`/`wireReviewHandlers`/`renderSavedGames`) introduced a `list ↔ narrate` reference. `CoachStats` stays a `window` global (read via `typeof`), never imported.
+
+- **Spec 11 — interactive game review.** Games is now two-surface: ingest + Review. A new `js/games/review.js` lists replayable games, steps through a game ply-by-ply (reusing the canonical `renderStaticBoard` from `js/board-static.js` — **no `js/puzzle/board.js` refactor needed**, unlike the spec's assumption), shows a severity badge at each saved mistake (joined via the `${gameKey}|${ply}` id), and on tap fires one on-demand grounded `/api/coach` call rendered as a §17 card. Tagged mistakes get a "Drill <motif>" CTA → `/puzzle.html?motif=<tag>&source=review`, handled by a new `activateMotifFromUrl()` in `js/puzzle/boot.js` that reuses `startThemeDrill()`.
+  - **One new key:** `chess-coach-game-moves-v1` = `{ [gameKey]: { moves:[SAN…], userIsWhite, result, opponent, dateStr } }`, captured at ingest (the move list is already in memory) and swept by the existing `handleClear` `chess-coach-*` removal. Per-ply FENs are reconstructed in-browser by replaying SAN, never stored.
+  - **§12 carve-out (deliberate):** the review explanation prompt freely names the better move / eval / motif — the game is over, so it's the deliverable, not a spoiler. The puzzle.html live-solve coach is untouched and keeps its NAMING_RULES.
+  - **Reuse note:** the §17 `parseReviewMessage`/`appendCoachReview` in `js/puzzle/dom.js` are bound to `#coach-log` + puzzle CSS, so review.js inlines a small parser + an inline-styled card instead, to keep games.html decoupled from the puzzle module graph.
+  - Verified in-browser: list → replay (last-move highlight tracks) → badge → grounded request + §17 fallback card → Drill CTA → focused fork drill ("Drilling: Fork — 1 of 1"). Full QA suite 56 passed; live end-to-end ingest (the moves-key capture) is the spec's manual device-QA step.
+
+---
+
 ## v0.60 — Mistakes-not-loading regression, coach sees endgame moves, nav sub-themes always shown (2026-06-08)
 
 Three fixes, the first a regression introduced by the v0.59 combined bundle:

@@ -6,6 +6,7 @@ import { ingest } from './ingest.js';
 import { classifyMotifsBatch } from './classify.js';
 import { renderMistakeList, renderSavedGames } from './list.js';
 import { handleCoachNarrative } from './narrate.js';
+import { initReview, renderReviewList } from './review.js';
 import { tagAndSaveMistakes } from '/js/tagger.js';
 // ============================================================================
 // SECTION 10 — BOOT
@@ -31,7 +32,7 @@ async function handleIngestSubmit(e) {
   setProgress('Fetching games from Chess.com…', 5);
 
   try {
-    const { mistakes: fresh, perGameSummary, scorecards } = await ingest(username, numGames, depth, (done, total, label) => {
+    const { mistakes: fresh, perGameSummary, scorecards, moves } = await ingest(username, numGames, depth, (done, total, label) => {
       const pct = total > 0 ? (done / total) * 100 : 0;
       const prefix = label || `Analysing positions`;
       setProgress(`${prefix} — ${done}/${total} positions`, pct);
@@ -56,6 +57,17 @@ async function handleIngestSubmit(e) {
       for (const k of Object.keys(scorecards)) existingCards[k] = scorecards[k];
       try { localStorage.setItem(KEY_SCORECARDS, JSON.stringify(existingCards)); }
       catch (e) { console.warn('saveScorecards failed:', e.message); }
+    }
+
+    // Spec 11 — persist this run's SAN move lists for the game-review replay.
+    // Idempotent merge by game key; a re-ingest overwrites the entry.
+    if (moves && Object.keys(moves).length) {
+      const KEY_MOVES = 'chess-coach-game-moves-v1';
+      let existingMoves = {};
+      try { existingMoves = JSON.parse(localStorage.getItem(KEY_MOVES) || '{}') || {}; } catch { existingMoves = {}; }
+      for (const k of Object.keys(moves)) existingMoves[k] = moves[k];
+      try { localStorage.setItem(KEY_MOVES, JSON.stringify(existingMoves)); }
+      catch (e) { console.warn('saveMoves failed:', e.message); }
     }
 
     // Chess.com rating time-series -> populates the EXISTING Insights rating
@@ -89,6 +101,7 @@ async function handleIngestSubmit(e) {
     state.thisRunMistakes = fresh;
     renderMistakeList(fresh, perGameSummary);
     renderSavedStats();
+    renderReviewList(); // Spec 11 — freshly-ingested games become replayable
     setProgress(`Done. ${fresh.length} new mistakes saved across ${perGameSummary.length} game(s). Open Puzzles to review.`, 100, 'ok');
     // Spec 05 — reveal the on-demand Coach narrative button for this run.
     const crp = $('coach-review-panel');
@@ -156,3 +169,4 @@ initStockfish().catch((err) => {
 });
 renderSavedStats();
 renderSavedGames();
+initReview(); // Spec 11 — render the review list + wire replay controls

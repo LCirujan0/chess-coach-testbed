@@ -56,6 +56,7 @@ async function ingest(username, numGames, depth, onProgress) {
   // engine cost. The shared CoachStats module turns these into attribute
   // scores at read-time on Insights / Practice.
   const newScorecards = {};
+  const gameMoves = {}; // Spec 11 — SAN move lists for the game-review replay
   let gameIndex = 0;
 
   for (const { game, headers, userIsWhite, history } of parsedGames) {
@@ -225,8 +226,12 @@ async function ingest(username, numGames, depth, onProgress) {
       rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
       endTime: game.end_time || null,
     });
+    // Spec 11 — capture the full SAN move list (already in memory) for the
+    // game-review replay. Keyed to match the mistake-record join in review.js.
+    const movesKey = game.url || game.uuid || ('game-' + gameIndex);
+    gameMoves[movesKey] = { moves: history.map((h) => h.san), userIsWhite, result, opponent, dateStr };
   }
 
-  return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards };
+  return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards, moves: gameMoves };
 }
 export { ingest };

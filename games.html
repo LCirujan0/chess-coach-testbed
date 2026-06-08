@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/type.css">
+<link rel="stylesheet" href="/css/board.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -400,6 +401,27 @@
       <button class="btn" id="coach-narrative-btn" type="button">Coach: how did you play?</button>
       <div id="coach-narrative-out" style="display:none; margin-top:12px; padding:12px 14px; background:var(--surface-2,#f5f5f5); border-radius:8px; font-size:0.95em; line-height:1.6; color:var(--text-primary,#1a1a1a);"></div>
     </div>
+  </div>
+
+  <!-- Spec 11 — interactive game review -->
+  <div class="panel" id="review-panel">
+    <h2>Review a game</h2>
+    <div class="sub">Step through a game move by move. At each flagged mistake, tap “Why?” for the coach’s take, then drill the theme.</div>
+    <div class="review-list" id="review-list"></div>
+  </div>
+
+  <div class="panel hidden" id="review-mode">
+    <button class="btn btn-secondary" id="review-back" type="button" style="margin-bottom:14px;">← Back to games</button>
+    <div style="max-width:380px; margin:0 auto;">
+      <div class="board" id="review-board"></div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-top:14px;">
+      <button class="btn btn-secondary" id="review-prev" type="button" style="flex:none;">← Prev</button>
+      <span id="review-ply" style="font-size:13px; color:var(--muted); min-width:120px; text-align:center;">Move 0</span>
+      <button class="btn btn-secondary" id="review-next" type="button" style="flex:none;">Next →</button>
+    </div>
+    <div id="review-badge" style="text-align:center; margin-top:14px; min-height:26px;"></div>
+    <div id="review-coach" style="margin-top:12px;"></div>
   </div>
 </div>
 

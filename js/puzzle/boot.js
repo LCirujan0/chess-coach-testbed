@@ -216,6 +216,18 @@ async function loadStaticPuzzleSets() {
 await loadStaticPuzzleSets();
 rebuildQueue();
 
+// Spec 11 — game-review "Drill this motif" deep-link: /puzzle.html?motif=<tag>.
+// Runs after the deck is built (startThemeDrill filters state.puzzles). Yields
+// to a Today session deep-link if one is active (mutually exclusive in practice).
+(function activateMotifFromUrl() {
+  if (state.sessionMode) return;
+  const m = urlParams.get('motif');
+  if (!m || !MOTIFS.includes(m)) return;
+  state.motifFilter = m;
+  saveLastMotif(m);
+  startThemeDrill();
+})();
+
 // Reset restarts the same puzzle position without re-opening the CCTO gate
 // (the student has already filled in their analysis for this position).
 // Reset = soft reset: rewind the board to the puzzle's starting position but
