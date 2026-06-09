@@ -402,7 +402,64 @@
     };
   }
 
+  // ===========================================================================
+  // COACH'S READ (retention #5 — variable, data-grounded reward). A short, warm,
+  // SPECIFIC observation about the player's actual play, varied day-to-day so it
+  // feels fresh (variable reward) but ALWAYS tied to a real number — never empty
+  // praise (the explicit anti-pattern). Pure: the caller assembles the signals +
+  // a dayKey ("YYYY-MM-DD") that rotates which eligible read surfaces.
+  //   coachRead({ view, profile, history, streak, dayKey }) -> { kind, text }
+  // ===========================================================================
+  function humaniseAttr(a){ return String(a||'').replace(/[_-]/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+  function daySeed(dayKey){ var s=0,k=String(dayKey||'x'); for (var i=0;i<k.length;i++) s=(s*31 + k.charCodeAt(i))>>>0; return s; }
+  function coachRead(input){
+    input = input || {};
+    var view = input.view || {}, profile = input.profile || {}, rapid = profile.rapid || {};
+    var streak = input.streak || {}, counts = view.counts || {};
+    var history = Array.isArray(input.history) ? input.history.filter(function(h){return h && typeof h.rating==='number';}) : [];
+    var reads = [];
+
+    // 1) Trajectory — the moat: net rapid change over the recent window.
+    if (history.length >= 2){
+      var win = history.slice(-20);
+      var delta = win[win.length-1].rating - win[0].rating, span = win.length - 1;
+      if (delta >= 10) reads.push({ kind:'trajectory-up', weight:5, text:'Your rapid is up '+delta+' over your last '+span+' games — the training is showing.' });
+      else if (delta <= -10) reads.push({ kind:'trajectory-down', weight:3, text:'Rapid dipped '+Math.abs(delta)+' across your last '+span+' games. Improvement shows over weeks, not games — keep working the leaks.' });
+    }
+    // 2) Peak proximity / new peak.
+    if (typeof rapid.current === 'number' && typeof rapid.best === 'number' && rapid.best > 0){
+      if (rapid.current >= rapid.best) reads.push({ kind:'peak', weight:5, text:"You're at your peak rapid rating ("+rapid.best+"). Press the advantage." });
+      else { var off = rapid.best - rapid.current; if (off > 0 && off <= 60) reads.push({ kind:'near-peak', weight:3, text:"You're only "+off+" off your peak of "+rapid.best+" — within reach." }); }
+    }
+    // 3) Streak.
+    if (typeof streak.current === 'number' && streak.current >= 3) reads.push({ kind:'streak', weight:4, text:'A '+streak.current+'-day streak — consistency is doing the quiet work.' });
+    // 4) Strongest area (focus is ranked weakest-first; last = strongest).
+    var focus = Array.isArray(view.focus) ? view.focus : [];
+    if (focus.length >= 2 && focus[focus.length-1] && focus[focus.length-1].attribute)
+      reads.push({ kind:'strength', weight:3, text:'Your '+humaniseAttr(focus[focus.length-1].attribute)+' is your sharpest area right now — lean on it.' });
+    // 5) Mistakes-turned-puzzles (competence / volume).
+    if (typeof counts.puzzles === 'number' && counts.puzzles >= 10)
+      reads.push({ kind:'volume', weight:2, text:"You've turned "+counts.puzzles+' of your own mistakes into trainable puzzles — that deck IS your curriculum.' });
+    // 6) Settled + trending up (honest meta-reward).
+    if (rapid.settledness && rapid.settledness.known && rapid.settledness.settled && history.length >= 2 &&
+        (history[history.length-1].rating - history[0].rating) > 0)
+      reads.push({ kind:'settled-up', weight:3, text:'Your rapid is settled (RD '+rapid.settledness.rd+') and trending up — that gain is real, not noise.' });
+    // 7) Tactics rating.
+    if (typeof profile.tactics === 'number') reads.push({ kind:'tactics', weight:1, text:'Your Chess.com puzzle rating is '+profile.tactics+' — pattern recognition is a real asset of yours.' });
+
+    if (!reads.length){
+      if ((counts.games||0) === 0) return { kind:'coldstart', text:"Sync a few of your Chess.com games and I'll start reading your play — your strengths, your leaks, and where the rating's heading." };
+      return { kind:'warm', text:'Keep clearing your mistake deck — the patterns compound. I read more into your play as the games add up.' };
+    }
+    // Daily rotation: ordered by weight, rotated by the day seed so it varies
+    // across days without flipping on every refresh (variable, not random).
+    reads.sort(function(a,b){ return b.weight - a.weight; });
+    var pick = reads[daySeed(input.dayKey) % reads.length];
+    return { kind:pick.kind, text:pick.text };
+  }
+
   var API = { CONFIG:CONFIG, ATTRS:ATTRS, MOTIF_ATTR:MOTIF_ATTR, PHASE_ATTR:PHASE_ATTR,
+    coachRead:coachRead,
     GOAL_TIERS:GOAL_TIERS, DEFAULT_GOAL_TIER:DEFAULT_GOAL_TIER,
     goalForTier:goalForTier, normalizeGoal:normalizeGoal,
     RATING_BAND_STEP:RATING_BAND_STEP, RATING_TARGET:RATING_TARGET, nextBand:nextBand,

@@ -4,6 +4,17 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.74 — Coach's read: the retention moat (variable, data-grounded reward) (STAGED) (2026-06-09)
+
+The E-moat slice from `../../docs/retention-and-gamification.md` (#5) — built on a separate `continue-build` branch so the v0.67→v0.73 preview stays stable for QA.
+
+- **`CoachStats.coachRead({view, profile, history, streak, dayKey})`** (pure, in `js/coach-stats.js`) — a short, warm, SPECIFIC line about the player's actual play. The anti-pattern guard: **every read is tied to a real number** (rating trajectory, peak proximity, streak length, strongest area, mistakes-turned-puzzles, settledness/RD, tactics rating) — never empty "Great job!" confetti. Variability without randomness: eligible reads are weight-ordered then **rotated by a day seed**, so it's stable within a day (not flipping on refresh) but fresh across days. Cold-start returns a warm onboarding line with **no fabricated numbers**.
+- **Surfaced on `today.html`** by reusing the existing `.coachnote` element (coach avatar + line → coach.html): the populated-session note now leads with the read (replacing the flatter `coachFraming()` "today is your recent mistakes"), and the **done-today celebration** gains a read too (a reward right when the session completes). Loads `chess-coach-rating-profile-v1` + `chess-coach-rating-history-v1`; degrades gracefully when absent.
+- **Why deterministic, not an LLM call:** instant, zero cost, and *always honest* (it can only say what the data supports) — which matters more than fluency for a tool the owner uses on themselves. An LLM phrasing layer can come later.
+- **Verified:** node harness `qa/scripts/coachread-check.cjs` (47/0 — grounded, varies across days, stable within a day, constructive on a rating dip, no fake numbers cold-start) + today.html smoke clean.
+
+---
+
 ## v0.73 — Shared `.panel` card + button-fork consolidation (STAGED) (2026-06-09)
 
 The two deferred visual-consistency items from v0.72, done on the verifiable subset.

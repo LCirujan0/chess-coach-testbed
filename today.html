@@ -212,6 +212,8 @@
   var KEY_SESSION    = 'chess-coach-session-v1';
   var KEY_COMPLETE   = 'chess-coach-session-complete-v1';
   var KEY_GOAL       = 'chess-coach-daily-goal-v1';   // { tier, target } — SDT autonomy
+  var KEY_PROFILE    = 'chess-coach-rating-profile-v1';
+  var KEY_HISTORY    = 'chess-coach-rating-history-v1';
 
   function loadJson(key, fb) {
     try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; }
@@ -404,6 +406,18 @@
     var lead = parts.length ? ('Today is ' + (parts.length === 2 ? parts[0] + ' plus ' + parts[1] : parts[0]) + '.') : 'Nothing new to drill today.';
     var endgameTail = endgameInFocus ? ' <b>Endgame technique</b> is your focus today — drills queued below.' : ' Endgame practice is now available as an optional extra.';
     return lead + endgameTail;
+  }
+
+  // ---- coach’s read (retention #5 — variable, data-grounded reward) ----
+  // A short, specific, VARIED line tied to a real number (never empty praise).
+  // Rotates day-to-day so it feels fresh; falls back to the session framing.
+  function coachReadHtml() {
+    if (typeof CoachStats === 'undefined' || !CoachStats.coachRead) return coachFraming();
+    var pv = null;
+    try { pv = CoachStats.ratingProfileView(loadJson(KEY_PROFILE, null)); } catch (e) {}
+    var hist = loadJson(KEY_HISTORY, []);
+    var r = CoachStats.coachRead({ view: view, profile: pv, history: Array.isArray(hist) ? hist : [], streak: streakInfo, dayKey: TODAY });
+    return (r && r.text) ? esc(r.text) : coachFraming();
   }
 
   // ---- plan-today focus sentence (deterministic, zero tokens) ----
@@ -630,6 +644,7 @@
       '<h2>' + esc(doneMsg) + '</h2>' +
       '<p>' + (detailStr || 'Nice work today.') + '</p>' +
       '<a class="btn primary" href="/session.html">One more set</a></div>' +
+      '<a href="/coach.html" class="coachnote" style="margin-top:14px;"><span class="ava">C</span><div class="txt">' + coachReadHtml() + '</div></a>' +
       bandBarHtml() +
       glanceHtml();
     return;
@@ -673,7 +688,7 @@
   // POPULATED — assemble + persist a fresh plan.
   persistPlan();
   root.innerHTML = headerHtml('A pre-built session from your games. One tap to start.') +
-    '<a href="/coach.html" class="coachnote"><span class="ava">C</span><div class="txt">' + coachFraming() + '</div></a>' +
+    '<a href="/coach.html" class="coachnote"><span class="ava">C</span><div class="txt">' + coachReadHtml() + '</div></a>' +
     goalBarHtml() +
     sessionCardHtml() +
     bandBarHtml() +
