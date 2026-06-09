@@ -4,6 +4,17 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.66 — Shell migration (US-17): 7 pages onto the shared shell.css chrome (2026-06-09)
+
+Finished the consistency work started in v0.65. The 7 pages that reinvented the app chrome inline (today, practice, games, insights, coach, completed, roadmap) now **link `css/shell.css` + `css/nav.css` and the duplicated inline chrome was deleted** — header bar, `.nav-drawer`, `.nav-brand*`, `.nav-drawer-link*`, `.tab-bar*`, `.version-stamp`, `.nav-backdrop`, `html/body`, `.container`, and the desktop `@media` chrome (body padding-left, container width, nav-drawer pin, tab-bar hide). Page-specific rules (cards, charts, buttons, and any page-specific `@media` like `.phases`/`.ratestrip`/`h1` desktop size) were preserved.
+
+- **Why it matters:** the `.container` width had drifted to 560/640/720/780/820/920 across pages; now every page computes the canonical **560 (mobile) / 1100 (desktop)** with the **224px pinned nav** and **mobile-only tab-bar** — identical to the board screens.
+- **How (low-risk method):** swap the `header.css` link → `shell.css`, then delete the chrome rule-ranges from each inline `<style>` via a Node `splice` (descending line order so indices stay valid; the `@media` blocks were *replaced* with just their surviving page rule rather than deleted). **Verified by computed-style parity** — each migrated page's body padding / container max-width / nav width+position / tab-bar display / header position were compared to the canonical `endgames.html` at desktop (1280) AND mobile (375) and must match. Full QA 64 passed (one `a-shell-nav` completed.html failure was a teardown flake — confirmed by re-run).
+- **`header.css` deleted** — it was a v0.65 transitional shim; the branded header is now single-sourced in `shell.css` for all pages.
+- **Verification note:** the local preview browser **caches aggressively** — append `?v=Date.now()` when re-checking a just-edited page (an early today.html check showed the stale 780px container until cache-busted).
+
+---
+
 ## v0.65 — UI consistency: branded header app-wide + design-system reference (2026-06-08)
 
 Jorge asked for a full UI consistency / brand-identity pass. Audit found the root cause: 7 pages (today, practice, games, insights, coach, completed, roadmap) never linked `shell.css` and reinvented the header/nav/body inline, using the OLD `.page-title` header, while the 5 board screens used the BRANDED `KnightPath + screen-chip` header.

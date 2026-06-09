@@ -15,7 +15,7 @@ The brand reference. Every screen should feel like the same product: same header
     <span class="screen-chip">PAGE NAME</span>
   </div>
   ```
-  Styled by `css/header.css` (and identically by `css/shell.css` on the board screens). Link `header.css` (or `shell.css`) and use this markup — never a bare `.page-title`.
+  Styled by `css/shell.css` (the branded `.header-bar` + `.brand-mark`/`.brand-word`/`.screen-chip`). Link `shell.css` and use this markup — never a bare `.page-title`.
 
 ---
 
@@ -51,16 +51,16 @@ One system. Canonical classes: **`.btn`** (base) · **`.btn.primary`** (accent f
 
 ## Canonical stylesheet link order
 
-`tokens → header → shell → nav → board → type → screen → train → [page].css`. Link `tokens.css` first; never redefine its tokens inline.
+`tokens → shell → nav → board → type → screen → train → [page].css`. Link `tokens.css` first; never redefine its tokens inline. Every page now links `shell.css` for the shared chrome (header/nav/body/container/tab-bar) — do not re-declare it inline.
 
 ---
 
 ## Consistency backlog (prioritised — for future passes)
 
-The header is now consistent app-wide (v0.65). Remaining debt found in the 2026-06-08 audit:
+The header is consistent app-wide (v0.65) and the shell migration is done (v0.66). Remaining debt found in the 2026-06-08 audit:
 
-1. **7 pages don't link `shell.css`** (today, practice, games, insights, coach, completed, roadmap) and **reinvent the nav-drawer / tab-bar / body / container inline**, with subtle drift (`.container` max-width varies 560/640/720/780/820/920px; per-page `.nav-drawer`). High-value, higher-risk: migrate each to link the shared shell + delete the duplicated inline rules. Do one page at a time with device QA (the shared nav/body cascade can shift desktop layout). This is the US-17 "finish the shell extraction" item.
+1. ~~7 pages don't link `shell.css`~~ **DONE (v0.66, US-17):** today, practice, games, insights, coach, completed, roadmap now link `shell.css` + `nav.css` and the duplicated inline chrome (header/nav/body/container/tab-bar + the desktop `@media`) was removed. Each page's chrome now computes identically to the board screens (560/1100 container, 224px pinned nav, mobile-only tab-bar, branded static header). Verified by computed-style parity + QA.
 2. **No shared `.panel`/card component** — defined inline on games/insights/review with different padding/shadow. Create one shared card (in train.css) and migrate.
 3. **Button naming drift** — games.html uses inline `.btn-secondary`/`.btn-danger` (not in train.css). Migrate to `.btn` / `.btn.ghost` once games links train.css.
 4. **Hardcoded values** — pages hardcode the body gradient (`#FFFFFF/#EDF0F3`), header blur, and some semantic colours (`#FBF0ED` ≈ bad-soft) instead of tokens. Tokenise as part of (1).
-5. **`header.css` ⇄ `shell.css` duplication** — the branded header lives in both (header.css for the 7 converted pages, shell.css for the 5 board screens). Consolidate into header.css and link it everywhere; remove from shell.css.
+5. ~~`header.css` ⇄ `shell.css` duplication~~ **DONE (v0.66):** the v0.65 `header.css` was a transitional shim; now every page links `shell.css`, so `header.css` was deleted and the branded header is single-sourced in `shell.css`.
