@@ -19,7 +19,7 @@ import { setProgress } from './dom.js';
 //     line-5-eval-to-line-1-eval gap (lower bound for "this move is worse").
 // ============================================================================
 
-async function ingest(username, numGames, depth, onProgress) {
+async function ingest(username, numGames, depth, onProgress, onGamePersist) {
   const alreadyIngested = loadIngestedGameUrls();
   const fetched = await fetchRecentRapidGames(username, numGames, alreadyIngested);
   const games = fetched.games;
@@ -62,6 +62,9 @@ async function ingest(username, numGames, depth, onProgress) {
 
   for (const { game, headers, userIsWhite, history } of parsedGames) {
     gameIndex++;
+    // One stable key per game for ALL its stores (scorecard/moves/meta) + the
+    // incremental persist below, so a re-sync overwrites cleanly.
+    const gameKey = game.url || game.uuid || ('game-' + gameIndex);
     const opponent = userIsWhite ? (headers.Black || 'opponent') : (headers.White || 'opponent');
     const dateStr = (headers.Date || '').replace(/\./g, '-');
     const result = headers.Result || '';
@@ -208,9 +211,9 @@ async function ingest(username, numGames, depth, onProgress) {
     // Spec 06 — finalize this game's scorecard now that we know the result
     // and have walked all the user's moves. eval_swing derives from the
     // markPhaseEntry('endgame') reading + the result.
+    let finalCard = null;
     if (scorecard) {
-      const finalCard = scorecard.finalize(resultForUser);
-      const gameKey = game.url || game.uuid || `game-${gameIndex}-${Date.now()}`;
+      finalCard = scorecard.finalize(resultForUser);
       newScorecards[gameKey] = finalCard;
     }
     const userRatingForGame = userIsWhite ? (game.white && game.white.rating) : (game.black && game.black.rating);
@@ -230,8 +233,7 @@ async function ingest(username, numGames, depth, onProgress) {
     });
     // Spec 11 — capture the full SAN move list (already in memory) for the
     // game-review replay. Keyed to match the mistake-record join in review.js.
-    const movesKey = game.url || game.uuid || ('game-' + gameIndex);
-    gameMoves[movesKey] = { moves: history.map((h) => h.san), userIsWhite, result, opponent, dateStr };
+    gameMoves[gameKey] = { moves: history.map((h) => h.san), userIsWhite, result, opponent, dateStr };
     // Spec 24 — per-game enrichment, already on the game object (~0 cost). Powers
     // the rating trajectory (rated flag filters noise), the accuracy cross-check
     // (accuracies are present only when a Game Review ran — null otherwise), and
@@ -241,7 +243,7 @@ async function ingest(username, numGames, depth, onProgress) {
     const oppAccuracy = acc ? (userIsWhite ? acc.black : acc.white) : null;
     const termination = userIsWhite ? (game.white && game.white.result) : (game.black && game.black.result);
     const oppTermination = userIsWhite ? (game.black && game.black.result) : (game.white && game.white.result);
-    gameMeta[movesKey] = {
+    gameMeta[gameKey] = {
       rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
       oppRating: (typeof oppRatingForGame === 'number') ? oppRatingForGame : null,
       endTime: game.end_time || null,
@@ -258,6 +260,23 @@ async function ingest(username, numGames, depth, onProgress) {
       termination: termination || null,
       oppTermination: oppTermination || null,
     };
+    // Incremental persistence — the bugfix for "sync stopped when I changed page".
+    // Persist THIS game now so leaving mid-sync keeps finished games and a re-sync
+    // resumes (this game is added to the ingested set → skipped next time).
+    if (typeof onGamePersist === 'function') {
+      try {
+        onGamePersist({
+          gameUrl: game.url || game.uuid || '',
+          key: gameKey,
+          mistakes: thinned,
+          scorecard: finalCard,
+          moves: gameMoves[gameKey],
+          meta: gameMeta[gameKey],
+          rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
+          endTime: game.end_time || null,
+        });
+      } catch (e) { /* best-effort; never break the run */ }
+    }
   }
 
   return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards, moves: gameMoves, meta: gameMeta };

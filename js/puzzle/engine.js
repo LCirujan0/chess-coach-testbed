@@ -8,6 +8,8 @@ import { $, setInlineStatus } from './dom.js';
 // runtime deps (called inside function bodies only — no top-level call, so cycles are safe)
 import { startThinkingGate } from './gate.js';
 import { renderBoard } from './board.js';
+import { getCurrentPuzzle } from './queue.js';
+import { markIntroLinesReady } from './intro.js';
 
 export function orientationFor(puzzle) {
   const userColor = puzzle.userColorName === 'Black' ? 'b'
@@ -126,8 +128,18 @@ export async function initStockfish() {
   $('coach-send').disabled = false;
   // Don't analyse if the queue is empty.
   if (state.phase === 'empty') return;
-  await analyzePosition(state.chess.fen(), STOCKFISH_DEPTH);
-  if (state.phase === 'idle') {
+  // First-load order is resetPuzzleStateAndRender() THEN initStockfish(), so the
+  // first puzzle's own analysis block is skipped (engine not ready yet) — this is
+  // the fallback that analyses it once the engine boots and settles the phase.
+  // In 'intro' the board may be mid-replay, so analyse the puzzle's SOLVE fen.
+  const _cur = getCurrentPuzzle && getCurrentPuzzle();
+  const analyseFen = (state.phase === 'intro' && _cur && _cur.fen) ? _cur.fen : state.chess.fen();
+  await analyzePosition(analyseFen, STOCKFISH_DEPTH);
+  if (state.phase === 'intro') {
+    // Mistake intro is showing — lines for the solve position are ready; enable
+    // "Solve it" (without this the first puzzle's intro stayed frozen).
+    markIntroLinesReady();
+  } else if (state.phase === 'idle') {
     if (state.reviewPuzzleId || state.mode === 'drill') {
       state.phase = 'playing';
     } else {

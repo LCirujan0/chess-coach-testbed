@@ -4,6 +4,17 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.75 — Four QA-found bug fixes (STAGED) (2026-06-09)
+
+From Jorge's preview QA of the v0.67–v0.73 batch.
+
+- **First puzzle froze (P0, a regression from the mistake-intro).** Boot order is `resetPuzzleStateAndRender()` THEN `initStockfish()`, so the first puzzle renders before the engine is ready and its own analysis block is skipped. `initStockfish` self-heals that by analysing + settling the phase — but its check was `if (state.phase === 'idle')`, and the intro sets `phase='intro'`, so it never called `markIntroLinesReady()` → the intro's "Solve it" stayed disabled forever (clicking Next loaded the next puzzle once the engine was up, which is why that worked). **Fix:** `engine.js` now handles the `intro` phase on engine-ready — analyses the puzzle's solve fen (the board may be mid-replay) and calls `markIntroLinesReady()`. Verified headlessly: seed a mistake → intro shows → "Solve it" enables.
+- **Sync stopped on navigation, lost progress (P1).** `ingest()` persisted everything only at the END, so leaving mid-sync lost the whole run. **Fix:** ingest now persists **per game** via an `onGamePersist` callback (`boot.js persistGameIncrementally`) — mistakes/scorecard/moves/meta/rating-history + marks the game ingested — so finished games survive and a re-sync **resumes** (ingested games are skipped). Plus a `beforeunload` warning + "keep this page open" copy (client-side sync can't run in the background — no service worker). Also unified the per-game storage key (scorecard key had a stray `Date.now()`, diverging from moves/meta).
+- **Insights rating chart was a flat line (P1).** `renderTrajectory` included the 1500 TARGET in the y-scale, so a 950–1100 player's real movement was squashed into a sliver. **Fix:** scale to the **data** range (with a floor + padding); draw the target line only if 1500 falls in the visible band; add a readable "▲ +N over your last K snapshots" caption.
+- **Insights looked empty with no games (P1).** There was a prompt, but behind a lonely "—" rating strip + empty trajectory. **Fix:** the no-games state is now a clear, prominent "Sync your games to unlock Insights" hero with the Sync button; the sparse strip is dropped when there's no rating.
+
+---
+
 ## v0.74 — Coach's read: the retention moat (variable, data-grounded reward) (STAGED) (2026-06-09)
 
 The E-moat slice from `../../docs/retention-and-gamification.md` (#5) — built on a separate `continue-build` branch so the v0.67→v0.73 preview stays stable for QA.

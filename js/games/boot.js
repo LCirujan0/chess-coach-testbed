@@ -18,6 +18,36 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   setProgress('Unhandled rejection: ' + (e.reason?.message || String(e.reason)), 100, 'error');
 });
+// Persist ONE game's results as it finishes (called per-game from ingest) so a
+// mid-sync navigation keeps finished games and a re-sync resumes. Best-effort —
+// every step is guarded so a storage hiccup never breaks the run.
+function persistGameIncrementally(g) {
+  if (!g) return;
+  try { if (Array.isArray(g.mistakes) && g.mistakes.length) saveMistakes(mergeMistakes(loadMistakes(), g.mistakes)); } catch (e) {}
+  const mergeOne = (key, val) => {
+    if (!val || !g.key) return;
+    try { const o = JSON.parse(localStorage.getItem(key) || '{}') || {}; o[g.key] = val; localStorage.setItem(key, JSON.stringify(o)); } catch (e) {}
+  };
+  mergeOne('chess-coach-game-scorecards-v1', g.scorecard);
+  mergeOne('chess-coach-game-moves-v1', g.moves);
+  mergeOne('chess-coach-game-meta-v1', g.meta);
+  if (typeof g.rating === 'number' && g.endTime) {
+    try {
+      const KEY = 'chess-coach-rating-history-v1';
+      let h = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.isArray(h)) h = [];
+      const at = new Date(g.endTime * 1000).toISOString();
+      if (!h.some((p) => p && p.at === at)) {
+        h.push({ rating: g.rating, at });
+        h.sort((a, b) => new Date(a.at) - new Date(b.at));
+        localStorage.setItem(KEY, JSON.stringify(h));
+        const latest = h[h.length - 1];
+        if (latest) localStorage.setItem('chess-coach-user-rating-v1', JSON.stringify({ rating: latest.rating, fetchedAt: new Date().toISOString() }));
+      }
+    } catch (e) {}
+  }
+  if (g.gameUrl) { try { const set = loadIngestedGameUrls(); set.add(g.gameUrl); saveIngestedGameUrls(set); } catch (e) {} }
+}
+
 async function handleIngestSubmit(e) {
   e.preventDefault();
   if (state.busy) return;
@@ -29,14 +59,18 @@ async function handleIngestSubmit(e) {
   state.busy = true;
   $('ingest-btn').disabled = true;
   $('ingest-btn').textContent = 'Analysing…';
-  setProgress('Fetching games from Chess.com…', 5);
+  setProgress('Fetching games… keep this page open while it syncs.', 5);
+  // Sync is client-side — it can't continue in the background, so warn before
+  // leaving. Finished games persist incrementally, so a re-sync resumes.
+  const warnLeave = (ev) => { ev.preventDefault(); ev.returnValue = ''; return ''; };
+  window.addEventListener('beforeunload', warnLeave);
 
   try {
     const { mistakes: fresh, perGameSummary, scorecards, moves, meta } = await ingest(username, numGames, depth, (done, total, label) => {
       const pct = total > 0 ? (done / total) * 100 : 0;
       const prefix = label || `Analysing positions`;
-      setProgress(`${prefix} — ${done}/${total} positions`, pct);
-    });
+      setProgress(`${prefix} — ${done}/${total} · keep this page open`, pct);
+    }, persistGameIncrementally);
 
     // Persist mistakes (de-duplicated by id).
     const merged = mergeMistakes(loadMistakes(), fresh);
@@ -125,6 +159,7 @@ async function handleIngestSubmit(e) {
   } catch (err) {
     setProgress('Error: ' + err.message, 100, 'error');
   } finally {
+    window.removeEventListener('beforeunload', warnLeave);
     state.busy = false;
     $('ingest-btn').disabled = !state.engineReady;
     $('ingest-btn').textContent = 'Load and analyse';

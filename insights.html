@@ -219,18 +219,28 @@
     var wrap = $('traj-wrap'); if (!wrap) return;
     var points = ratingHistory.slice();
     if (currentRating != null) { var last = points[points.length - 1]; if (!last || last.rating !== currentRating) points.push({ rating: currentRating, at: new Date().toISOString() }); }
-    if (points.length < 2) { wrap.innerHTML = '<div class="traj-empty">Trajectory builds as your rating moves — two snapshots minimum.</div>'; return; }
+    if (points.length < 2) { wrap.innerHTML = '<div class="traj-empty">Trajectory builds as your rating moves — sync a few games.</div>'; return; }
     var ratings = points.map(function (p) { return p.rating; });
-    var yMin = Math.min.apply(null, ratings.concat([TARGET])) - 25, yMax = Math.max.apply(null, ratings.concat([TARGET])) + 25;
+    // Scale to the DATA range (NOT the 1500 target). Including TARGET squashed a
+    // 950–1100 player's line into a flat sliver — the movement was invisible.
+    var dMin = Math.min.apply(null, ratings), dMax = Math.max.apply(null, ratings);
+    var span = Math.max(20, dMax - dMin);          // floor so a small move isn't a hairline
+    var pad = span * 0.30, yMin = dMin - pad, yMax = dMax + pad;
     var W = 320, H = 46, PADT = 5, PADB = 5, innerH = H - PADT - PADB;
     var xOf = function (i) { return (i / (points.length - 1)) * W; };
     var yOf = function (r) { return PADT + (1 - (r - yMin) / (yMax - yMin)) * innerH; };
     var d = points.map(function (p, i) { return (i === 0 ? 'M' : 'L') + xOf(i).toFixed(1) + ',' + yOf(p.rating).toFixed(1); }).join(' ');
-    var tY = yOf(TARGET);
+    // Target line only if 1500 actually falls in the visible band (else it would
+    // re-squash the data); the strip already shows "X to 1500".
+    var targetLine = (TARGET >= yMin && TARGET <= yMax)
+      ? '<line x1="0" y1="' + yOf(TARGET).toFixed(1) + '" x2="' + W + '" y2="' + yOf(TARGET).toFixed(1) + '" stroke="#1F9D57" stroke-width="1" stroke-dasharray="3,4" opacity=".5"/>' : '';
+    var net = ratings[ratings.length - 1] - ratings[0];
+    var cap = (net === 0 ? 'Holding steady' : (net > 0 ? '▲ +' + net : '▼ ' + net)) + ' over your last ' + points.length + ' snapshots';
     wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-label="Rating trajectory">' +
-      '<line x1="0" y1="' + tY.toFixed(1) + '" x2="' + W + '" y2="' + tY.toFixed(1) + '" stroke="#1F9D57" stroke-width="1" stroke-dasharray="3,4" opacity=".5"/>' +
+      targetLine +
       '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
-      points.map(function (p, i) { return '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(p.rating).toFixed(1) + '" r="2.2" fill="var(--accent)"/>'; }).join('') + '</svg>';
+      points.map(function (p, i) { return '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(p.rating).toFixed(1) + '" r="2.2" fill="var(--accent)"/>'; }).join('') + '</svg>' +
+      '<div class="traj-cap" style="font-size:10.5px;color:var(--muted);margin-top:2px;text-align:right;">' + esc(cap) + '</div>';
   }
 
   // ---- rating profile block (C-surface payoff): peak / record / tactics / RD ----
@@ -443,9 +453,17 @@
   }
   var anyPhase = ['opening', 'middlegame', 'endgame'].some(function (p) { return phases[p] && phases[p].status !== 'no data'; });
   if (!anyPhase) {
-    root.innerHTML = ratingStripHtml() + ratingBlockHtml() +
-      '<div class="panel"><div class="empty-state">Not enough games yet. Phase scores need a few analysed games — sync from Chess.com and they appear here.<br><a class="btn" href="/games.html">Sync games</a></div></div>';
-    renderTrajectory();
+    // No analysed games yet — a clear, prominent prompt (not a sparse "—" strip).
+    var hasRating = currentRating != null;
+    root.innerHTML =
+      (hasRating ? ratingStripHtml() : '') +
+      '<div class="panel"><div class="empty-state" style="padding:30px 20px;">' +
+        '<div style="font-size:30px;margin-bottom:8px;">📊</div>' +
+        '<div style="font-size:15px;font-weight:700;color:var(--ink);font-family:\'Plus Jakarta Sans\',sans-serif;margin-bottom:6px;">Sync your games to unlock Insights</div>' +
+        'Connect Chess.com and the coach analyses your games — your rating trajectory, phase strengths, and exactly where you go wrong.' +
+        '<br><a class="btn" href="/games.html">Sync games</a>' +
+      '</div></div>';
+    if (hasRating) renderTrajectory();
     return;
   }
 
