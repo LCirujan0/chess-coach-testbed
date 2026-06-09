@@ -142,6 +142,7 @@ function beginLine(opening, line) {
     line,
     chess,
     moves: line.moves,        // SAN strings from the start
+    whys: line.whys || [],    // per-move coach explanation (the WHY), parallel to moves
     idx: 0,                   // index of the next move to be played
     side: opening.side === 'b' ? 'b' : 'w',
     sel: null,                // selected origin square (algebraic) or null
@@ -166,6 +167,7 @@ function advance() {
   if (D.idx >= D.moves.length) { finishLine(); return; }
   D.sel = null;
   renderBoard();
+  showWhy(D.idx - 1); // explain the move that led to this position (opponent's reply)
   const ply = D.idx; // user's move number for display
   const moveNo = Math.floor(ply / 2) + 1;
   $('op-prompt').innerHTML = `Your move — find <b>${esc(D.side === 'w' ? 'White' : 'Black')}</b>'s book move (move ${moveNo}). Tap the piece, then its destination.`;
@@ -191,6 +193,16 @@ function renderBoard(lastMove) {
   if (D.sel) markSquare(D.sel, 'op-sel');
 }
 function markSquare(alg, cls) { const sq = D.boardEl.querySelector(`.square[data-square="${alg}"]`); if (sq) sq.classList.add(cls); }
+
+// Show the coach's "why" for the move at `ply` (the one that produced the current
+// position). Hidden when there's no note (e.g. the very first prompt). This is the
+// ChessReps-style per-move explanation — understanding the WHY, not just the move.
+function showWhy(ply) {
+  const card = $('op-why-card'); if (!card) return;
+  const why = (ply >= 0 && D && Array.isArray(D.whys) && D.whys[ply]) ? D.whys[ply] : '';
+  if (why) { $('op-why').textContent = why; card.classList.remove('hidden'); }
+  else { card.classList.add('hidden'); }
+}
 
 // Delegated tap on the static board: first tap selects an origin with a friendly
 // piece; second tap attempts the move origin->destination. We validate with
@@ -232,8 +244,9 @@ function attemptMove(from, to) {
     D.chess.move({ from, to, promotion: 'q' });
     D.idx++;
     renderBoard({ from, to });
+    showWhy(D.idx - 1); // explain the move the user just found
     flash(true, `${expectedSan} — correct`);
-    setTimeout(advance, 650);
+    setTimeout(advance, 1200);
   } else {
     D.perfect = false;
     D.sel = null;
@@ -244,7 +257,8 @@ function attemptMove(from, to) {
       const m = D.chess.move(D.moves[D.idx]);
       D.idx++;
       renderBoard(m ? { from: m.from, to: m.to } : null);
-      setTimeout(advance, 850);
+      showWhy(D.idx - 1); // explain the correct move now that it's revealed
+      setTimeout(advance, 1100);
     }, 1100);
   }
 }

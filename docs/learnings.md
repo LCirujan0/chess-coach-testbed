@@ -4,6 +4,16 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.77 — Vienna openings enriched (Stockfish-verified, every move explained) + SRS due-count (STAGED) (2026-06-09)
+
+Two asks. The openings one was done ChessReps-style with real care.
+
+- **Vienna repertoire — 22 lines, every move explained, Stockfish-verified.** `data/openings/vienna.json` (v2) now has 22 sound lines (was 6), each with a parallel **`whys`** array — a coach explanation of the WHY for every ply (kept parallel to `moves` so the SRS/validation code is untouched). Surfaced in the drill as a **"Why this move"** coach panel (`#op-why-card`) that updates with each move (`js/openings/boot.js showWhy`), plus the slide animation; verified in-browser ("1.e4 — grab the centre…").
+- **Stockfish verification harness** (`qa/scripts/verify-openings.cjs`) — loads the **bundled engine** (`/engine/stockfish-17.1-lite-single`) + chess.js in a headless page, replays each line (legality), and evaluates **every White move** at depth 13 MultiPV 5; for moves outside the top 5 it also evals the resulting position to get the move's TRUE cp. **Findings + fixes:** all 22 lines legal; it caught a real blunder (`bc4-nf6-solid` 6.Bb3 = −216cp → fixed to exd5) and a −330cp slip (`gambit-accepted-ne7` 7.Bxf4 → 7.h4), and I swapped two ~100–120cp sidelines (3.Na4, 4.Nf3-accepted) for sound lines. **Key insight:** the gambit move `3.f4` is flagged at ~40–65cp "worse" — that's just Stockfish underrating gambits (the accepted tax); it's the aggressive Vienna the owner asked for, so it's kept. `bc4-nf6-trap` 6.Nb5 actually evaluated **−112 (better than the engine's depth-13 top pick)**. Final: worst non-gambit move is 56cp — all sound.
+- **SRS due-count** surfaced as the top-priority **coach's read** on Today ("N patterns are due for review — a few minutes locks them in"): `CoachStats.coachRead` takes a `reviewDue` count (weight 6, outranks the rest when ≥3); today.html computes it via `ReviewSRS.dueCount`.
+
+---
+
 ## v0.76 — Piece animation everywhere + SRS spaced-review + mastery milestones (STAGED) (2026-06-09)
 
 Three requested items.

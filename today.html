@@ -439,7 +439,8 @@
     var pv = null;
     try { pv = CoachStats.ratingProfileView(loadJson(KEY_PROFILE, null)); } catch (e) {}
     var hist = loadJson(KEY_HISTORY, []);
-    var r = CoachStats.coachRead({ view: view, profile: pv, history: Array.isArray(hist) ? hist : [], streak: streakInfo, dayKey: TODAY });
+    var reviewDue = (typeof ReviewSRS !== 'undefined') ? ReviewSRS.dueCount(mistakes, attempts, Date.now()) : 0;
+    var r = CoachStats.coachRead({ view: view, profile: pv, history: Array.isArray(hist) ? hist : [], streak: streakInfo, reviewDue: reviewDue, dayKey: TODAY });
     return (r && r.text) ? esc(r.text) : coachFraming();
   }
 

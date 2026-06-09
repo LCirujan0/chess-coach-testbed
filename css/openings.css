@@ -60,6 +60,12 @@
 .op-prompt { font-size: 15px; line-height: 1.5; }
 .op-idea-card .op-panel-h { margin-bottom: 6px; }
 .op-idea { font-size: 13px; line-height: 1.5; color: var(--muted); }
+/* Per-move coach "why" (ChessReps-style) — the reason behind the move. */
+.op-why-card { border-left: 3px solid var(--accent); }
+.op-why-card.hidden { display: none; }
+.op-why-h { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.op-why-ava { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
+.op-why { font-size: 13.5px; line-height: 1.5; color: var(--ink); }
 .op-feedback { min-height: 22px; font-size: 14px; font-weight: 600; text-align: center; }
 .op-feedback.ok { color: var(--pos); }
 .op-feedback.bad { color: var(--bad); }

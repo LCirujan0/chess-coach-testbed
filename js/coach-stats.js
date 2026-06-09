@@ -419,6 +419,13 @@
     var history = Array.isArray(input.history) ? input.history.filter(function(h){return h && typeof h.rating==='number';}) : [];
     var reads = [];
 
+    // 0) Spaced-review due (SRS) — the most ACTIONABLE nudge, so it outranks the
+    // rest when there's a meaningful backlog. Count is passed in by the caller.
+    if (typeof input.reviewDue === 'number' && input.reviewDue >= 3) {
+      reads.push({ kind:'review-due', weight:6,
+        text: input.reviewDue + ' patterns are due for review — a few minutes today locks them back in before they fade.' });
+    }
+
     // 1) Trajectory — the moat: net rapid change over the recent window.
     if (history.length >= 2){
       var win = history.slice(-20);

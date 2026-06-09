@@ -1,45 +1,472 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "vienna",
   "name": "Vienna Game",
   "eco": "C25–C29",
   "side": "w",
+  "blurb": "1.e4 e5 2.Nc3 — develop, hold e4, and keep the f2–f4 break in reserve. An aggressive, principled White repertoire built around the Vienna Gambit.",
   "lines": [
     {
-      "id": "main-bc4",
-      "name": "Vienna — Classical 3.Bc4",
-      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Nc6", "d3", "Bb4", "Nge2", "d6", "O-O"],
-      "idea": "Calm classical setup: develop the bishop to c4 eyeing f7, support e4 with d3, and route the knight via e2 so the c-pawn and f-pawn stay free. Castle and play for f4 later."
+      "id": "gambit-main",
+      "name": "Vienna Gambit — Main Line",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "d4", "O-O"],
+      "whys": [
+        "1.e4 — grab the centre and free the bishop and queen. The backbone of every aggressive repertoire.",
+        "1…e5 — Black stakes an equal claim in the centre.",
+        "2.Nc3 — the Vienna. Develop, defend e4, and keep f2–f4 in reserve so the centre stays flexible.",
+        "2…Nf6 — Black develops and attacks e4.",
+        "3.f4 — the Vienna Gambit. Hit e5 and open the f-file for a kingside attack before Black is castled.",
+        "3…d5 — the critical reply. Black counter-strikes in the centre instead of grabbing on f4.",
+        "4.fxe5 — take, and the e5-pawn now drives the f6-knight; the centre opens in your favour.",
+        "4…Nxe4 — Black recovers the pawn, but the knight on e4 is active and a little loose.",
+        "5.Nf3 — develop with tempo, prepare d4, and cover e5/g5. (5.Qf3 is the sharp alternative.)",
+        "5…Be7 — Black develops solidly and prepares to castle.",
+        "6.d4 — build the broad centre. The e5-pawn cramps Black and the c1-bishop springs to life.",
+        "6…O-O — Black castles. You have a strong centre and natural pressure down the f-file."
+      ],
+      "idea": "f4 rips open the f-file; after …d5 fxe5 Nxe4, build with Nf3 and d4 for a powerful centre and kingside attack."
+    },
+    {
+      "id": "gambit-qf3",
+      "name": "Vienna Gambit — 5.Qf3 (Sharp)",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Qf3", "Nxc3", "bxc3", "Be7", "d4"],
+      "whys": [
+        "1.e4 — open lines and seize the centre.",
+        "1…e5 — the classical reply.",
+        "2.Nc3 — the Vienna; defend e4 and keep f4 ready.",
+        "2…Nf6 — develop and hit e4.",
+        "3.f4 — the gambit: pry open the f-file.",
+        "3…d5 — the principled central counter.",
+        "4.fxe5 — capture; the knight on f6 must move and Black's centre comes under fire.",
+        "4…Nxe4 — Black wins the pawn back on e4.",
+        "5.Qf3 — double-attack: hit the e4-knight AND eye f7. The most forcing try.",
+        "5…Nxc3 — Black trades off the attacked knight before it's lost.",
+        "6.bxc3 — recapture toward the centre; the half-open b-file and big pawn centre favour White.",
+        "6…Be7 — Black develops and braces to castle.",
+        "7.d4 — claim the full centre; with the open f-file and bishop pair, White is comfortably better."
+      ],
+      "idea": "5.Qf3 hits the e4-knight and f7 at once. After …Nxc3 bxc3, White gets a strong centre, the bishop pair, and the open f-file."
+    },
+    {
+      "id": "gambit-bg4",
+      "name": "Vienna Gambit — 5…Bg4",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Bg4", "Qe2", "Nxc3", "dxc3"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — equal stake.",
+        "2.Nc3 — Vienna; hold e4, keep f4.",
+        "2…Nf6 — develop, hit e4.",
+        "3.f4 — gambit, open the f-file.",
+        "3…d5 — central counter.",
+        "4.fxe5 — take; the centre opens.",
+        "4…Nxe4 — regain the pawn.",
+        "5.Nf3 — develop with tempo, prepare d4.",
+        "5…Bg4 — Black pins the f3-knight to add pressure on e5.",
+        "6.Qe2 — break the pin's sting: defend e4-ideas, prepare to castle, and leave the e4-knight hanging.",
+        "6…Nxc3 — Black trades before the knight drops.",
+        "7.dxc3 — recapture, open the d-file for the queen and free the c1-bishop. White is comfortable with the better structure."
+      ],
+      "idea": "Meet the …Bg4 pin with Qe2: the e4-knight is loose, and after the trade White opens lines with a healthy pull."
+    },
+    {
+      "id": "gambit-bc5",
+      "name": "Vienna Gambit — 5…Bc5",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Bc5", "d4", "Bb6", "Bd3"],
+      "whys": [
+        "1.e4 — seize the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna setup.",
+        "2…Nf6 — hit e4.",
+        "3.f4 — the gambit.",
+        "3…d5 — the right counter.",
+        "4.fxe5 — open the centre.",
+        "4…Nxe4 — recover the pawn.",
+        "5.Nf3 — develop, eye d4.",
+        "5…Bc5 — Black aims the bishop at f2, discouraging an early O-O.",
+        "6.d4 — gain a tempo by hitting the c5-bishop while building the centre.",
+        "6…Bb6 — the bishop retreats but stays active on the a7–g1 diagonal.",
+        "7.Bd3 — challenge the strong e4-knight and prepare to castle; the big centre gives White the edge."
+      ],
+      "idea": "Against …Bc5, play d4 with tempo and Bd3 to challenge the e4-knight — your centre and development outweigh Black's bishop."
     },
     {
       "id": "gambit-accepted",
-      "name": "Vienna Gambit — Accepted",
-      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "e5", "Qe7", "Qe2", "Ng8", "Nf3", "d6"],
-      "idea": "The Vienna Gambit: 3.f4 strikes at e5. After ...exf4 the e5 push gains time on the f6-knight, and Qe2 holds the centre. White trades the f4-pawn back later with active piece play down the f-file."
+      "name": "Vienna Gambit — Accepted (3…exf4)",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "e5", "Ng8", "Nf3", "d6", "d4"],
+      "whys": [
+        "1.e4 — open the game.",
+        "1…e5 — classical.",
+        "2.Nc3 — the Vienna.",
+        "2…Nf6 — develop and hit e4.",
+        "3.f4 — the gambit pawn.",
+        "3…exf4 — Black accepts, grabbing on f4.",
+        "4.e5 — the point: gain space and kick the f6-knight before Black is organised.",
+        "4…Ng8 — the knight is shoved all the way back; Black has lost development time.",
+        "5.Nf3 — develop, eye the loose f4-pawn and the kingside.",
+        "5…d6 — Black strikes at the e5-spearhead to free his game.",
+        "6.d4 — support the e5-wedge and complete a dominant centre. Black is cramped and badly behind in development while White has a big space edge and the f-file — full value for the pawn."
+      ],
+      "idea": "Accept the gambit with the e5! push — kicking the knight back and building a big centre with Nf3/d4; the lead in space and development outweighs the pawn."
     },
     {
-      "id": "gambit-declined-d5",
-      "name": "Vienna Gambit — Declined with 3...d5",
-      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "d4", "O-O"],
-      "idea": "Black's best reply 3...d5 counterstrikes in the centre. Take on e5, let Black grab e4, then build a broad pawn centre with Nf3 and d4. White has a healthy space advantage and the e5-pawn cramps Black."
+      "id": "gambit-accepted-g5",
+      "name": "Vienna Gambit — Accepted, …g5 Hold",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "f4", "exf4", "Nf3", "g5", "h4", "g4", "Ng5", "h6", "Nxf7"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nc6 — Black develops the knight first.",
+        "3.f4 — the gambit.",
+        "3…exf4 — accepted.",
+        "4.Nf3 — develop and stop …Qh4+ ideas while eyeing the loose f4-pawn.",
+        "4…g5 — Black grimly tries to hold the extra pawn with the pawn chain.",
+        "5.h4 — strike at the over-extended g5-pawn before the chain solidifies.",
+        "5…g4 — Black pushes on, but this loosens his kingside fatally.",
+        "6.Ng5 — leap into g5; the knight eyes f7 and h7 with Black's king stuck in the centre.",
+        "6…h6 — Black tries to evict the knight.",
+        "7.Nxf7 — the classic sacrifice: rip open f7 and win material or the king. This is why grabbing-and-holding the f-pawn is dangerous for Black."
+      ],
+      "idea": "If Black clings to the gambit pawn with …g5, blast it open with h4 and the Ng5–xf7 sacrifice — the king is too exposed."
     },
     {
-      "id": "falkbeer-style",
-      "name": "Vienna Gambit — 3...exf4 sideline",
-      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "Nf3", "g5", "h4", "g4", "Ng5", "h6"],
-      "idea": "If Black tries to cling to the f4-pawn with ...g5, undermine the pawn chain with h4. The knight jumps to g5 hitting f7; Black must spend time defending while White's attack rolls on the kingside."
+      "id": "gambit-decline-d3",
+      "name": "Vienna Gambit — Declined (4.d3)",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "d3", "exf4", "Bxf4", "dxe4", "dxe4", "Qxd1+", "Kxd1"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — hit e4.",
+        "3.f4 — gambit.",
+        "3…d5 — central counter.",
+        "4.d3 — the calm, sound option: reinforce e4 and keep control rather than enter the wildest theory.",
+        "4…exf4 — Black grabs on f4.",
+        "5.Bxf4 — develop the bishop to an active square and open the f-file.",
+        "5…dxe4 — Black opens the centre and offers a queen trade.",
+        "6.dxe4 — recapture; the position simplifies with a pleasant, easy game for White.",
+        "6…Qxd1+ — Black trades queens.",
+        "7.Kxd1 — recapture with the king; the endgame is comfortable — active bishop, open f-file, and the safer structure."
+      ],
+      "idea": "Prefer a quieter game? 4.d3 keeps a firm grip on e4; after the central trades White has an easy, slightly better position."
     },
     {
-      "id": "early-bc5",
-      "name": "Vienna — 2...Nc6 with Bc4",
-      "moves": ["e4", "e5", "Nc3", "Nc6", "Bc4", "Bc5", "Qg4", "Qf6", "Nd5", "Qxf2"],
-      "idea": "Against the natural 2...Nc6 3...Bc5, the aggressive Qg4 hits g7 and pressures f7. Nd5 piles in with threats on c7 and f6. A sharp tactical line where White seizes the initiative early."
+      "id": "bc4-nf6-trap",
+      "name": "Vienna — Bishop's Setup, 3…Nxe4 4.Qh5!",
+      "eco": "C26",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Nxe4", "Qh5", "Nd6", "Bb3", "Nc6", "Nb5"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.Bc4 — the Bishop's setup: aim at f7 and keep d3 or f4 in reserve.",
+        "3…Nxe4? — the tempting but flawed grab. The knight wins a pawn but exposes the king.",
+        "4.Qh5! — the refutation: double-attack on e5 and (mate on) f7.",
+        "4…Nd6 — the only move: block the queen's path to f7 and hit the c4-bishop.",
+        "5.Bb3 — keep the strong bishop aimed at f7 instead of trading it.",
+        "5…Nc6 — Black defends e5 with the knight.",
+        "6.Nb5 — pile onto the weak d6/c7 squares; Black is tangled up and White regains the pawn with a big initiative."
+      ],
+      "idea": "Punish the greedy 3…Nxe4 with 4.Qh5! — the double attack on e5 and f7 leaves Black's pieces hanging and his king exposed."
     },
     {
-      "id": "max-lange",
-      "name": "Vienna — 3.g3 fianchetto",
-      "moves": ["e4", "e5", "Nc3", "Nf6", "g3", "Bc5", "Bg2", "Nc6", "Nge2", "d6", "O-O", "a6"],
-      "idea": "A quieter positional try: fianchetto the bishop to g2 to pressure the long diagonal and the d5/e4 squares. Castle short, complete development with Nge2, and prepare d3 and f4 for a slow kingside expansion."
+      "id": "bc4-nf6-solid",
+      "name": "Vienna — Bishop's Setup, 3…Nc6",
+      "eco": "C26",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Nc6", "d3", "Bb4", "Nge2", "d5", "exd5", "Nxd5", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.Bc4 — the Bishop's setup, eyeing f7.",
+        "3…Nc6 — Black develops solidly and declines the e4-grab.",
+        "4.d3 — support e4 and open the c1-bishop; a flexible, sound centre.",
+        "4…Bb4 — Black pins the c3-knight.",
+        "5.Nge2 — unpin smartly: re-route the knight toward g3/f5 and keep e4 solid.",
+        "5…d5 — Black strikes in the centre.",
+        "6.exd5 — meet the central break head-on, before Black gets in …d4 or …dxe4 with tempo.",
+        "6…Nxd5 — Black recaptures with the knight.",
+        "7.O-O — castle to safety; the c4-bishop eyes d5/f7 and White has a sound, slightly freer game with f4 and a3/Bd2 still to come."
+      ],
+      "idea": "If Black avoids the …Nxe4 trap, play the quiet d3/Nge2 setup and meet …d5 with exd5 — a sound, slightly freer game with f4 in reserve."
+    },
+    {
+      "id": "frankenstein-dracula",
+      "name": "Frankenstein–Dracula Variation",
+      "eco": "C27",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Nxe4", "Qh5", "Nd6", "Bb3", "Nc6", "Nb5", "g6", "Qf3", "f5", "Qd5"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.Bc4 — Bishop's setup.",
+        "3…Nxe4 — Black accepts the wild challenge.",
+        "4.Qh5 — double attack on e5 and f7.",
+        "4…Nd6 — block f7 and hit the bishop.",
+        "5.Bb3 — keep the bishop trained on f7.",
+        "5…Nc6 — defend e5.",
+        "6.Nb5 — hit the d6-knight and the c7-square.",
+        "6…g6 — Black must kick the queen.",
+        "7.Qf3 — keep the queen active, renewing pressure on f7 and the long light squares.",
+        "7…f5 — Black blocks the diagonal but weakens e6/e5.",
+        "8.Qd5 — the famous re-route: the queen lands on d5, forking the c6-knight and hitting f7/c7. White emerges on top from the chaos."
+      ],
+      "idea": "The sharpest Bishop's-setup line. After 3…Nxe4 4.Qh5 Nd6 5.Bb3, the Nb5/Qf3–d5 manoeuvre wins material amid the complications."
+    },
+    {
+      "id": "nc6-bc4-bc5",
+      "name": "Vienna — 2…Nc6 3.Bc4 Bc5",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "Bc4", "Bc5", "d3", "d6", "Nf3", "Nf6", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nc6 — Black develops the knight.",
+        "3.Bc4 — eye f7 and prepare a kingside build-up.",
+        "3…Bc5 — Black mirrors, aiming at f2.",
+        "4.d3 — solidify e4 and open the c1-bishop.",
+        "4…d6 — Black props up e5 and frees his light bishop.",
+        "5.Nf3 — develop and add pressure to e5; here an early f4 is premature, so build soundly instead.",
+        "5…Nf6 — Black develops and eyes e4.",
+        "6.O-O — castle into a healthy Italian-type middlegame; the f4-break and the Nd5 jump stay in reserve for the right moment."
+      ],
+      "idea": "Against …Nc6/…Bc5, don't rush f4 — play d3 and develop soundly with Nf3/O-O, keeping the f4-break and the Nd5 jump for when they really bite."
+    },
+    {
+      "id": "nc6-bc4-nf6",
+      "name": "Vienna — 2…Nc6 3.Bc4 Nf6",
+      "eco": "C26",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "Bc4", "Nf6", "d3", "Bb4", "Bg5", "h6", "Bxf6", "Qxf6"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nc6 — develop.",
+        "3.Bc4 — Bishop's setup.",
+        "3…Nf6 — Black develops and eyes e4.",
+        "4.d3 — keep e4 solid; a sound Italian-like structure.",
+        "4…Bb4 — Black pins the knight.",
+        "5.Bg5 — pin back: pile pressure on f6 to soften Black's grip on e4.",
+        "5…h6 — Black questions the bishop.",
+        "6.Bxf6 — take; the trade hands you the bishop pair and damages nothing of yours.",
+        "6…Qxf6 — Black recaptures with the queen; White follows with Nd5, hitting the queen and c7 with tempo."
+      ],
+      "idea": "Meet …Nc6/…Nf6 with d3 and Bg5; the Bxf6 trade plus Nd5 gives White the bishop pair and tempo-gaining play on c7/e7."
+    },
+    {
+      "id": "bc5-nf3",
+      "name": "Vienna — 2…Bc5 3.Nf3",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Bc5", "Nf3", "d6", "Bc4", "Nf6", "d3", "Nc6", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Bc5 — Black develops the bishop to its most active diagonal.",
+        "3.Nf3 — develop and immediately pressure e5; the most natural, principled reply.",
+        "3…d6 — Black props up e5.",
+        "4.Bc4 — train the bishop on f7 and prepare to castle; a sound Italian-type set-up.",
+        "4…Nf6 — Black develops.",
+        "5.d3 — keep e4 firm and open the c1-bishop.",
+        "5…Nc6 — Black completes development.",
+        "6.O-O — castle into a healthy, slightly more comfortable middlegame, with the f4-break and Nd5 ideas in reserve."
+      ],
+      "idea": "Against the early …Bc5, develop naturally with Nf3 and Bc4 into a sound Italian-type set-up — keeping f4 and Nd5 in reserve."
+    },
+    {
+      "id": "nc6-f4-d6",
+      "name": "Vienna Gambit — 2…Nc6 3.f4 d6",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "f4", "d6", "Nf3", "exf4", "d4"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nc6 — develop.",
+        "3.f4 — the gambit.",
+        "3…d6 — Black supports e5 instead of taking; solid but passive.",
+        "4.Nf3 — develop and add a second attacker to e5.",
+        "4…exf4 — Black takes now that e5 is pressured.",
+        "5.d4 — seize the full centre and open lines toward Black's king; with a big lead in development and the half-open f-file, White has more than enough for the pawn."
+      ],
+      "idea": "If Black props up e5 with …d6, develop with Nf3 and seize the centre with d4 — the lead in development and the open f-file outweigh the gambit pawn."
+    },
+    {
+      "id": "nf6-bc4-bc5",
+      "name": "Vienna — Bishop's Setup, …Bc5",
+      "eco": "C26",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Bc5", "Nf3", "Nc6", "d3", "d6", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.Bc4 — the Bishop's setup, eyeing f7.",
+        "3…Bc5 — Black develops symmetrically, aiming at f2.",
+        "4.Nf3 — develop and pressure e5 — calm, principled, and sidestepping any …Nxe4 tricks.",
+        "4…Nc6 — Black defends e5.",
+        "5.d3 — keep e4 solid and open the c1-bishop.",
+        "5…d6 — Black supports the centre.",
+        "6.O-O — castle into a sound Italian-type middlegame; the f4-break and the Nd5 jump are there for later."
+      ],
+      "idea": "If Black meets the Bishop's setup with …Bc5, develop calmly with Nf3/d3/O-O into a solid Italian-type game — keeping f4 and Nd5 in reserve."
+    },
+    {
+      "id": "d6-philidor-ish",
+      "name": "Vienna — 2…d6",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "d6", "f4", "exf4", "Nf3", "Nf6", "d4", "Be7", "Bxf4"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…d6 — a passive Philidor-like set-up that concedes central space.",
+        "3.f4 — punish the passivity by opening the centre at once.",
+        "3…exf4 — Black takes.",
+        "4.Nf3 — develop and stop …Qh4+.",
+        "4…Nf6 — Black develops.",
+        "5.d4 — take the whole centre while Black is cramped.",
+        "5…Be7 — Black develops toward castling.",
+        "6.Bxf4 — recover the pawn with a beautifully active bishop; White enjoys a big centre and a clear space advantage."
+      ],
+      "idea": "Against the passive …d6, strike with f4 and seize the centre with d4 — then Bxf4 regains the pawn with a dominant position."
+    },
+    {
+      "id": "g6-modern",
+      "name": "Vienna — 2…g6 (Modern)",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "g6", "f4", "exf4", "Nf3", "Bg7", "d4", "d6", "Bxf4"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…g6 — Black fianchettoes, but spends a move not contesting the centre.",
+        "3.f4 — open the centre before the fianchetto bishop is effective.",
+        "3…exf4 — Black takes.",
+        "4.Nf3 — develop, cover h4 and e5.",
+        "4…Bg7 — Black completes the fianchetto.",
+        "5.d4 — build the dominant centre that blunts the g7-bishop.",
+        "5…d6 — Black supports the centre.",
+        "6.Bxf4 — regain the pawn actively; with the big centre, White has a comfortable space edge and easy development."
+      ],
+      "idea": "If Black fianchettoes with …g6, open the centre with f4/d4 — a broad pawn centre takes the sting out of the g7-bishop."
+    },
+    {
+      "id": "gambit-main-qe2",
+      "name": "Vienna Gambit — Main with Qe2",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "Qe2", "Nxc3", "dxc3"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.f4 — gambit.",
+        "3…d5 — central counter.",
+        "4.fxe5 — open the centre.",
+        "4…Nxe4 — recover the pawn.",
+        "5.Nf3 — develop with tempo.",
+        "5…Be7 — Black develops.",
+        "6.Qe2 — a flexible alternative to d4: pressure the e4-knight, prepare O-O-O, and ready a fast kingside roll. The knight must move.",
+        "6…Nxc3 — Black trades it off.",
+        "7.dxc3 — open the d-file for the queen and bishop; White's lead in development and open lines promise the initiative."
+      ],
+      "idea": "A flexible main-line try: Qe2 hits the e4-knight, readies O-O-O, and after …Nxc3 dxc3 White opens lines with an initiative."
+    },
+    {
+      "id": "nc6-mieses",
+      "name": "Vienna — 2…Nc6 3.g3 (Mieses)",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "g3", "Nf6", "Bg2", "Bc5", "Nge2", "d6", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nc6 — develop.",
+        "3.g3 — the calm Mieses set-up: fianchetto to bear down on the long diagonal and d5/e4.",
+        "3…Nf6 — Black develops.",
+        "4.Bg2 — the bishop eyes the centre and queenside; a safe, strategic plan if you prefer manoeuvring to the gambit.",
+        "4…Bc5 — Black develops actively.",
+        "5.Nge2 — flexible: the knight supports d4/f4 breaks and doesn't block the bishop.",
+        "5…d6 — Black supports e5.",
+        "6.O-O — castle safely; White has a sound, flexible position aiming for d4 or f4 at the right moment."
+      ],
+      "idea": "Prefer strategy over the gambit? The Mieses g3/Bg2 set-up is rock-solid and keeps the f4/d4 breaks for later."
+    },
+    {
+      "id": "gambit-accepted-ne7",
+      "name": "Vienna Gambit — Accepted, …Ne7–g6",
+      "eco": "C25",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "e5", "Ng8", "Nf3", "Ne7", "d4", "Ng6", "h4"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.f4 — the gambit.",
+        "3…exf4 — accepted.",
+        "4.e5 — push, kicking the knight and grabbing space.",
+        "4…Ng8 — the knight retreats; Black is undeveloped.",
+        "5.Nf3 — develop and prepare d4.",
+        "5…Ne7 — Black re-routes the knight toward g6 to hit the f4/e5 chain.",
+        "6.d4 — complete the broad centre.",
+        "6…Ng6 — Black attacks f4.",
+        "7.h4! — the punch: chase the g6-knight (h5 comes next) and start a kingside storm while Black is undeveloped. White keeps the e5-wedge and a raging initiative."
+      ],
+      "idea": "In the Accepted line, e5! then Nf3/d4; when Black hits f4 with …Ng6, blast forward with h4–h5 — the lead in development makes the attack crash through."
+    },
+    {
+      "id": "nf6-bc4-be7",
+      "name": "Vienna — Bishop's Setup, quiet …Be7",
+      "eco": "C26",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Be7", "d3", "O-O", "Nf3", "Nc6", "O-O"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.Bc4 — Bishop's setup, eyeing f7.",
+        "3…Be7 — Black develops modestly and avoids the …Nxe4 complications.",
+        "4.d3 — keep e4 firm and open the c1-bishop.",
+        "4…O-O — Black castles.",
+        "5.Nf3 — develop the kingside.",
+        "5…Nc6 — Black develops and defends e5.",
+        "6.O-O — castle; you reach a healthy Italian-type middlegame where the f4-break and Nd5 jump give White the more pleasant game."
+      ],
+      "idea": "If Black plays it safe with …Be7, transpose to a sound Italian-style setup with d3/Nf3/O-O — keeping f4 and Nd5 in reserve."
+    },
+    {
+      "id": "gambit-main-bg4-be2",
+      "name": "Vienna Gambit — Main, …Bg4 & Be2",
+      "eco": "C29",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "d4", "Bg4", "Be2"],
+      "whys": [
+        "1.e4 — the centre.",
+        "1…e5 — classical.",
+        "2.Nc3 — Vienna.",
+        "2…Nf6 — develop, hit e4.",
+        "3.f4 — gambit.",
+        "3…d5 — central counter.",
+        "4.fxe5 — open the centre.",
+        "4…Nxe4 — recover the pawn.",
+        "5.Nf3 — develop, eye d4.",
+        "5…Be7 — develop, ready to castle.",
+        "6.d4 — the big centre.",
+        "6…Bg4 — Black pins to pressure e5/d4.",
+        "7.Be2 — calmly break the pin and prepare O-O; the e5-wedge and open f-file keep White on top."
+      ],
+      "idea": "In the main line, meet a later …Bg4 with Be2 — unpin, castle, and lean on the e5-wedge and the half-open f-file."
     }
   ]
 }
