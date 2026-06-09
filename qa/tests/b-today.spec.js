@@ -6,7 +6,8 @@ test('today.html renders content, not a blank page', async ({ page }) => {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/today.html', { waitUntil: 'networkidle' });
   expect(errors).toEqual([]);
-  await expect(page.locator('.page-title')).toContainText('Today');
+  // Branded header (v0.65): the screen chip names the page.
+  await expect(page.locator('.header-bar .screen-chip')).toContainText('Today');
 });
 
 test('today.html shows a sane empty state with no ingested data', async ({ page }) => {

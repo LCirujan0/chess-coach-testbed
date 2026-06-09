@@ -4,6 +4,16 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.65 — UI consistency: branded header app-wide + design-system reference (2026-06-08)
+
+Jorge asked for a full UI consistency / brand-identity pass. Audit found the root cause: 7 pages (today, practice, games, insights, coach, completed, roadmap) never linked `shell.css` and reinvented the header/nav/body inline, using the OLD `.page-title` header, while the 5 board screens used the BRANDED `KnightPath + screen-chip` header.
+
+- **Branded header is now app-wide** (the brand signature). New shared `css/header.css` carries the branded `.header-bar` + `.brand-mark`/`.brand-word`/`.screen-chip`. Linked on the 7 old pages; their markup swapped to the branded form; roadmap (which had no header) gained one. **Technique:** header.css uses `body .header-bar` (specificity 0,1,1) + explicit resets (`position:static; backdrop-filter:none`) so it overrides each page's inline `.header-bar` **without editing any page's `<style>` block** — minimal-risk, header-only change. Verified by computed styles (gradient card, accent wordmark, static position) + full QA.
+- **`docs/design-system.md`** written — the brand/UI reference (header, tokens, type, buttons, layout, nav, icons, link order) + a prioritised **consistency backlog**: the big one is that those 7 pages still inline their own nav-drawer/tab-bar/body (US-17) — migrating them to link `shell.css` is higher-risk (cascade can shift desktop layout) so it's deferred to per-page passes with device QA.
+- `qa/tests/b-today.spec.js` updated (it asserted the old `.page-title`; now checks the branded `.screen-chip`). Full QA 64 passed.
+
+---
+
 ## v0.64 — Games → Review: review-led IA, ingest demoted to "Sync games" under More (2026-06-08)
 
 First-principles IA decision (Jorge): the Games surface did two jobs — *ingest* (periodic plumbing) and *review/analysis* (the repeated, valuable activity). Review is now a first-class destination; ingestion is a sync utility.
