@@ -4,6 +4,18 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.64 — Games → Review: review-led IA, ingest demoted to "Sync games" under More (2026-06-08)
+
+First-principles IA decision (Jorge): the Games surface did two jobs — *ingest* (periodic plumbing) and *review/analysis* (the repeated, valuable activity). Review is now a first-class destination; ingestion is a sync utility.
+
+- **New `/review.html`** is the primary **"Review"** tab — leads with the list of your games; tapping one opens the replay/coach/drill surface (Spec 11's `js/games/review.js`, imported standalone). The replay now uses the **canonical training-screen shell** (`css/screen.css` `.layout-grid` — board left, badge + coach rail right), consistent with puzzle/endgames.
+- **`/games.html` slimmed to "Sync games"** (ingest form + saved-puzzle stats only; the review markup moved to review.html). Demoted into the nav **More** group (`⟳ Sync games`). Retitled; added a "Review your games →" CTA.
+- **Nav renamed across all 12 shell pages:** the top-level "Games" link/tab → "Review" → `/review.html` (new review/magnifier icon); "Sync games" added to the More group → `/games.html`. Active states: Review active on review.html; the Sync-games More link active on games.html (keeps `a-shell-nav`'s single-active-link assertion green). `qa/tests/pages.js` adds `/review.html` and relabels games.
+- Cross-page CTAs relabeled "Ingest games" → "Sync games" (today, insights).
+- Full QA 64 passed; integrity clean. **Follow-up:** an Insights→Review bridge link, and `js/games/boot.js` still imports `review.js` (its `initReview()` no-ops on the sync page since the review DOM is gone — harmless, could be trimmed).
+
+---
+
 ## v0.63 — Board Vision UI consistency pass (2026-06-08)
 
 Jorge flagged that v0.62 Board Vision looked clunky and off-brand — it had hand-rolled its own layout + unstyled (default-HTML) buttons + pure-text move lists, violating the shared-component rule. Fixed:

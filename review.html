@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Board Vision</title>
+<title>KnightPath — Review</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/css/tokens.css">
@@ -13,83 +13,62 @@
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/screen.css">
 <link rel="stylesheet" href="/css/train.css">
-<link rel="stylesheet" href="/css/board-vision.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 16px 18px; box-shadow: 0 8px 22px -16px rgba(30,40,70,.3); margin-bottom: 14px; }
+  .panel > h2 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+  .panel .sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .review-empty { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  /* review-mode rail (board screen uses the canonical .layout-grid) */
+  #review-ply { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
+  .review-mode-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+</style>
 </head>
 <body>
 <div class="container">
   <div class="header-bar">
     <img class="brand-mark" src="/brand-icons/knight-mark.png" alt="" aria-hidden="true">
     <span class="brand-word">KnightPath</span>
-    <span class="screen-chip">Board Vision</span>
-    <div class="bv-streak" id="bv-streak"></div>
+    <span class="screen-chip">Review</span>
   </div>
 
-  <!-- HUB -->
-  <section id="bv-hub">
-    <div class="eyebrow">Daily warm-up</div>
-    <h1>Board Vision</h1>
-    <p class="lede">A 3–4 minute warm-up that builds the mental board model under calculation. Tap a drill to do it solo, or start the full warm-up.</p>
-
-    <button class="btn primary bv-start" id="bv-start-all" type="button">Start warm-up →</button>
-
-    <div class="bv-onramp" id="bv-onramp">
-      <div class="bv-card" data-drill="coord">
-        <div class="bv-card-ic">🎯</div>
-        <div class="bv-card-bd"><b>Coordinate Snap <span class="bv-sharp hidden" id="bv-sharp">✓ Sharp</span></b><small>Name every square</small></div>
-        <span class="bv-card-m">~40s</span>
-      </div>
-      <div class="bv-card" data-drill="knight">
-        <div class="bv-card-ic">♞</div>
-        <div class="bv-card-bd"><b>Knight Vision</b><small>Where the L-shape lands</small></div>
-        <span class="bv-card-m">~48s</span>
-      </div>
-      <div class="bv-card" data-drill="walk">
-        <div class="bv-card-ic">👁</div>
-        <div class="bv-card-bd"><b>Piece Walk</b><small>Visualise a short path</small></div>
-        <span class="bv-card-m">~54s</span>
-      </div>
+  <!-- REVIEW LIST (hero) -->
+  <section id="review-panel">
+    <div class="eyebrow">Game review</div>
+    <h1>Review your games</h1>
+    <p class="lede">Step through a game move by move. At each flagged mistake, ask the coach what went wrong, then drill the theme.</p>
+    <div class="panel">
+      <h2>Your games</h2>
+      <div class="sub">Pick a game to replay and analyse. New games show up after you sync.</div>
+      <div class="review-list" id="review-list"></div>
     </div>
-
-    <div class="bv-ladder-head">Sequence tracker</div>
-    <div class="bv-ladder" id="bv-ladder"></div>
+    <a class="btn ghost" href="/games.html" style="text-decoration:none; text-align:center;">＋ Sync more games from Chess.com</a>
   </section>
 
-  <!-- DRILL RUNNER — canonical training-screen shell (css/screen.css) -->
-  <section id="bv-drill" class="hidden">
+  <!-- REVIEW MODE — canonical training-screen shell (css/screen.css) -->
+  <section id="review-mode" class="hidden">
     <div class="layout-grid">
       <div class="lg-head">
-        <div class="bv-drill-head">
-          <span class="bv-drill-title" id="bv-drill-title"></span>
-          <span class="bv-drill-rep" id="bv-drill-rep"></span>
+        <div class="review-mode-head">
+          <button class="btn ghost" id="review-back" type="button" style="width:auto; padding:8px 14px;">← All games</button>
+          <span id="review-ply">Move 0</span>
         </div>
       </div>
       <div class="lg-left">
-        <div class="board-wrap"><div class="board" id="bv-board"></div></div>
-        <div class="controls"><button class="btn ghost" id="bv-quit" type="button">Quit drill</button></div>
+        <div class="board-wrap"><div class="board" id="review-board"></div></div>
+        <div class="controls">
+          <button class="btn" id="review-prev" type="button">← Prev</button>
+          <button class="btn" id="review-next" type="button">Next →</button>
+        </div>
       </div>
       <div class="lg-right">
-        <div class="bv-panel" id="bv-prompt-card"><div class="bv-prompt" id="bv-prompt"></div></div>
-        <div class="bv-panel hidden" id="bv-moves-card">
-          <div class="bv-panel-h">The moves — picture them</div>
-          <div class="bv-moves" id="bv-moves"></div>
-        </div>
-        <div class="bv-panel hidden" id="bv-tracker-q"></div>
-        <div class="bv-feedback" id="bv-feedback"></div>
+        <div id="review-badge" style="min-height:26px;"></div>
+        <div id="review-coach"></div>
       </div>
     </div>
-  </section>
-
-  <!-- COMPLETE -->
-  <section id="bv-complete" class="hidden">
-    <div class="eyebrow">Warm-up complete</div>
-    <h1 id="bv-complete-h">Nice work</h1>
-    <div class="bv-scores" id="bv-scores"></div>
-    <div class="bv-coach" id="bv-coach"></div>
-    <div class="bv-complete-actions" id="bv-complete-actions"></div>
   </section>
 </div>
 
@@ -104,9 +83,9 @@
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
-    <a href="/board-vision.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
+    <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
   </div>
-  <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
   <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
@@ -121,13 +100,16 @@
 
 <nav class="tab-bar" aria-label="Primary">
   <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
-  <a href="/practice.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
-  <a href="/review.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/practice.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
+  <a href="/review.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
   <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
 
-<script type="module" src="/js/board-vision/boot.js"></script>
+<script type="module">
+  import { initReview } from '/js/games/review.js';
+  initReview();
+</script>
 <script type="module" src="/js/puzzle/config.js"></script>
 </body>
 </html>
