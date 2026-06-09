@@ -6,7 +6,7 @@ KnightPath is a chess coaching PWA. It fetches a player's Chess.com games, analy
 
 **App name:** KnightPath  
 **Repo folder:** `chess-coach-testbed` (legacy name — ignore it, this is the full production app)  
-**Current version:** v0.66 live on prod (2026-06-09). **v0.67–v0.71 are STAGED** (uncommitted, `APP_VERSION` stamps v0.71) pending review + per-deploy QA — richer ingestion (Spec 24), openings trainer, coach unification, retention foundation, themed-drilling supply, the mistake-intro replay, piece-slide animation, and the first wave of audit fixes. See `docs/learnings.md` (v0.67–v0.71) + `../docs/super-app-roadmap.md` "Roadmap v4".  
+**Current version:** v0.77 LIVE on prod (2026-06-09, commit `8004727`). The full **v0.67→v0.77** batch shipped: richer Chess.com ingestion (Spec 24), the **Openings trainer** (22 Stockfish-verified Vienna lines, every move explained), coach unification (one shared §17 card), the **retention** layer (session streak + freeze, daily goal, goal-gradient, data-grounded "coach's read", mastery milestones, SRS spaced-review queue), themed-drilling Lichess supply (Spec 17), the **mistake-intro replay**, **piece-slide animation** (Spec 19), the visual-consistency pass (eyebrow/`.panel`/nav-icons/brand-mark 843KB→13KB), and QA bug fixes. Per-version detail in `docs/learnings.md` (v0.67–v0.77); strategy in `../docs/super-app-roadmap.md` "Roadmap v4".  
 **Deploy:** ship via `combined-deploy-v2` → `master` → Vercel (auto-deploys prod, `chess-coach-coral.vercel.app`). See `docs/learnings.md` for the per-version build log.  
 **Chess.com account:** LCirujano (hardcoded in `config.js` → `CHESS_COM_USERNAME`)
 
@@ -63,6 +63,7 @@ GitHub secret (not Vercel):
 | `endgames.html` | Endgame play-out training |
 | `endgame-recognition.html` | Win/draw/loss recognition training |
 | `board-vision.html` | Board Vision warm-up — 3 procedural drills + a 6-level hide-the-board tracker (Spec 14, v0.62) |
+| `openings.html` | **Openings trainer** (v0.61→enriched v0.77) — repertoire-recall drill with spaced repetition; each move shown with a coach "why". Vienna first (22 Stockfish-verified lines); extensible via `data/openings/`. |
 | `review.html` | **Game review** (primary "Review" tab, v0.64) — replay a game, per-mistake coach, "drill this motif" |
 | `games.html` | **Sync games** — Chess.com ingestion only (v0.64: review moved to review.html; demoted to nav "More") |
 | `insights.html` | Progress stats, estimated rating, practice heatmap |
@@ -85,7 +86,7 @@ GitHub secret (not Vercel):
 
 ### Puzzle module (`js/puzzle/`)
 
-17 ES modules. All pages that host a board load `boot.js` as `<script type="module">`, which imports the rest.
+19 ES modules. All pages that host a board load `boot.js` as `<script type="module">`, which imports the rest.
 
 | Module | Responsibility |
 |---|---|
@@ -98,7 +99,9 @@ GitHub secret (not Vercel):
 | `engine.js` | Manages the Stockfish Web Worker. Sends UCI commands, parses responses. |
 | `gate.js` | Pre-move "thinking gate" — CCTO questions + dwell timer (Deep mode only). |
 | `queue.js` | Builds and navigates the puzzle queue. Filters by severity, category, motif, tried status. |
-| `grade.js` | Evaluates player moves against engine lines. Assigns cp loss, pass/fail verdict. |
+| `grade.js` | Evaluates player moves against engine lines (cp loss, pass/fail). Has an **isolated `source==='lichess'` branch** (Spec 17 solution-line grading) — the mistake path is untouched. |
+| `intro.js` | **Mistake-intro (v0.71)** — the "what happened in your game" replay + cp-cost + no-spoiler analysis shown before solving a mistake puzzle; `markIntroLinesReady` gates "Solve it" on engine readiness. |
+| `lichess.js` | **Themed-supply loader (Spec 17)** — lazy-fetches `data/lichess-puzzles.json`, tops up a theme drill (own-game first → library), tracks solved ids. |
 | `classify.js` | Classifies puzzle position by game phase (opening / middlegame / endgame). |
 | `playout.js` | Plays out endgame positions move-by-move against Stockfish. |
 | `coach.js` | Sends coach messages to Anthropic via `/api/coach`. Manages the coach log panel. |
@@ -112,9 +115,13 @@ GitHub secret (not Vercel):
 
 | File | Purpose |
 |---|---|
-| `board-static.js` | Canonical STATIC board renderer (`renderStaticBoard`) — reused by recognition, game review (`review.html`), and Board Vision. The single non-interactive board. |
-| `coach-stats.js` | Fetches and caches the user's Chess.com rating. |
-| `coach-widget.js` | Reusable coach panel widget (endgames/recognition). Reads live `state.chess` moves via a `getLiveContext` hook (v0.60). |
+| `board-static.js` | Canonical STATIC board renderer (`renderStaticBoard`) — reused by recognition, review, Board Vision, openings. Also exports the **FLIP `animateMoveFLIP`** piece-slide (Spec 19, v0.71/76). |
+| `coach-stats.js` | The **read-time stats engine** (`window.CoachStats`): rating cache + `computeCoachView`/`buildDigest`, phase scores + ACPL→ELO, the retention helpers (goal tiers, rating-band gradient, `ratingProfileView`), and the data-grounded **`coachRead`** (the "coach's read", incl. SRS due-count). |
+| `coach-card.js` | **The single shared §17 coach card** (v0.70) — `renderCoachCard`/`parseCoachJson`/`sanitiseCoachText`; puzzle/coach/review all delegate here (killed the 3 drifted copies). |
+| `coach-widget.js` | Reusable coach panel widget (endgames/recognition). Reads live `state.chess` moves via a `getLiveContext` hook (v0.60); fed lesson context + the shared card (v0.70). |
+| `streak.js` | **Session streak + freeze** (`window.Streak`, retention) — pure daily/streak/freeze logic generalised from Board Vision. Marked on session completion (today.html + session.html). |
+| `review-srs.js` | **Spaced-repetition scheduler** (`window.ReviewSRS`, v0.76) — derives a Leitner schedule from `chess-coach-attempts-v1` (no new key); drives the today "Spaced review" block + the due-count. |
+| `mastery.js` | **Mastery milestones** (`window.Mastery`, v0.76) — capability markers (motif mastered, rating band, streak, endgame converted) + a seen-diff for the "new" highlight. |
 | `material.js` | Renders the material balance display (captured pieces + net advantage, v0.59). |
 | `session-wrap.js` | Logic for the in-session wrapper (`session.html`). |
 | `tagger.js` | Client-side caller for `api/tag.js` — batches puzzles and applies returned motifs. |
@@ -142,6 +149,19 @@ Spec 14 (v0.62). `board-vision.html` loads `boot.js`. No engine/network for the 
 | `tracker.js` | Procedural hide-the-board sequence tracker (uses chess.js — sparse base FEN + N random legal moves). |
 | `boot.js` | UI runner — hub, drill loops, the tracker show→hide→read→answer→replay flow, storage. |
 
+### Openings module (`js/openings/`)
+
+Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening is a **data unit** in `data/openings/` (registry + per-opening file), so new openings are added as data, not code.
+
+| Module | Responsibility |
+|---|---|
+| `boot.js` | UI runner — the hub (repertoire cards + a "your openings" personal panel) and the drill: recall a line by tapping origin→destination, with a **"Why this move"** coach panel per ply (the explanations from `data/openings/<id>.json` `whys`) and the piece-slide animation. |
+| `data.js` | Loads + caches the registry (`index.json`) and per-opening files. |
+| `srs.js` | Pure Leitner SRS over the lines (`chess-coach-openings-v1`). |
+| `personal.js` | Reads `chess-coach-game-scorecards-v1` + `-game-meta-v1` (ECO/openingName) to surface which repertoire openings the user actually plays. |
+
+> **Verifying opening data:** `qa/scripts/verify-openings.cjs` loads the bundled Stockfish + chess.js headless and checks every White move in every line (legality + cp-loss vs engine best). Run with the static server up. The gambit `f4` reads ~40–65cp "worse" (engines underrate gambits — kept by design); anything beyond that is a real inaccuracy to fix.
+
 ### CSS (`css/`)
 
 `tokens.css` is the foundation — everything else builds on its variables. Canonical link order: **tokens → shell → nav → board → type → screen → train → [page].css**. See `docs/design-system.md` for the brand reference.
@@ -166,10 +186,12 @@ Spec 14 (v0.62). `board-vision.html` loads `boot.js`. No engine/network for the 
 
 ### Data files (`data/`)
 
-Both files are **hand-authored**. Do not auto-generate or overwrite them.
+`endgames.json` / `endgame-recognition.json` / `openings/*` are **hand-authored** — do not auto-generate. `lichess-puzzles.json` is a generated dataset (don't hand-edit).
 
 - **`endgames.json`** — endgame lesson definitions. Each entry has `id`, `title`, `category`, `difficulty`, `fen`, `sideToMove`, `goal`, `technique`.
 - **`endgame-recognition.json`** — recognition positions. Each entry has `id`, `type`, `fen`, `answer`, `explanation`.
+- **`openings/index.json`** + **`openings/<id>.json`** — the openings registry + per-opening repertoire (Spec 22). Each opening: `{ id, name, eco, side, lines: [{ id, name, eco, moves:[SAN], whys:[per-move explanation], idea }] }`. **Verify edits with `qa/scripts/verify-openings.cjs` (Stockfish).** Vienna is the first (22 lines).
+- **`lichess-puzzles.json`** — the Spec 17 themed-supply pack (~10.5k, generated). Lazy-loaded by `js/puzzle/lichess.js`; never hand-edited.
 
 ---
 
@@ -188,19 +210,20 @@ Both files are **hand-authored**. Do not auto-generate or overwrite them.
 
 ## Current status
 
-**Version:** v0.66 (2026-06-09). Latest shipped work (newest first — full log in `docs/learnings.md`):
+**Version:** v0.77 LIVE on prod (2026-06-09). Recent shipped work (newest first — full per-version log in `docs/learnings.md`):
 
-- **v0.66 — shell.css migration (US-17):** today/practice/games/insights/coach/completed/roadmap now link `shell.css` + `nav.css`; duplicated inline chrome removed; `header.css` deleted (header single-sourced in `shell.css`). Chrome computes identically app-wide.
-- **v0.65 — branded header + design system:** the `.header-bar` (knight mark + wordmark + screen chip) is the brand signature on every page; `docs/design-system.md` added as the brand reference.
-- **v0.64 — Games → Review IA:** new primary **Review** tab (`review.html`); `games.html` demoted to "Sync games" (ingest only) under nav "More".
-- **v0.62 — Board Vision (Spec 14):** `board-vision.html` — 3 procedural drills + 6-level hide-the-board tracker.
-- **v0.61 — Spec 10:** `games.html` modularized into `js/games/`.
-- **v0.60 — bug fixes:** mistakes back-fill `type:'mistake'` on load (queue filter dropped them); coach reads live endgame moves via `getLiveContext`; desktop shows practice sub-themes in the pinned nav always.
-- **v0.59 — polish:** material balance display, coach widget, insights tweaks.
+- **v0.77 — Openings enriched + SRS due-count:** 22 Stockfish-verified Vienna lines, every move explained (a "Why this move" coach panel); SRS due-count surfaced as the top-priority coach's read on Today.
+- **v0.76 — animation everywhere + SRS spaced-review + mastery milestones:** the piece-slide now runs on review/openings too; the Today "Review" block is SRS-driven (`js/review-srs.js`); mastery milestone chips on Today (`js/mastery.js`).
+- **v0.74 — coach's read:** a variable, data-grounded retention line on Today (`CoachStats.coachRead`).
+- **v0.72–v0.73 — visual-consistency pass:** eyebrow/lede → `type.css` (fixed review.html's unstyled-eyebrow break), shared `.panel` in `shell.css`, button-fork consolidation, emoji "More"-group nav icons → SVG, brand-mark 843KB→13KB.
+- **v0.71 — mistake-intro replay + piece-slide animation (Spec 19) + 4 QA fixes** (first-puzzle freeze, sync resumes on nav, Insights rating chart + empty state).
+- **v0.67–v0.70 — Roadmap v4 batch:** richer ingestion (Spec 24: `chess-coach-game-meta-v1` + `-rating-profile-v1`), Openings trainer (Spec 22), coach unification (one shared §17 card), retention foundation (streak/freeze, daily goal, goal-gradient, Insights rating block), themed-drilling Lichess supply (Spec 17).
 
-### Staged but not yet deployed
+The strategic spine is now **daily-habit / retention** (see `../docs/super-app-roadmap.md` "Roadmap v4" + `../docs/retention-and-gamification.md`). Public launch is on the roadmap, **not now** (keep schemas/prompts portable). Next candidates: a 2nd opening, wiring openings into the daily session, and the E-moat already shipped.
 
-**v0.67 — Spec 24 richer Chess.com ingestion (capture layer):** at ingest we now capture per-game enrichment (`accuracies`, `rated`, `time_control`, termination, opponent rating) → new key `chess-coach-game-meta-v1`; and a richer rating profile from `/stats` (peak, RD/settledness, W/L/D record, tactics rating) → new key `chess-coach-rating-profile-v1`. Pure additive capture, no UI/scoring/prompt change. The *surfacing* (Insights rating block + trajectory) ships later with the retention work. `APP_VERSION` now stamps v0.67.
+### Known follow-ups
+- `qa/scripts/` holds dev harnesses (`verify-openings`, `srs-mastery-check`, `coachread-check`, `lichess-grade-harness`) — run-on-demand, not part of the Playwright suite.
+- The two motif-classification paths at ingest (`js/games/classify.js` via `/api/coach` + `js/tagger.js` via `/api/tag`) are redundant — flagged in the 2026-06-09 bug audit for consolidation.
 
 ---
 
