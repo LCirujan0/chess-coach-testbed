@@ -122,9 +122,13 @@ function renderPly() {
     try { lm = c.move(moves[k]); } catch { lm = null; break; }
   }
   reviewState.lastMove = lm ? { from: lm.from, to: lm.to } : null;
+  // Slide the piece only on a single forward step (▶) — back/jumps render instantly.
+  const animate = (reviewState._prevPly != null && plyIndex === reviewState._prevPly + 1 && !!reviewState.lastMove);
+  reviewState._prevPly = plyIndex;
   renderStaticBoard($('review-board'), c.fen(), {
     orientation: reviewState.userIsWhite ? 'w' : 'b',
     lastMove: reviewState.lastMove,
+    animate,
   });
   $('review-ply').textContent = `Move ${plyIndex} of ${moves.length}`;
   $('review-prev').disabled = plyIndex <= 0;

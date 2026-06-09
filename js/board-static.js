@@ -97,7 +97,7 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
 // Computes purely from the NEW DOM (both squares exist post-render), so it needs
 // no snapshot of the prior position — the grid is fixed, only pieces move.
 // ============================================================================
-const SLIDE_MS = 180;
+const SLIDE_MS = 210;
 
 export function animateMoveFLIP(boardEl, from, to) {
   if (!boardEl || !from || !to || from === to) return;
@@ -122,7 +122,8 @@ export function animateMoveFLIP(boardEl, from, to) {
   void img.offsetWidth; // force reflow so the inverted transform is committed
   // Play: next frame, transition to the real (destination) position.
   requestAnimationFrame(() => {
-    img.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.61,.36,1)`;
+    // Smooth ease-out glide (decelerate into the destination square).
+    img.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.2,.72,.24,1)`;
     img.style.transform = 'translate(0, 0)';
   });
   const cleanup = () => {

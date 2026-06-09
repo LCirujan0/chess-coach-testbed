@@ -19,6 +19,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="/js/coach-stats.js"></script>
 <script src="/js/streak.js"></script>
+<script src="/js/review-srs.js"></script>
+<script src="/js/mastery.js"></script>
 <style>
   /* Page chrome = shared shell.css + nav.css. */
   h1, .page-title, .nav-brand-name, .title, .stat-num { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
@@ -62,6 +64,14 @@
   .plan-focus { font-size:13px; color:var(--ink); margin:0 0 10px; padding:9px 12px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; line-height:1.45; }
   .plan-focus b { font-family:"Plus Jakarta Sans",sans-serif; }
   .plan-focus.plan-focus-muted { color:var(--muted); background:var(--surface2); border-left-color:var(--surface3); font-style:italic; }
+  /* Mastery milestones (retention #7) */
+  .milestones { margin-top:14px; }
+  .ms-h { font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .ms-row { display:flex; flex-wrap:wrap; gap:7px; }
+  .ms-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:5px 11px; border-radius:var(--r-pill); background:var(--surface2); color:var(--ink); border:1px solid var(--line); }
+  .ms-chip.ms-new { background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); }
+  .ms-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:ms-pulse 1.6s ease-out infinite; }
+  @keyframes ms-pulse { 0% { box-shadow:0 0 0 0 rgba(47,158,118,.5); } 70% { box-shadow:0 0 0 6px rgba(47,158,118,0); } 100% { box-shadow:0 0 0 0 rgba(47,158,118,0); } }
   /* unlocked endgame extra block (when not the focus) */
   .extra-section { margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:14px 18px; box-shadow:0 8px 20px -18px rgba(30,40,70,.3); }
   .extra-section .sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
@@ -214,6 +224,8 @@
   var KEY_GOAL       = 'chess-coach-daily-goal-v1';   // { tier, target } — SDT autonomy
   var KEY_PROFILE    = 'chess-coach-rating-profile-v1';
   var KEY_HISTORY    = 'chess-coach-rating-history-v1';
+  var KEY_EG         = 'chess-coach-eg-results-v1';
+  var KEY_MASTERY    = 'chess-coach-mastery-seen-v1';
 
   function loadJson(key, fb) {
     try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; }
@@ -313,8 +325,19 @@
   byNewest.slice(0, 12).forEach(function (m) { if (m.gameUrl) recentGames[m.gameUrl] = 1; });
   var nGames = Object.keys(recentGames).length;
 
-  // Block 2 — Review due: earlier misses to retry (no SRS box yet; honest proxy).
-  var b2ids = unsolvedTried.filter(function (m) { return b1ids.indexOf(m.id) === -1; }).slice(0, 5).map(function (m) { return m.id; });
+  // Block 2 — Spaced review (SRS, js/review-srs.js): previously-attempted
+  // mistakes that are DUE to resurface — failed ones immediately, solved ones
+  // after a growing interval — so patterns are re-exposed just before they fade.
+  // Excludes the fresh block (b1). Falls back to the old unsolved-tried proxy.
+  var b2ids;
+  if (typeof ReviewSRS !== 'undefined') {
+    b2ids = ReviewSRS.buildQueue(mistakes, attempts, Date.now(), 12)
+      .map(function (m) { return m.id; })
+      .filter(function (id) { return b1ids.indexOf(id) === -1; })
+      .slice(0, 6);
+  } else {
+    b2ids = unsolvedTried.filter(function (m) { return b1ids.indexOf(m.id) === -1; }).slice(0, 5).map(function (m) { return m.id; });
+  }
 
   // Block 3 — Endgame recognition (Spec 21 — folded into the session host).
   // Gated behind a recognition-focus flag so it's only queued when relevant;
@@ -383,7 +406,7 @@
   // LIVE blocks only (built types). Empty ones are dropped (never an empty row).
   var blocks = [];
   if (b1ids.length) blocks.push({ id: 'mistakes', title: 'Recent mistakes', sub: 'From your last ' + nGames + ' game' + (nGames === 1 ? '' : 's'), count: b1ids.length, mode: 'drill', done: 0, ids: b1ids });
-  if (b2ids.length) blocks.push({ id: 'review', title: 'Review due', sub: 'Earlier misses to retry', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
+  if (b2ids.length) blocks.push({ id: 'review', title: 'Spaced review', sub: 'Resurfacing before you forget', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
   if (b3ids.length) blocks.push({ id: 'recognition', title: 'Endgame recognition', sub: 'Winning, drawn, or losing?', count: b3ids.length, mode: 'drill', done: 0, ids: b3ids });
   if (b4ids.length) blocks.push({ id: 'endgames', title: 'Endgame play-out', sub: 'Convert the win, hold the draw', count: b4ids.length, mode: 'drill', done: 0, ids: b4ids });
 
@@ -418,6 +441,27 @@
     var hist = loadJson(KEY_HISTORY, []);
     var r = CoachStats.coachRead({ view: view, profile: pv, history: Array.isArray(hist) ? hist : [], streak: streakInfo, dayKey: TODAY });
     return (r && r.text) ? esc(r.text) : coachFraming();
+  }
+
+  // ---- mastery milestones (retention #7) — earned capability markers ----
+  // Derived from real data; a freshly-earned one is dot-highlighted (the reward
+  // moment), then recorded in chess-coach-mastery-seen-v1 so it's only "new" once.
+  function milestonesHtml() {
+    if (typeof Mastery === 'undefined') return '';
+    var egResults = {};
+    try { egResults = loadJson(KEY_EG, {}) || {}; } catch (e) {}
+    var earned = Mastery.markers({ attempts: attempts, mistakes: mistakes, rating: rating, streak: streakInfo, egResults: egResults });
+    if (!earned.length) return '';
+    var seen = [];
+    try { seen = loadJson(KEY_MASTERY, []) || []; } catch (e) {}
+    var d = Mastery.diffSeen(earned, seen);
+    try { localStorage.setItem(KEY_MASTERY, JSON.stringify(d.seen)); } catch (e) {}
+    var fresh = {}; d.fresh.forEach(function (m) { fresh[m.id] = 1; });
+    var chips = earned.map(function (m) {
+      return '<span class="ms-chip ms-' + esc(m.kind) + (fresh[m.id] ? ' ms-new' : '') + '" title="' + esc(m.detail) + '">' +
+        (fresh[m.id] ? '<span class="ms-dot"></span>' : '') + esc(m.label) + '</span>';
+    }).join('');
+    return '<div class="milestones"><div class="ms-h">Milestones</div><div class="ms-row">' + chips + '</div></div>';
   }
 
   // ---- plan-today focus sentence (deterministic, zero tokens) ----
@@ -646,6 +690,7 @@
       '<a class="btn primary" href="/session.html">One more set</a></div>' +
       '<a href="/coach.html" class="coachnote" style="margin-top:14px;"><span class="ava">C</span><div class="txt">' + coachReadHtml() + '</div></a>' +
       bandBarHtml() +
+      milestonesHtml() +
       glanceHtml();
     return;
   }
@@ -692,6 +737,7 @@
     goalBarHtml() +
     sessionCardHtml() +
     bandBarHtml() +
+    milestonesHtml() +
     (!endgameInFocus ? endgameExtraHtml() : '') +
     glanceHtml();
   wireGoalPick();

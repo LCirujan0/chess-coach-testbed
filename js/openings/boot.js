@@ -185,7 +185,9 @@ function updateProgress() {
 
 // Render the current position. `highlight` optionally tints selected/target sqs.
 function renderBoard(lastMove) {
-  renderStaticBoard(D.boardEl, D.chess.fen(), { orientation: D.side, lastMove: lastMove || null });
+  // Slide the piece when this render reflects a just-played move (book move or
+  // opponent reply); a fresh line/position load passes no lastMove → instant.
+  renderStaticBoard(D.boardEl, D.chess.fen(), { orientation: D.side, lastMove: lastMove || null, animate: !!lastMove });
   if (D.sel) markSquare(D.sel, 'op-sel');
 }
 function markSquare(alg, cls) { const sq = D.boardEl.querySelector(`.square[data-square="${alg}"]`); if (sq) sq.classList.add(cls); }

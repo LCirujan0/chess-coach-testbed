@@ -4,6 +4,17 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.76 — Piece animation everywhere + SRS spaced-review + mastery milestones (STAGED) (2026-06-09)
+
+Three requested items.
+
+- **Smoother piece movement.** The FLIP slide (Spec 19) shipped on the live puzzle board in v0.71 but the *static-board* surfaces still teleported — I'd added `opts.animate` to `renderStaticBoard` but never wired the callers. Now the **game-review replay** animates on a single forward step (▶ only; back/jumps render instantly via a `_prevPly` check) and the **openings drill** animates a just-played move (`animate: !!lastMove`). Tuned the slide to 210ms with a smoother ease-out. Board Vision stays unanimated (it's a position *reveal*, not a move-step).
+- **SRS spaced-review queue** (retention #8). `js/review-srs.js` (pure, node-testable) DERIVES a Leitner schedule from the existing `chess-coach-attempts-v1` — no new key. Box = consecutive clean solves from the attemptLog tail (a fail resets); intervals `[0,1,3,7,16,35]` days; due when `now - lastAt >= interval`. So failed misses resurface immediately and mastered patterns space out. today.html's "Review" block (line 317 literally said *"no SRS box yet; honest proxy"*) is now SRS-driven — `ReviewSRS.buildQueue(...)`, weakest-box-first — relabelled "Spaced review · Resurfacing before you forget". Verified: due/not-due/spacing + ordering (19/0 with mastery).
+- **Mastery milestones** (retention #7). `js/mastery.js` (pure) marks *capability* thresholds from real data — motif mastery (≥5 of a motif solved), rating bands crossed, mistakes-fixed volume, streak milestones, first endgame converted. Surfaced as a clean accent-chip "Milestones" row on today.html (session + done-today); a freshly-earned marker gets a pulsing dot (the reward moment) then is recorded in `chess-coach-mastery-seen-v1` so it's only "new" once. On-brand: no emoji, chips use tokens. Seeded browser check: chips render ("Fork mastered", "Climbed past 1000"), new-badge highlights, seen persists.
+- **New keys:** `chess-coach-mastery-seen-v1` (mastery). SRS adds none (derives from attempts). Both swept by the `chess-coach-*` clear.
+
+---
+
 ## v0.75 — Four QA-found bug fixes (STAGED) (2026-06-09)
 
 From Jorge's preview QA of the v0.67–v0.73 batch.
