@@ -69,7 +69,52 @@ export async function refreshRatingFromChessCom() {
       saveCachedRating(rating);
       console.log('Coach calibrated to Chess.com rating:', rating);
     }
+    // Spec 24 — capture the richer rating profile (peak, RD/settledness, W/L/D
+    // record, tactics rating) alongside the back-compat user-rating-v1. Each
+    // sub-object is null when the API omits that section (a feature never used).
+    saveRatingProfile(data);
   } catch (err) {
     console.warn('Chess.com rating fetch failed:', err.message);
   }
+}
+
+// Spec 24 — richer rating profile from the /stats endpoint. Additive companion
+// to chess-coach-user-rating-v1; powers the settledness-aware Insights block and
+// the macro goal-gradient (peak/record). Defensive: every field is optional.
+export function saveRatingProfile(data) {
+  try {
+    const rapidLast = data?.chess_rapid?.last;
+    const rapidBest = data?.chess_rapid?.best;
+    const rapidRec = data?.chess_rapid?.record;
+    const tactics = data?.chess_tactics?.highest || data?.tactics?.highest;
+    const profile = {
+      rapid: rapidLast ? {
+        current: (typeof rapidLast.rating === 'number') ? rapidLast.rating : null,
+        rd: (typeof rapidLast.rd === 'number') ? rapidLast.rd : null,
+        date: (typeof rapidLast.date === 'number') ? rapidLast.date : null,
+        best: (rapidBest && typeof rapidBest.rating === 'number') ? rapidBest.rating : null,
+        bestDate: (rapidBest && typeof rapidBest.date === 'number') ? rapidBest.date : null,
+        // Keys match the coach-stats.js ratingProfileView reader (rec.w/l/d).
+        record: rapidRec ? {
+          w: rapidRec.win ?? null, l: rapidRec.loss ?? null, d: rapidRec.draw ?? null,
+        } : null,
+      } : null,
+      blitz: (data?.chess_blitz?.last && typeof data.chess_blitz.last.rating === 'number')
+        ? { current: data.chess_blitz.last.rating } : null,
+      // Reader expects profile.tactics.current.
+      tactics: (tactics && typeof tactics.rating === 'number')
+        ? { current: tactics.rating, date: tactics.date ?? null } : null,
+      fetchedAt: new Date().toISOString(),
+    };
+    localStorage.setItem('chess-coach-rating-profile-v1', JSON.stringify(profile));
+  } catch (err) {
+    console.warn('saveRatingProfile failed:', err.message);
+  }
+}
+
+export function loadRatingProfile() {
+  try {
+    const raw = localStorage.getItem('chess-coach-rating-profile-v1');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }

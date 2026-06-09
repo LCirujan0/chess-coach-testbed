@@ -53,12 +53,8 @@
 
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.btn.btn-primary {
-    background: var(--accent); color: #fff; border-color: transparent;
-    box-shadow: 0 8px 18px -8px var(--accent);
-  }
-
-.btn.btn-primary:hover { filter: brightness(1.07); background: var(--accent); }
+/* `.btn-primary` is a legacy alias of the canonical `.btn.primary`; both are
+   defined together below (design-system.md backlog #3) so they never drift. */
 
 /* ============================================================
      Post-resolution navigation
@@ -341,8 +337,8 @@
 .material-row .mb-score.mb-even { color: var(--muted); }
 
 /* Shared button variants (used by exercise panels: play-out, primary actions). */
-.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); border: none; }
-.btn.primary:hover { filter: brightness(1.06); }
+.btn.primary, .btn.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); border: none; }
+.btn.primary:hover, .btn.btn-primary:hover { filter: brightness(1.06); }
 .btn.ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
 .btn.ghost:hover { background: var(--surface2); }
 .btn.ghost:disabled { opacity: .45; cursor: default; }

@@ -1,3 +1,7 @@
 .vercel
 
 node_modules
+
+# Playwright run artifacts (screenshots, traces) — never commit
+qa/test-results
+qa/playwright-report

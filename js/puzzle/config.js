@@ -4,7 +4,7 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.58 · today session host C3 — endgame play-out folded into session host · 2026-06-05';
+export const APP_VERSION = 'v0.73 · shared .panel card + button-fork consolidation (staged) · 2026-06-09';
 // Inject the stamp lazily once the DOM is parsed.
 queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
 
@@ -85,6 +85,20 @@ export const MOTIF_LABELS = {
   'king-attack':'King attack', 'none-tactical':'No clear motif',
 };
 export const STORAGE_KEY_ATTEMPTS = 'chess-coach-attempts-v1';
+
+// Spec 17 — themed-drilling cross-source supply (Lichess pack top-up).
+// The bundled pack (data/lichess-puzzles.json, ~10.5k puzzles on the Spec 02
+// 17-tag motif vocabulary, rating 800-1499). Fetched once on the first themed
+// top-up, cached in memory, never written to localStorage (1.7 MB raw).
+export const LICHESS_PACK_URL = '/data/lichess-puzzles.json';
+// Themed drill fills to this many puzzles (own-game first, then Lichess).
+export const THEME_DRILL_TARGET = 10;
+// Rating window (± centred on the player's calibrated rating, Spec 01) used to
+// pick supply puzzles. Widened progressively when the narrow band is thin.
+export const LICHESS_RATING_WINDOW = 150;
+// Solved Lichess puzzle ids (namespaced `lichess:<id>`), so the top-up skips
+// puzzles the player has already cleared. Swept by the chess-coach-* clear.
+export const STORAGE_KEY_LICHESS_SOLVED = 'chess-coach-lichess-solved-v1';
 
 // Position exclusion thresholds. Puzzles where the starting position is
 // already a forced mate (either side) or where the side to move is more than

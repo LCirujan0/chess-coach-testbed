@@ -90,6 +90,8 @@
 <div id="focus-head"></div>
 <div class="wrap" id="session-root"><!-- rendered by JS --></div>
 
+<!-- App-level session streak (window.Streak) — marked on session completion. -->
+<script src="/js/streak.js"></script>
 <script>
 /* ============================================================================
  * session.html — the in-session WRAPPER (Loop 1, rebuilt v1.0 to Design's
@@ -273,6 +275,12 @@
       : '<div class="stat"><div class="v">🔥</div><div class="k">Streak</div></div>';
     var read = 'Cleared your recent mistakes and the cards due today. Tomorrow leans the same way until your endgame trainer unlocks.';
     save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, correct: st.correct, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
+    // Mark today's session streak here — this is where the session actually
+    // completes (the "Streak secured" copy is shown below). markSessionDone is
+    // idempotent for the day, so today.html re-marking on return is harmless.
+    if (typeof Streak !== 'undefined') {
+      try { Streak.writeStreak(Streak.markSessionDone(Streak.readStreak(), Streak.todayStr()).state); } catch (e) { /* non-fatal */ }
+    }
     root.innerHTML =
       '<div class="sum"><div class="crown">🔥</div><h1>Session complete</h1>' +
       '<div class="ssub">Streak secured · ' + st.correct + ' of ' + st.reps + ' correct</div>' +

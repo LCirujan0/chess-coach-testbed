@@ -18,11 +18,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="/js/coach-stats.js"></script>
-  /* Page chrome = shared shell.css + nav.css. */
+<script src="/js/streak.js"></script>
 <style>
+  /* Page chrome = shared shell.css + nav.css. */
   h1, .page-title, .nav-brand-name, .panel-title, .aha { font-family:"Plus Jakarta Sans","Inter",sans-serif; }
 
-  .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:.13em; font-weight:700; color:var(--accent); margin-bottom:6px; margin-top:6px; }
+  .eyebrow { font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700; color:var(--accent); margin-bottom:6px; margin-top:6px; }
   h1 { font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.1; margin-bottom:14px; }
 
   .ratestrip { display:flex; align-items:center; gap:18px; flex-wrap:wrap; border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; background:var(--surface); box-shadow:0 10px 24px -20px rgba(20,30,55,.3); margin-bottom:6px; }
@@ -46,7 +47,7 @@
   .phase .flag { position:absolute; top:11px; right:11px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--endg); border-radius:6px; padding:2px 7px; }
   .phase .impact { font-family:"Spline Sans Mono"; font-size:12px; color:var(--endg); font-weight:600; margin-top:6px; }
 
-  .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:18px 20px; margin-top:16px; box-shadow:0 10px 24px -18px rgba(20,30,55,.22); }
+  .panel { margin-top:16px; } /* visual props from shared .panel (shell.css) */
   .panel-title { font-size:14px; font-weight:800; letter-spacing:-.01em; }
   .ph2 { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .ph2 .ov { font-size:11px; color:var(--muted); } .ph2 .ov b { color:var(--ink); font-family:"Plus Jakarta Sans"; }
   .cgrp { margin-bottom:12px; } .cgrp:last-child { margin-bottom:0; }
@@ -79,13 +80,31 @@
   .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:10px; padding:11px 13px; margin-top:8px; } .ebanner .t { font-weight:700; font-size:12.5px; color:var(--bad); } .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:#9a4334; margin-top:5px; }
 
 
+  /* rating profile block (C-surface — peak / record / tactics / settledness) */
+  .ratecard { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:18px 20px; margin-top:16px; box-shadow:0 10px 24px -18px rgba(20,30,55,.22); }
+  .ratecard .rc-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:14px; }
+  .ratecard .rc-title { font-size:14px; font-weight:800; letter-spacing:-.01em; font-family:"Plus Jakarta Sans",sans-serif; }
+  .ratecard .rc-when { font-size:10.5px; color:var(--muted); }
+  .rc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; } @media (max-width:560px){ .rc-grid { grid-template-columns:repeat(2,1fr); } }
+  .rc-stat { border:1px solid var(--line); border-radius:12px; padding:12px 13px; background:var(--surface); }
+  .rc-stat .k { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .rc-stat .v { font-family:"Plus Jakarta Sans",sans-serif; font-weight:800; font-size:24px; line-height:1; margin-top:6px; }
+  .rc-stat .v small { font-size:11px; font-weight:700; color:var(--muted); margin-left:4px; }
+  .rc-stat .v.muted { color:var(--muted); }
+  .rc-stat .x { font-size:11px; color:var(--muted); margin-top:5px; }
+  .rc-settle { font-size:12.5px; margin-top:14px; padding:10px 12px; border-radius:10px; line-height:1.45; }
+  .rc-settle.settled { background:var(--accent-soft); border:1px solid #CDE9DC; color:var(--ink); }
+  .rc-settle.settling { background:#FBF3E6; border:1px solid #EAD9B6; color:var(--ink); }
+  .rc-settle b { font-family:"Plus Jakarta Sans",sans-serif; }
+  .rc-causal { font-size:12.5px; color:var(--muted); margin-top:10px; } .rc-causal b { color:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; }
+
   @media (min-width: 880px) { h1 { font-size:32px; } }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header-bar">
-    <img class="brand-mark" src="/brand-icons/knight-mark.png" alt="" aria-hidden="true">
+    <img class="brand-mark" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
     <span class="brand-word">KnightPath</span>
     <span class="screen-chip">Insights</span>
   </div>
@@ -96,7 +115,7 @@
 
 <aside class="nav-drawer" id="nav-drawer">
   <div class="nav-brand">
-    <img src="/brand-icons/knight-mark.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
+    <img src="/brand-icons/knight-mark-sm.png" width="30" height="30" alt="" class="nav-brand-mark" aria-hidden="true">
     <span class="nav-brand-name">KnightPath</span>
   </div>
   <a href="/today.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
@@ -106,15 +125,16 @@
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
+    <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
   <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
   <a href="/insights.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
     <div class="nav-more-label">More</div>
-    <a href="/games.html" class="nav-drawer-link nav-more-link"><span class="nav-icon">⟳</span>Sync games</a>
-    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><span class="nav-icon">▤</span>Roadmap</a>
-    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><span class="nav-icon">✓</span>Completed</a>
+    <a href="/games.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync games</a>
+    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
+    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
   </div>
   <div class="version-stamp" id="version-stamp"></div>
 </aside>
@@ -144,16 +164,18 @@
   var KEY_ATTEMPTS = 'chess-coach-attempts-v1';
   var KEY_RATING = 'chess-coach-user-rating-v1';
   var KEY_RATING_HISTORY = 'chess-coach-rating-history-v1';
+  var KEY_RATING_PROFILE = 'chess-coach-rating-profile-v1';   // Spec 24: peak/RD/record/tactics
   var KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
   function loadJson(key, fb) { try { var r = localStorage.getItem(key); if (r == null) return fb; var v = JSON.parse(r); return v == null ? fb : v; } catch (e) { return fb; } }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
 
-  var mistakes, attempts, ratingCache, ratingHistory, scorecards, recognition;
+  var mistakes, attempts, ratingCache, ratingHistory, ratingProfile, scorecards, recognition;
   try {
     mistakes = loadJson(KEY_MISTAKES, []) || [];
     attempts = loadJson(KEY_ATTEMPTS, {}) || {};
     ratingCache = loadJson(KEY_RATING, null);
     ratingHistory = loadJson(KEY_RATING_HISTORY, []) || [];
+    ratingProfile = loadJson(KEY_RATING_PROFILE, null);
     scorecards = loadJson(KEY_SCORECARDS, {}) || {};
     recognition = loadJson('chess-coach-recognition-v1', {}) || {};
   } catch (e) {
@@ -163,15 +185,16 @@
   var currentRating = (ratingCache && typeof ratingCache.rating === 'number') ? ratingCache.rating : null;
   var TARGET = 1500;
 
-  function computeDayStreak(records) {
-    var days = {};
-    for (var id in records) { var r = records[id]; if (!r) continue; if (r.lastAt) days[r.lastAt.slice(0, 10)] = 1; if (Array.isArray(r.attemptLog)) r.attemptLog.forEach(function (a) { if (a && a.at) days[a.at.slice(0, 10)] = 1; }); }
-    if (!Object.keys(days).length) return 0;
-    var today = new Date(); today.setHours(0, 0, 0, 0); var streak = 0, freeze = false;
-    for (var d = 0; d < 365; d++) { var day = new Date(today); day.setDate(today.getDate() - d); var k = day.toISOString().slice(0, 10); if (days[k]) { streak++; continue; } if (!freeze && d <= 6) { freeze = true; continue; } break; }
-    return streak;
-  }
-  var streak = computeDayStreak(attempts);
+  // App-level session streak (single-sourced via js/streak.js — same module
+  // today.html writes). Read-only here: resolve the elapsed gap for an honest
+  // display value, but never mark a completion from Insights.
+  var streakInfo = { current: 0, freezesAvailable: 0, message: '' };
+  try {
+    if (typeof Streak !== 'undefined') {
+      streakInfo = Streak.describe(Streak.resolve(Streak.readStreak(), Streak.todayStr()).state, Streak.todayStr());
+    }
+  } catch (e) { /* streak is non-essential chrome */ }
+  var streak = streakInfo.current;
 
   var phases = null, view = null;
   try {
@@ -208,6 +231,72 @@
       '<line x1="0" y1="' + tY.toFixed(1) + '" x2="' + W + '" y2="' + tY.toFixed(1) + '" stroke="#1F9D57" stroke-width="1" stroke-dasharray="3,4" opacity=".5"/>' +
       '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
       points.map(function (p, i) { return '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(p.rating).toFixed(1) + '" r="2.2" fill="var(--accent)"/>'; }).join('') + '</svg>';
+  }
+
+  // ---- rating profile block (C-surface payoff): peak / record / tactics / RD ----
+  // Reads chess-coach-rating-profile-v1 via CoachStats.ratingProfileView. Every
+  // field degrades gracefully when absent; the settledness note hedges gains
+  // honestly when RD is high. No fabrication — only renders what the store holds.
+  function ratingBlockHtml() {
+    if (typeof CoachStats === 'undefined') return '';
+    var pv;
+    try { pv = CoachStats.ratingProfileView(ratingProfile); } catch (e) { return ''; }
+    if (!pv || !pv.hasAny) return '';   // capture layer hasn't run yet -> show nothing
+
+    var r = pv.rapid;
+    function statCard(k, val, extra) {
+      var muted = (val == null);
+      return '<div class="rc-stat"><div class="k">' + esc(k) + '</div><div class="v' + (muted ? ' muted' : '') + '">' + (val == null ? '—' : val) + '</div>' + (extra ? '<div class="x">' + esc(extra) + '</div>' : '') + '</div>';
+    }
+    // current rapid (prefer the live cache; fall back to the profile)
+    var curRapid = (currentRating != null) ? currentRating : r.current;
+    var peak = r.best;
+    var peakX = (peak != null && curRapid != null) ? (curRapid >= peak ? 'at your peak' : (peak - curRapid) + ' below peak') : '';
+    var rec = r.record;
+    var recVal = rec ? (rec.w + '–' + rec.l + '–' + rec.d) : null;
+    var recX = (rec && rec.winPct != null) ? (rec.winPct + '% wins · ' + rec.total + ' rapid games') : '';
+    var tac = pv.tactics;
+
+    var cards = '<div class="rc-grid">' +
+      statCard('Rapid', curRapid != null ? curRapid : null, (curRapid != null ? (TARGET - curRapid > 0 ? (TARGET - curRapid) + ' to 1500' : 'at/above 1500') : '')) +
+      statCard('Peak', peak != null ? peak : null, peakX) +
+      statCard('Record (W–L–D)', recVal, recX) +
+      statCard('Tactics', tac != null ? tac : null, tac != null ? 'Chess.com puzzles' : '') +
+      '</div>';
+
+    // settledness note from RD (honest hedge)
+    var settle = '';
+    var s = r.settledness;
+    if (s && s.known) {
+      settle = '<div class="rc-settle ' + (s.settled ? 'settled' : 'settling') + '"><b>' +
+        (s.settled ? 'Settled' : 'Still settling') + '</b> (RD ' + s.rd + '). ' + esc(s.note) + '</div>';
+    }
+
+    // honest causal framing — ONLY when rating history clearly supports it.
+    var causal = causalNote();
+
+    var when = pv.fetchedAt ? ('Synced ' + relTime(pv.fetchedAt)) : '';
+    return '<div class="ratecard"><div class="rc-head"><span class="rc-title">Your Chess.com rating</span>' +
+      (when ? '<span class="rc-when">' + esc(when) + '</span>' : '') + '</div>' +
+      cards + settle + causal + '</div>';
+  }
+  function relTime(iso) {
+    var t = Date.parse(iso); if (isNaN(t)) return '';
+    var days = Math.floor((Date.now() - t) / 86400000);
+    if (days <= 0) return 'today'; if (days === 1) return 'yesterday'; if (days < 30) return days + ' days ago';
+    return 'a while ago';
+  }
+  // Causal note: compute the rapid delta over recent rated history. Only assert a
+  // link when the trend is real (>= 2 snapshots, a meaningful positive move).
+  function causalNote() {
+    var pts = (ratingHistory || []).filter(function (p) { return p && typeof p.rating === 'number'; });
+    if (currentRating != null) { var last = pts[pts.length - 1]; if (!last || last.rating !== currentRating) pts = pts.concat([{ rating: currentRating, at: new Date().toISOString() }]); }
+    if (pts.length < 2) return '';
+    var first = pts[0].rating, lastR = pts[pts.length - 1].rating;
+    var delta = lastR - first;
+    if (delta >= 15) return '<div class="rc-causal">Up <b>+' + delta + '</b> across your tracked snapshots — the training is showing up in your rating.</div>';
+    if (delta <= -15) return '<div class="rc-causal">Down ' + delta + ' lately — a dip is normal; keep clearing your mistake queue and it tends to recover.</div>';
+    return '<div class="rc-causal">Holding steady across your tracked snapshots.</div>';
   }
 
   function leakOf() {
@@ -348,13 +437,13 @@
 
   // RENDER
   if (!phases) {
-    root.innerHTML = ratingStripHtml() + '<div class="panel"><div class="empty-state">Stats module failed to load. Reload the page; if it persists, check the browser console.</div></div>';
+    root.innerHTML = ratingStripHtml() + ratingBlockHtml() + '<div class="panel"><div class="empty-state">Stats module failed to load. Reload the page; if it persists, check the browser console.</div></div>';
     renderTrajectory();
     return;
   }
   var anyPhase = ['opening', 'middlegame', 'endgame'].some(function (p) { return phases[p] && phases[p].status !== 'no data'; });
   if (!anyPhase) {
-    root.innerHTML = ratingStripHtml() +
+    root.innerHTML = ratingStripHtml() + ratingBlockHtml() +
       '<div class="panel"><div class="empty-state">Not enough games yet. Phase scores need a few analysed games — sync from Chess.com and they appear here.<br><a class="btn" href="/games.html">Sync games</a></div></div>';
     renderTrajectory();
     return;
@@ -363,6 +452,7 @@
   var leak = leakOf();
   root.innerHTML =
     ratingStripHtml() +
+    ratingBlockHtml() +
     ahaHtml(leak) +
     phaseCardsHtml(leak) +
     detailHtml() +

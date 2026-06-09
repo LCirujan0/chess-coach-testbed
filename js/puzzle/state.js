@@ -24,6 +24,10 @@ export const state = {
   drillMotif: null,                 // string | null
   drillIndex: 0,                    // position within the drill queue
   drillQueue: [],                   // Array<Mistake> for this drill session
+  // Spec 17 — own-game vs Lichess split of the current themed drill, for the
+  // honest banner note ("6 from your games + 4 from the library"). null when no
+  // drill is active. { mine, lichess } | null.
+  drillSourceSplit: null,
 
   // v0.13 — Today/in-session round-trip (per Releases-B's contract). When the
   // user arrives via /puzzle.html?session=today&block=<id> we restrict the
@@ -43,12 +47,20 @@ export const state = {
   selectedSquare: null,
   legalMovesFromSelected: [],
   lastMove: null,
+  // Spec 19 — transient render hint: when set to {from,to} just before a
+  // renderBoard() that reflects a newly-played move, the rebuild path slides
+  // that piece (FLIP) instead of teleporting it. Consumed + cleared by
+  // renderBoard so navigation / flips / new-puzzle loads never animate.
+  animateMove: null,
   engineReady: false,
   engineLines: [],
   positionSummary: null,
 
   // Lifecycle
-  phase: 'idle',                      // 'idle' | 'thinking' | 'playing' | 'punishment' | 'resolved'
+  phase: 'idle',                      // 'idle' | 'intro' | 'thinking' | 'playing' | 'resolved' | 'empty'
+  // Mistake-intro ("what happened") — true once the engine lines for the solve
+  // position are ready, which enables the intro's "Solve it from here" button.
+  introLinesReady: false,
   userMovesMade: 0,
   attemptHistory: [],
   moveCpLoss: [],    // Array<number|null> — cp loss for each user move (up to 3), null = pending

@@ -32,7 +32,7 @@ async function handleIngestSubmit(e) {
   setProgress('Fetching games from Chess.com…', 5);
 
   try {
-    const { mistakes: fresh, perGameSummary, scorecards, moves } = await ingest(username, numGames, depth, (done, total, label) => {
+    const { mistakes: fresh, perGameSummary, scorecards, moves, meta } = await ingest(username, numGames, depth, (done, total, label) => {
       const pct = total > 0 ? (done / total) * 100 : 0;
       const prefix = label || `Analysing positions`;
       setProgress(`${prefix} — ${done}/${total} positions`, pct);
@@ -68,6 +68,17 @@ async function handleIngestSubmit(e) {
       for (const k of Object.keys(moves)) existingMoves[k] = moves[k];
       try { localStorage.setItem(KEY_MOVES, JSON.stringify(existingMoves)); }
       catch (e) { console.warn('saveMoves failed:', e.message); }
+    }
+
+    // Spec 24 — persist this run's per-game Chess.com enrichment (rating,
+    // accuracy, rated flag, time control, termination). Same idempotent merge.
+    if (meta && Object.keys(meta).length) {
+      const KEY_META = 'chess-coach-game-meta-v1';
+      let existingMeta = {};
+      try { existingMeta = JSON.parse(localStorage.getItem(KEY_META) || '{}') || {}; } catch { existingMeta = {}; }
+      for (const k of Object.keys(meta)) existingMeta[k] = meta[k];
+      try { localStorage.setItem(KEY_META, JSON.stringify(existingMeta)); }
+      catch (e) { console.warn('saveGameMeta failed:', e.message); }
     }
 
     // Chess.com rating time-series -> populates the EXISTING Insights rating

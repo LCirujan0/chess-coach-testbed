@@ -27,6 +27,19 @@
   --warn: #C98A2E;
   --bad:  #D2553F;
 
+  /* Semantic SOFT / LINE variants — the tinted backgrounds + borders that were
+     hardcoded (e.g. #FBF0ED ≈ bad-soft) across pages. Reference these instead. */
+  --bad-soft:  #FBF0ED;
+  --bad-line:  #EDD2CB;
+  --bad-ink:   #9A4334;
+  --warn-soft: #FBF3E6;
+  --warn-line: #EAD9B6;
+  --pos-soft:  #E8F5EE;
+  --accent-line: #CDE9DC;
+  /* App background gradient (shell.css + the chrome-less session.html share it). */
+  --app-bg-start: #FFFFFF;
+  --app-bg-end:   #EDF0F3;
+
   /* Board */
   --light-sq: #ECE3D2;
   --dark-sq:  #B49A78;

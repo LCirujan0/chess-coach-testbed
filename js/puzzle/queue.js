@@ -3,13 +3,14 @@
 // (includes shuffleInPlace + mixPuzzlesAcrossGames, physically at §4 tail in
 // the monolith but logically queue utilities — moved here per Spec 09)
 // ============================================================================
-import { MOTIFS, MOTIF_LABELS, isExcludedPuzzle } from './config.js';
+import { MOTIFS, MOTIF_LABELS, isExcludedPuzzle, THEME_DRILL_TARGET } from './config.js';
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { saveLastCategory, loadLastCategory } from './storage.js';
 // runtime deps (called inside function bodies only — live bindings handle the cycles)
 import { resetPuzzleStateAndRender } from './result.js';
 import { sessionModeWriteBack } from './grade.js';
+import { topUpMotif } from './lichess.js';
 
 export function isSolved(puzzleId) { const a = state.attempts[puzzleId]; return !!(a && a.solved); }
 export function attemptsCount(puzzleId) { const a = state.attempts[puzzleId]; return a ? (a.attempts || 0) : 0; }
@@ -240,7 +241,9 @@ export function renderThemePills() {
   const drillBtn = $('drill-cta');
   if (drillBtn) {
     const m = state.motifFilter;
-    const ok = m && m !== 'all' && m !== 'untagged' && counts[m] > 0;
+    // none-tactical has no library supply (topUpMotif rejects it), so a drill
+    // would never fill to target — disable the CTA for it like all/untagged.
+    const ok = m && m !== 'all' && m !== 'untagged' && m !== 'none-tactical' && counts[m] > 0;
     drillBtn.disabled = !ok;
     drillBtn.textContent = ok ? `Drill this theme (${Math.min(10, counts[m])})` : 'Drill this theme';
   }
@@ -249,22 +252,60 @@ export function renderThemePills() {
 // Drill this theme — assemble up to 10 puzzles with the active motif and put
 // them into a focused queue. Banner shows progress. End-drill returns to the
 // normal queue.
-export function startThemeDrill() {
+export async function startThemeDrill() {
   const m = state.motifFilter;
   if (!m || m === 'all' || m === 'untagged') return;
+  // 1) Own-game pool: current behaviour — same-motif mistakes, shuffled. Tag
+  //    each with source 'mine' so the grader/Completed route correctly.
   let pool = state.puzzles.filter((p) => !isExcludedPuzzle(p) && p.motif === m);
   shuffleInPlace(pool);
+  const own = pool.slice(0, THEME_DRILL_TARGET);
+  for (const p of own) { if (p.source == null) p.source = 'mine'; }
   state.drillMotif = m;
-  state.drillQueue = pool.slice(0, 10);
+  state.drillQueue = own.slice();
   state.drillIndex = 0;
-  if (!state.drillQueue.length) return;
-  updateDrillBanner();
-  resetPuzzleStateAndRender();
+  state.drillSourceSplit = { mine: own.length, lichess: 0 };
+  // Render the own-game queue first so the drill is interactive immediately,
+  // even before the (lazy, possibly slow) Lichess pack resolves.
+  if (state.drillQueue.length) {
+    updateDrillBanner();
+    resetPuzzleStateAndRender();
+  }
+  // 2) Supply top-up: if the own-game pool is below target, fill from the
+  //    Lichess pack (same motif, rating ±window around the calibrated rating),
+  //    skipping already-solved/queued ids. Own-game first, then Lichess.
+  const need = THEME_DRILL_TARGET - state.drillQueue.length;
+  if (need > 0) {
+    const excludeIds = state.drillQueue.map((p) => p.id);
+    let topUp = [];
+    try {
+      topUp = await topUpMotif(m, { ratingCenter: state.userRating, count: need, excludeIds });
+    } catch (err) { console.warn('themed-drill top-up failed:', err && err.message); }
+    // Guard against a stale resolve: only apply if the user is still drilling
+    // the same motif (they may have ended/switched while the pack loaded).
+    if (topUp.length && state.drillMotif === m) {
+      const wasEmpty = own.length === 0;
+      state.drillQueue = state.drillQueue.concat(topUp);
+      state.drillSourceSplit = { mine: own.length, lichess: topUp.length };
+      updateDrillBanner();
+      // If there was no own-game puzzle to render at the start, the board is
+      // still on the normal queue — load the first (Lichess) drill puzzle now.
+      if (wasEmpty) resetPuzzleStateAndRender();
+    }
+  }
+  // If the own-game pool was empty AND the top-up also came up empty, there is
+  // nothing to drill — clear the drill so the banner hides cleanly.
+  if (!state.drillQueue.length) {
+    state.drillMotif = null;
+    state.drillSourceSplit = null;
+    updateDrillBanner();
+  }
 }
 export function endThemeDrill() {
   state.drillMotif = null;
   state.drillQueue = [];
   state.drillIndex = 0;
+  state.drillSourceSplit = null;
   updateDrillBanner();
   rebuildQueue();
   resetPuzzleStateAndRender();
@@ -275,7 +316,17 @@ export function updateDrillBanner() {
   if (state.drillMotif && state.drillQueue.length) {
     banner.classList.remove('hidden');
     const label = MOTIF_LABELS[state.drillMotif] || state.drillMotif;
-    $('drill-label').textContent = `Drilling: ${label} — ${state.drillIndex + 1} of ${state.drillQueue.length}`;
+    let text = `Drilling: ${label} — ${state.drillIndex + 1} of ${state.drillQueue.length}`;
+    // Spec 17 — honest supply note when the drill was topped up from the
+    // library. Only shown when both sources contributed (don't add noise to a
+    // pure own-game or pure-library drill where the total already tells it).
+    const split = state.drillSourceSplit;
+    if (split && split.lichess > 0 && split.mine > 0) {
+      text += ` · ${split.mine} from your games + ${split.lichess} from the library`;
+    } else if (split && split.lichess > 0 && split.mine === 0) {
+      text += ` · ${split.lichess} from the library`;
+    }
+    $('drill-label').textContent = text;
   } else {
     banner.classList.add('hidden');
   }

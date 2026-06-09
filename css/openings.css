@@ -1,0 +1,88 @@
+/* ============================================================================
+ * css/openings.css — Openings trainer page chrome ONLY.
+ * The training-screen layout comes from css/screen.css (.layout-grid), the
+ * board from css/board.css, the buttons/cards from css/train.css, and the
+ * header/nav from shell.css + nav.css. This file styles the hub (repertoire
+ * cards + "Your openings" panel), the drill prompt/idea/feedback rail, and the
+ * complete screen — nothing the shared components already own.
+ * ========================================================================== */
+
+/* ---- hub ---- */
+.op-hub .eyebrow { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.op-hub h1 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -.02em; margin: 4px 0 2px; line-height: 1.1; }
+.op-hub .lede { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+
+.op-list { display: flex; flex-direction: column; gap: 8px; }
+.op-card {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+  cursor: pointer; transition: background .12s ease, transform .05s ease; box-shadow: 0 8px 20px -16px rgba(30,40,70,.3);
+  font-family: inherit; color: inherit;
+}
+.op-card:hover { background: var(--surface2); }
+.op-card:active { transform: scale(.99); }
+.op-card-ic { font-size: 22px; width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--surface2); color: var(--accent); }
+.op-card-bd { flex: 1; min-width: 0; }
+.op-card-bd b { font-weight: 700; display: block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: 14px; }
+.op-card-bd small { color: var(--muted); font-size: 12px; line-height: 1.45; display: block; margin: 2px 0 4px; }
+.op-card-meta { font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+.op-card-go { flex: none; color: var(--muted); font-size: 18px; }
+
+.op-due { font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #fff; background: var(--accent); padding: 1px 7px; border-radius: var(--r-pill); margin-left: 4px; vertical-align: middle; }
+.op-due.op-strong { background: var(--pos); }
+
+.op-empty { color: var(--muted); font-size: 13px; }
+
+/* ---- personal panel ---- */
+.op-personal { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; box-shadow: 0 8px 22px -16px rgba(30,40,70,.3); }
+.op-panel-h { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.op-personal-lede { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.45; }
+.op-personal-empty { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.op-personal-empty a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.op-personal-list { display: flex; flex-direction: column; gap: 6px; }
+.op-personal-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-align: left;
+  background: var(--surface2); border: 1px solid var(--line); border-radius: var(--r-btn);
+  cursor: pointer; font-family: inherit; color: inherit; transition: background .12s ease;
+}
+.op-personal-row:hover { background: var(--surface); }
+.op-personal-bd { flex: 1; min-width: 0; }
+.op-personal-bd b { font-weight: 700; font-size: 13.5px; font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
+.op-personal-bd small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.op-flag { font-size: 9.5px; font-weight: 800; letter-spacing: .03em; color: #fff; background: var(--warn); padding: 1px 6px; border-radius: var(--r-pill); margin-left: 4px; vertical-align: middle; }
+
+/* ---- drill runner: head + right-rail panels (board/controls = shared) ---- */
+.op-drill-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.op-line-name { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 17px; min-width: 0; }
+.op-progress { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; flex: none; }
+
+.op-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; box-shadow: 0 8px 22px -16px rgba(30,40,70,.3); }
+.op-prompt { font-size: 15px; line-height: 1.5; }
+.op-idea-card .op-panel-h { margin-bottom: 6px; }
+.op-idea { font-size: 13px; line-height: 1.5; color: var(--muted); }
+.op-feedback { min-height: 22px; font-size: 14px; font-weight: 600; text-align: center; }
+.op-feedback.ok { color: var(--pos); }
+.op-feedback.bad { color: var(--bad); }
+
+/* selected-origin highlight on the static board (board.css owns square cells;
+   this is a page-local training accent that layers a ring on the chosen sq). */
+.op-board .square.op-sel::after {
+  content: ""; position: absolute; inset: 0;
+  box-shadow: inset 0 0 0 3px var(--accent); border-radius: 2px; pointer-events: none;
+}
+
+/* mobile single-column order: head before board, rail panels after.
+   screen.css owns board-wrap=8 / controls=10. */
+.layout-grid .op-drill-head { order: 3; }
+.layout-grid #op-prompt-card { order: 11; }
+.layout-grid #op-idea-card   { order: 12; }
+.layout-grid #op-feedback    { order: 13; }
+
+/* ---- complete ---- */
+.op-complete .eyebrow { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.op-complete h1 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -.02em; margin: 4px 0 6px; }
+.op-complete-line { font-size: 14px; font-weight: 700; font-family: "Plus Jakarta Sans", "Inter", sans-serif; margin-bottom: 4px; }
+.op-complete-idea { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.op-complete-coach { padding: 12px 14px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: var(--r-panel); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+.op-complete-actions { display: flex; flex-direction: column; gap: 8px; }
+.op-complete-actions .btn { text-decoration: none; text-align: center; }

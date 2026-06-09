@@ -4,6 +4,74 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.73 — Shared `.panel` card + button-fork consolidation (STAGED) (2026-06-09)
+
+The two deferred visual-consistency items from v0.72, done on the verifiable subset.
+
+- **Shared `.panel` card.** Six+ pages each defined their own card (`.panel` on games/insights/review, plus `.session`/`.mode-card`/`.loop`/`.op-panel`/`.summary-bar` elsewhere) with **3 radii + 4 shadow recipes + 4 paddings**. **Key constraint:** `train.css` (the "components" sheet) is only linked on 6 pages, so the canonical `.panel` had to go in **`shell.css`** (universally linked on all chrome pages). Defined it there (`var(--r-card)` / 18px / `1px var(--line)` / `0 10px 24px -18px rgba(20,30,55,.22)` / `var(--surface)`), then reduced games/insights/review's inline `.panel` to **margin-only** so they inherit it. **Verified by computed-style parity** — all three `.panel`s now compute identically (16px / 18px / same shadow / same border / white).
+- **Button fork.** `train.css` had two near-identical accent-fill rules — `.btn.btn-primary` (legacy) and `.btn.primary` (canonical per design-system.md) — so the two class names could drift. Merged them into one rule with both selectors (`.btn.primary, .btn.btn-primary {…}`), so puzzle.html (`.btn-primary`) and openings/review (`.btn primary`) render identically with zero markup changes. Also puzzle.html's `.btn-secondary` (which had no rule → silently fell back to base `.btn`) → `.btn.ghost`.
+- **Deferred (visual-QA gate, in `design-system.md` backlog):** migrating the *bespoke* cards (`.session`/`.mode-card`/`.loop`/`.op-panel`/`.summary-bar`) onto `.panel` (needs HTML re-classing + padding checks), and `games.html`'s self-rolled `.btn` system (it doesn't link `train.css`; migrating changes every button — needs an eyeball on a preview).
+- **Method note:** can't screenshot headlessly here (preview screenshots time out), so every CSS-consolidation step was verified with **`getComputedStyle` parity via the bundled Chromium** + the shell/smoke suite — which catches property mismatches and console errors, though not subjective layout shift (that's Jorge's preview QA).
+
+---
+
+## v0.72 — Visual-consistency pass + brand-mark 843 KB→13 KB (STAGED) (2026-06-09)
+
+The visual half of the codebase audit (the consistency report). Targeted the brand-recognition wins; deferred the risky/tedious ones (see `design-system.md` backlog).
+
+- **`.eyebrow` + `.lede` → `type.css` (single source).** `type.css` is linked on every page, so promoting these (a) **fixes review.html's unstyled eyebrow** — a live brand break: it used `.eyebrow`/`.lede` in markup but no sheet defined them, so the accent-green uppercase intro rendered as plain black text — and (b) unifies the two drifting values (10.5px on today/practice/openings, 11px on insights/games/roadmap/puzzle.css). Canonical = **accent / 10.5px / 700 / .12em / margin-bottom 5px** (700 not 800 — matches every existing page; the 11px outliers were edited *in place* to keep their margins). **Verified by computed-style parity**: review/today/insights eyebrows are now byte-identical (`rgb(47,158,118)` 10.5px 700 1.26px).
+- **"More"-group nav icons** (Sync games / Roadmap / Completed) were OS emoji (`⟳ ▤ ✓`) — mismatched weight/baseline vs the SVG nav set and no `currentColor` active-state. Replaced app-wide with line-icon SVGs (24×24, stroke-width 1.9, no inline stroke/fill so the `.nav-drawer-link svg.nav-icon` CSS drives colour + the active-white flip).
+- **Brand-mark** — the header + nav-drawer mark was `knight-mark.png` (**843 KB**, a 1254² PNG) rendered at 24/30px on *every* page. **No image tooling on this box** (`convert` is the Windows disk utility, not ImageMagick; no `sharp`), so I downscaled the **exact** mark to 128² via the bundled Playwright/Chromium canvas → `knight-mark-sm.png` (**12.9 KB**, visually identical, brand preserved — I did NOT swap to the rounded-square app icon, which is a different composition). Swapped all 26 refs; plus `/brand-icons/*` is now immutable-cached.
+- **Semantic soft/line tokens** added to `tokens.css` (`--bad-soft/-line/-ink`, `--warn-soft/-line`, `--pos-soft`, `--accent-line`, `--app-bg-start/-end`) — used by the new intro card; the ~17 existing hardcoded hexes still need migrating (deferred).
+- **Misc:** `insights.html` stray comment moved inside `<style>`; `openings.css` off-scale `6px` radius → token; the `none-tactical` "Drill this theme" CTA disabled (no library supply → it never filled to target).
+- **Deferred (in `design-system.md` backlog #2/#3/#4):** the shared `.panel` card migration (train.css isn't universal + per-card paddings differ = layout-shift risk needing visual QA), the button fork (`.btn.primary` vs `.btn.btn-primary` + games.html's rogue `.btn-secondary`/`.btn-danger`), and the full hardcoded-hex→token migration.
+
+---
+
+## v0.71 — Mistake-intro replay + piece-slide animation + audit fixes (STAGED) (2026-06-09)
+
+Two requested features plus the first wave of a codebase audit (bugs / perf / visual consistency — three read-only sub-agent reports).
+
+**Mistake intro ("what happened in your game"):** a new pre-solve phase for own-game mistake puzzles (`js/puzzle/intro.js`, new phase `'intro'`). It replays the move sequence the player actually played (animated), names the move + severity + cp cost, then hands the *pre-mistake* position over to solve. **No-spoiler:** shows only what the player DID (their move + the real continuation + cost) — never the engine's better move/lines/motif; the answer stays earned via the existing gate/solve flow. Integrated in `resetPuzzleStateAndRender` (`result.js`): a fresh own-game mistake with an `actualContinuation` enters the intro; retries / Lichess / review skip it. The engine analyses `puzzle.fen` by string (not live `state.chess`) so the intro replay can mutate the board without corrupting the solve analysis; "Solve it" is gated until lines are ready.
+
+**Piece-slide animation (Spec 19):** FLIP `animateMoveFLIP` in `js/board-static.js` (shared, exported, `prefers-reduced-motion`-aware). Wired into the live board via a transient `state.animateMove` hint set in `grade.js` at the user-move / engine-reply / Lichess-move points and consumed in `board.js`'s rebuild path. Computes from the NEW DOM only (grid is fixed, only pieces move) so it needs no prior-position snapshot. Only the live position animates — `◀▶` nav, board flips, and new-puzzle loads render instantly (guarded on `viewIndex===null && !revealOverlay`, hint cleared each render).
+
+**Audit fixes applied (from the 3 reports):**
+- **P1 bug — streak never incremented from `session.html`:** it wrote `chess-coach-session-complete-v1` and showed "Streak secured" but never called `Streak.markSessionDone` (only `today.html` did, on return). Added `<script src="/js/streak.js">` + the idempotent mark in `renderSummary()`.
+- **P1 bug — Insights rating record/tactics blank:** the writer (`storage.js saveRatingProfile`) emitted `record:{win,loss,draw}` + `tactics:{rating}` but the reader (`coach-stats.js ratingProfileView`) reads `rec.w/l/d` + `tactics.current`. Aligned the writer to the reader.
+- **Perf — static JSON re-downloaded every load:** `endgames.json` + `endgame-recognition.json` (511 KB) were fetched `cache:'no-store'`, defeating the `/data/*` CDN header. Switched to `cache:'force-cache'`.
+- **Perf — immutable caching** for `/piece/*` + `/brand-icons/*` (stable filenames) in `vercel.json` (zero-risk; removes ~12 piece-SVG revalidations per board page).
+
+**Deferred with reason (presented to Jorge, not applied this pass):** the 843 KB `knight-mark.png` rendered at 24px (needs a proper small asset + a brand-visual check, which can't be done headlessly here); `/js`+`/css` immutable caching (stale-code-vs-fresh-HTML risk without hashed filenames — needs a hashing strategy or an accepted staleness window); the eager-engine lazy-init (Spec 15 Fix 2 — behaviour-sensitive, needs its own no-spoiler-red-teamed QA); and the larger visual-consistency refactor (shared `.panel`, the `.eyebrow`/`h1` type scale incl. review.html's unstyled eyebrow, the `.btn.primary` vs `.btn.btn-primary` fork, semantic soft/line tokens, the emoji "More"-group nav icons). Full reports captured for the next pass.
+
+---
+
+## v0.70 — Roadmap v4 batch: openings · coach unification · retention · themed supply (STAGED) (2026-06-09)
+
+A large single-session batch implementing the Roadmap v4 workstreams (`../../docs/super-app-roadmap.md`). Built in parallel by focused sub-agents with **strict, non-overlapping file ownership** (the only safe way to parallelise on a consistency-strict codebase) + an orchestrator integration pass (nav, QA registry) and a final verify. **Staged, uncommitted, QA pending.** Integrity clean (73 files), all JS parses, node-level logic tests pass.
+
+- **A — Openings trainer** (`openings.html`, `js/openings/*`, `data/openings/{index,vienna}.json`, `css/openings.css`): extensible "each opening is a data unit" repertoire trainer, Vienna first (6 verified-legal lines). Drill = tap origin→destination on the canonical static board, validated via chess.js. SRS (Leitner) in `chess-coach-openings-v1`; a "your openings" personal panel reads the dead ECO/openingName data from scorecards/game-meta. **Lesson learned:** book SAN like `Nge2` can be over-disambiguated vs chess.js's `Ne2` (pin) — grade by resolved from/to squares, not SAN strings.
+- **B — Coach unification** (`js/coach-card.js` new): the §17 card was reimplemented 3× and had drifted; now one shared module that all surfaces delegate to. Each coach surface fed the context it was missing (endgames goal/technique, recognition answer *after* answering only, general-chat the digest, per-game-review the FENs). `coach-widget.js` gained the missing sanitiser + style rules. **No-spoiler preserved**: recognition answer never reaches the prompt pre-answer; puzzle live-coach path untouched. The `.rv-*` CSS is injected once via `ensureCoachCardStyles()` so the card is self-sufficient on pages that don't link puzzle.css.
+- **C — Richer ingestion:** capture layer (v0.67) + surface on Insights (with E).
+- **D — Themed supply** (Spec 17; `data/lichess-puzzles.json` 10.5k + `js/puzzle/lichess.js`): own-game-first → Lichess top-up in `startThemeDrill`. **Critical isolation:** all Lichess behaviour is an additive branch keyed on `source==='lichess'`; the mistake grade path is byte-for-byte unchanged (git diff = 84 pure insertions, 0 deletions in the mistake branch). **Lichess move convention:** `fen` is before the opponent's setup move (`moves[0]`); the adapter bakes `moves[0]` into the stored FEN so the board path matches an own-game puzzle and `solutionLine[0]` is the key move. v1 grades only the first solver move.
+- **E — Retention foundation** (`js/streak.js`): session streak + freeze (generalised from the Board Vision streak), goal-gradient session progress, user-set daily goal (Casual/Regular/Serious), macro rating-band bar; Insights rating profile (peak/RD-settledness/record/tactics) + trajectory. Honesty rules from `../../docs/retention-and-gamification.md` enforced (no streak-terror, no vanity metrics, supportive freeze framing).
+- **Orchestration note:** the 3 big builds (A, B, E) + later D ran as sub-agents on disjoint file sets; nav (the Openings child on 12 pages) and `qa/tests/pages.js` were integrated by the orchestrator AFTER, since nav touches every page. Bulk nav insert via an idempotent node splice (same pattern as the v0.66 shell migration).
+
+---
+
+## v0.67 — Richer Chess.com ingestion: capture layer (Spec 24, staged) (2026-06-09)
+
+Roadmap v4 re-pointed the spine to **daily-habit / retention** (see `../../docs/super-app-roadmap.md` "Roadmap v4" + `../../docs/retention-and-gamification.md`). First build is workstream **C** — capture more of what Chess.com already hands us. The 2026-06-09 ingestion audit found we fetch-but-ignore a lot.
+
+- **Two new keys, both additive (swept by the `chess-coach-*` clear):**
+  - `chess-coach-game-meta-v1` — per-game `{rating, oppRating, endTime, result, resultForUser, eco, openingName, rated, timeControl, userAccuracy, oppAccuracy, termination, oppTermination}`. Captured in `js/games/ingest.js` (~0 cost — already on the game object), persisted in `boot.js` with the same idempotent merge as scorecards/moves.
+  - `chess-coach-rating-profile-v1` — richer `/stats` profile `{rapid:{current,rd,best,record}, blitz, tactics, fetchedAt}`, written by `js/puzzle/storage.js refreshRatingFromChessCom()` alongside the back-compat `chess-coach-user-rating-v1`.
+- **Why these fields:** `rated` filters unrated games out of the rating trajectory; `rd` (rating deviation) is the *settledness* signal so Insights can hedge honestly ("+40 but still settling"); `best`/`record` give the macro goal-gradient; `accuracies` (present only when a chess.com Game Review ran, else null) is a cross-check on our own ACPL; `tactics` is an ability signal decoupled from game-result variance.
+- **Deliberately scoped to capture only** — no UI, no scoring (`coach-stats.js` untouched), no prompt change. So it's QA-safe to ship without device QA. The *surfacing* (Insights rating block + the "are you actually improving?" trajectory chart, retention #6) is built with the retention foundation and goes through the normal device-QA gate.
+- **Verification:** `node --check` on the 3 changed JS files + integrity-check clean (65 files). Browser end-to-end ingest (chess.js/Stockfish are browser-only) is Jorge's QA step. Spec: `../../engineering/specs/24-richer-ingestion.md`.
+
+---
+
 ## v0.66 — Shell migration (US-17): 7 pages onto the shared shell.css chrome (2026-06-09)
 
 Finished the consistency work started in v0.65. The 7 pages that reinvented the app chrome inline (today, practice, games, insights, coach, completed, roadmap) now **link `css/shell.css` + `css/nav.css` and the duplicated inline chrome was deleted** — header bar, `.nav-drawer`, `.nav-brand*`, `.nav-drawer-link*`, `.tab-bar*`, `.version-stamp`, `.nav-backdrop`, `html/body`, `.container`, and the desktop `@media` chrome (body padding-left, container width, nav-drawer pin, tab-bar hide). Page-specific rules (cards, charts, buttons, and any page-specific `@media` like `.phases`/`.ratestrip`/`h1` desktop size) were preserved.

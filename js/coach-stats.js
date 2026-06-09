@@ -305,7 +305,108 @@
     return out;
   }
 
+  // ===========================================================================
+  // RETENTION HELPERS (docs/retention-and-gamification.md). Pure, additive — the
+  // daily-goal tiers, the macro goal-gradient toward the next rating band, and a
+  // formatter for the richer rating profile (peak / record / tactics / RD
+  // settledness). today.html + insights.html consume these; nothing persists here.
+  // ===========================================================================
+
+  // SDT autonomy: the user picks the target. Tiers map to a small, completable
+  // item count — "casual" must still feel finishable on a tired day (Fogg B=MAP).
+  var GOAL_TIERS = [
+    { tier:'casual',  target:3,  label:'Casual',  hint:'3 items · keep the habit alive' },
+    { tier:'regular', target:6,  label:'Regular', hint:'6 items · steady progress' },
+    { tier:'serious', target:10, label:'Serious', hint:'10 items · pushing for 1500' }
+  ];
+  var DEFAULT_GOAL_TIER = 'regular';
+  function goalForTier(tier){
+    for (var i=0;i<GOAL_TIERS.length;i++){ if (GOAL_TIERS[i].tier===tier) return GOAL_TIERS[i]; }
+    return goalForTier(DEFAULT_GOAL_TIER);
+  }
+  // Normalise a stored { tier, target } goal; fall back to the default tier.
+  function normalizeGoal(stored){
+    var t = (stored && typeof stored.tier === 'string') ? stored.tier : DEFAULT_GOAL_TIER;
+    var g = goalForTier(t);
+    var target = (stored && typeof stored.target === 'number' && stored.target > 0) ? stored.target : g.target;
+    return { tier:g.tier, target:target, label:g.label, hint:g.hint };
+  }
+
+  // Macro goal-gradient: distance to the next round rating band above `rating`
+  // (e.g. 1030 -> "70 pts to 1100"). Honest: derived straight from the cached
+  // Chess.com rating, no fabrication. BAND_STEP keeps bands meaningful (100).
+  var RATING_BAND_STEP = 100;
+  var RATING_TARGET = 1500;
+  function nextBand(rating){
+    if (typeof rating !== 'number' || !isFinite(rating)) return null;
+    var band = Math.floor(rating / RATING_BAND_STEP) * RATING_BAND_STEP + RATING_BAND_STEP;
+    if (band > RATING_TARGET) band = RATING_TARGET;
+    if (rating >= RATING_TARGET) return { band:RATING_TARGET, points:0, atTarget:true, pctOfBand:100 };
+    var points = Math.max(0, band - rating);
+    var bandFloor = band - RATING_BAND_STEP;
+    var pctOfBand = Math.max(0, Math.min(100, Math.round((rating - bandFloor) / RATING_BAND_STEP * 100)));
+    return { band:band, points:points, atTarget:false, pctOfBand:pctOfBand };
+  }
+
+  // Goal-gradient copy lift for the session ring: a gentle push in the final
+  // 1-2 items ("one more to finish today"), never a countdown / terror message.
+  function sessionGradientCopy(done, target){
+    var remaining = Math.max(0, target - done);
+    if (target <= 0) return '';
+    if (remaining <= 0) return "Today's goal met. Nice.";
+    if (remaining === 1) return 'One more to finish today.';
+    if (remaining === 2) return 'Two to go — almost there.';
+    return remaining + ' to reach today’s goal.';
+  }
+
+  // Format the richer rating profile (chess-coach-rating-profile-v1, Spec 24).
+  // Every field degrades gracefully when absent. RD -> an HONEST settledness note
+  // ("settled" vs "still settling") so gains can be hedged when RD is high.
+  // Shape in: { rapid:{current,rd,best,record:{w,l,d}}, blitz, tactics, fetchedAt }
+  var RD_SETTLED = 60;   // Glicko RD below which a rating is "settled" (Chess.com-ish)
+  function ratingProfileView(profile){
+    profile = (profile && typeof profile === 'object') ? profile : {};
+    function fmtRecord(rec){
+      if (!rec || typeof rec !== 'object') return null;
+      var w = (typeof rec.w === 'number') ? rec.w : null;
+      var l = (typeof rec.l === 'number') ? rec.l : null;
+      var d = (typeof rec.d === 'number') ? rec.d : null;
+      if (w == null && l == null && d == null) return null;
+      var total = (w||0) + (l||0) + (d||0);
+      var winPct = total ? Math.round((w||0) / total * 100) : null;
+      return { w:w||0, l:l||0, d:d||0, total:total, winPct:winPct };
+    }
+    function settledness(rd){
+      if (typeof rd !== 'number' || !isFinite(rd)) return { known:false, settled:null, label:null, note:null };
+      var settled = rd <= RD_SETTLED;
+      return {
+        known:true, rd:Math.round(rd), settled:settled,
+        label: settled ? 'settled' : 'still settling',
+        note: settled
+          ? 'Your rapid rating is settled — recent gains are real.'
+          : 'Your rapid rating is still settling — treat recent swings as provisional.'
+      };
+    }
+    var rapid = profile.rapid || {};
+    return {
+      hasAny: !!(profile.rapid || profile.blitz || profile.tactics),
+      rapid: {
+        current: (typeof rapid.current === 'number') ? rapid.current : null,
+        best: (typeof rapid.best === 'number') ? rapid.best : null,
+        record: fmtRecord(rapid.record),
+        settledness: settledness(rapid.rd)
+      },
+      tactics: (profile.tactics && typeof profile.tactics.current === 'number') ? profile.tactics.current
+               : (typeof profile.tactics === 'number' ? profile.tactics : null),
+      fetchedAt: profile.fetchedAt || null
+    };
+  }
+
   var API = { CONFIG:CONFIG, ATTRS:ATTRS, MOTIF_ATTR:MOTIF_ATTR, PHASE_ATTR:PHASE_ATTR,
+    GOAL_TIERS:GOAL_TIERS, DEFAULT_GOAL_TIER:DEFAULT_GOAL_TIER,
+    goalForTier:goalForTier, normalizeGoal:normalizeGoal,
+    RATING_BAND_STEP:RATING_BAND_STEP, RATING_TARGET:RATING_TARGET, nextBand:nextBand,
+    sessionGradientCopy:sessionGradientCopy, ratingProfileView:ratingProfileView,
     recencyW:recencyW, acplToScore:acplToScore, acplToElo:acplToElo, shrink:shrink, tier:tier, median:median,
     scoreAttributes:scoreAttributes, overallTier:overallTier, newScorecard:newScorecard,
     buildObs:buildObs, focusRanking:focusRanking, buildSession:buildSession,

@@ -70,3 +70,22 @@ button, input, textarea, select {
 .comparison .cp-loss-small {
   font-family: var(--font-mono);
 }
+
+/* ── Page-intro pattern (design-system.md): .eyebrow → h1 → .lede ──────────────
+   Single source so every screen's intro reads identically. Pages must NOT
+   redefine these inline (that was the drift: .eyebrow existed at 10.5px on some
+   pages, 11px on others, and was simply ABSENT on review.html → unstyled). */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.lede {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}

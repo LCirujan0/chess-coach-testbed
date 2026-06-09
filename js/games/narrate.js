@@ -1,4 +1,21 @@
 import { $, escapeHtml } from './dom.js';
+import { renderCoachCard, parseCoachJson, ensureCoachCardStyles } from '/js/coach-card.js';
+
+// Render the per-game / per-session coach output through the ONE shared §17 card
+// (Surface 8 + Surface 9). games.html links neither puzzle.css nor train.css, so
+// ensureCoachCardStyles() injects the canonical .rv-* rules once. `extraHtml`
+// (the drill buttons) is appended below the card.
+function renderNarrationCard(outEl, parsed, extraHtml) {
+  ensureCoachCardStyles();
+  outEl.classList.remove('hidden');
+  renderCoachCard(outEl, parsed, { append: false, scroll: false });
+  if (extraHtml) {
+    const extra = document.createElement('div');
+    extra.innerHTML = extraHtml;
+    outEl.appendChild(extra);
+  }
+}
+
 // ---- Coach game review + drill (per-game) -------------------------------
 async function reviewGameWithCoach(gameUrl, outEl, btn) {
   let all = [];
@@ -8,22 +25,48 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
   if (!ms.length) { outEl.textContent = 'No saved mistakes for this game.'; return; }
   btn.disabled = true; const old = btn.textContent; btn.textContent = 'Reviewing…';
   outEl.textContent = 'Coach is reviewing this game…';
-  const digest = ms.map((m) => ({ move: m.fullmove, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
+  // Ground each mistake in its position (FEN) — the game is over, so naming the
+  // better move is the deliverable, not a spoiler. FEN lets the coach speak to
+  // the actual position, not just the abstract error record.
+  const digest = ms.map((m) => ({ move: m.fullmove, fen: m.fen, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
   const SYS = [
-    "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON).",
-    'Give a short review (3-5 sentences): name the recurring theme across these mistakes, the single most costly moment, and one thing to work on next.',
-    'Refer to moves by their move number and SAN. Use only the data given; do not invent moves. Plain prose only — no markdown, no lists, no em-dashes.',
+    "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON, each with the position FEN).",
+    'The game is OVER — there is no answer to hide. Ground every claim ONLY in the supplied data (positions, moves, cp losses); do not invent moves.',
+    '',
+    'Return ONLY this JSON (no markdown, no fences, no prose outside the object):',
+    '{ "lead": "...", "points": [{ "label": "...", "text": "...", "tone": "bad|warn|pos|muted" }], "question": "...", "grounded": "..." }',
+    '- lead: one line naming the recurring theme across these mistakes.',
+    '- points: 2-3 labelled points (e.g. Recurring theme / Most costly / Work on), tones tinted by severity.',
+    '- question: one reflective question to internalise the pattern.',
+    '- grounded: the single most costly moment, e.g. "Move 23 lost N pawns."',
+    'Plain language. No markdown, no bullet lists, no em-dashes.',
   ].join('\n');
   try {
     const r = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, system: SYS, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, system: SYS, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
     const data = await r.json();
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const txt = ((data.content && data.content[0] && data.content[0].text) || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/[—–]/g, ',').trim();
-    const drills = ms.map((m) => `<a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill move ${m.fullmove}: ${escapeHtml(m.userMoveSan)}</a>`).join('');
-    outEl.innerHTML = `<div class="coach-review-text">${escapeHtml(txt || '(no review)')}</div><div class="coach-review-drills">${drills}</div>`;
+    const txt = (data.content && data.content[0] && data.content[0].text) || '';
+    const parsed = parseCoachJson(txt) || reviewFallback(ms);
+    const drills = '<div class="coach-review-drills">' + ms.map((m) => `<a class="btn-drill-one" href="/puzzle.html?drill=${encodeURIComponent(m.id)}">Drill move ${m.fullmove}: ${escapeHtml(m.userMoveSan)}</a>`).join('') + '</div>';
+    renderNarrationCard(outEl, parsed, drills);
   } catch (e) { outEl.textContent = 'Coach unavailable right now.'; }
   finally { btn.disabled = false; btn.textContent = old; }
+}
+
+// Deterministic §17 fallback when the per-game review call fails or its JSON
+// doesn't parse — keeps Surface 9 structured rather than dropping to raw text.
+function reviewFallback(ms) {
+  const worst = ms.slice().sort((a, b) => (b.cpLoss || 0) - (a.cpLoss || 0))[0] || {};
+  return {
+    lead: ms.length + ' mistake' + (ms.length === 1 ? '' : 's') + ' to learn from in this game.',
+    points: [
+      { label: 'Most costly', text: 'Move ' + (worst.fullmove || '?') + ': ' + (worst.userMoveSan || '?') + ' (' + (worst.cpLoss || 0) + 'cp).', tone: 'bad' },
+      { label: 'Better', text: worst.bestMoveSan || 'see the engine line', tone: 'pos' },
+    ],
+    question: 'What did the better move do that yours did not?',
+    grounded: 'From your saved mistakes for this game.',
+  };
 }
 function wireReviewHandlers() {
   const listEl = $('mistakes-list');
@@ -41,10 +84,9 @@ function wireReviewHandlers() {
 // SECTION 9b — Spec 05 conductor narration (per-game "how you played")
 // ============================================================================
 
-// Deterministic fallback — zero tokens. Reads focus_ranked[0] and returns a
-// plain-English reason string. Shown immediately when data is thin OR when
-// the LLM call fails.
-function fallbackReason(d) {
+// §17 card-shaped fallback for Surface 8 — wraps the deterministic reason so the
+// narration stays structured even when the LLM call fails or data is thin.
+function narrativeFallbackCard(d) {
   const ATTR_NAMES = {
     tactical_patterns: 'tactics', endgame_technique: 'endgames',
     opening_principles: 'openings', king_safety: 'king safety',
@@ -52,17 +94,26 @@ function fallbackReason(d) {
     calculation: 'calculation',
   };
   if (!d || !d.focus_ranked || !d.focus_ranked.length) {
-    return 'Not enough data yet to call your biggest weakness. Solve a few more puzzles and ingest a game or two, and your focus will sharpen.';
+    return { lead: 'Still building your picture', points: [], question: 'Solve a few more puzzles and ingest a game or two so your focus sharpens.', grounded: 'Not enough data yet.' };
   }
   const top = d.focus_ranked[0];
   const name = ATTR_NAMES[top.attribute] || top.attribute;
-  const sess = d.session ? ` Today: ${d.session.title} (${d.session.count} puzzles).` : '';
-  return `Your weakest area right now is ${name} (${top.tier}, scoring ${Math.round(top.score)}/100).${sess}`;
+  const points = [{ label: 'Focus', text: `${name} (${top.tier}, scoring ${Math.round(top.score)}/100).`, tone: 'warn' }];
+  if (d.session) points.push({ label: 'Today', text: `${d.session.title} — ${d.session.count} puzzles queued.`, tone: 'muted' });
+  return { lead: 'How you have been playing', points, question: 'What is one idea from this area you could apply in your next game?', grounded: 'Based on your game and puzzle history.' };
+}
+
+// Render Surface 8 (the "how you played" narration) through the shared card,
+// honouring this surface's style.display toggle.
+function renderNarrative(out, parsed) {
+  ensureCoachCardStyles();
+  renderCoachCard(out, parsed, { append: false, scroll: false });
+  out.style.display = '';
 }
 
 // Build stores from localStorage (same as Insights), call computeCoachView()
-// + buildDigest(), then fire Prompt A. Falls back to fallbackReason() if the
-// LLM call fails or data is thin. On-demand only — never auto-fires.
+// + buildDigest(), then fire Prompt A and render the §17 card. Falls back to
+// narrativeFallbackCard() if the LLM call fails or data is thin. On-demand only.
 async function handleCoachNarrative() {
   const btn = $('coach-narrative-btn');
   const out = $('coach-narrative-out');
@@ -89,14 +140,15 @@ async function handleCoachNarrative() {
 
   // No games in scorecards yet — skip the LLM call.
   if (!digest.games || digest.games < 1) {
-    out.textContent = fallbackReason(digest);
-    out.style.display = '';
+    renderNarrative(out, narrativeFallbackCard(digest));
     btn.disabled = false;
     btn.textContent = 'Coach: how did you play?';
     return;
   }
 
-  // Prompt A — "how you played": narrate the worst phase/pattern from numbers.
+  // Prompt A — "how you played": narrate the worst phase/pattern from numbers,
+  // returned as the §17 card shape (lead + labelled points + reflective
+  // question) so Surface 8 renders the same structured card as everywhere else.
   const r = digest.rating || 950;
   const PROMPT_A_SYSTEM = [
     `You are a chess coach reviewing a student's recent games. They are rated approximately ${r} on Chess.com rapid, targeting 1500.`,
@@ -104,16 +156,21 @@ async function handleCoachNarrative() {
     'You are given a DIGEST (JSON) of structured scorecard data. Ground EVERY claim ONLY in these numbers.',
     '',
     'HARD RULES:',
-    '- Do NOT re-rank priorities.',
+    '- Do NOT re-rank priorities. The first item in focus_ranked IS the worst area.',
     '- Do NOT invent any chess fact, move, opening name, or piece name. Use only what the DIGEST provides.',
     '- Do NOT reveal a puzzle answer. There is no position here at all.',
     '- Name the ONE recurring pattern that costs the most: the phase + theme from focus_ranked.',
-    '- Say plainly what it is and why it loses points. 3-5 sentences.',
-    '- If focus_ranked is empty (still calibrating): say there is not enough data yet, suggest ingesting more games.',
+    '- If focus_ranked is empty (still calibrating): lead says there is not enough data yet; points empty; question suggests ingesting more games.',
     '',
     'Humanise attribute keys: tactical_patterns→tactics, endgame_technique→endgames, opening_principles→openings, king_safety→king safety, piece_activity→piece activity, pawn_structure→pawn structure, calculation→calculation.',
     '',
-    'Output: plain prose only. No markdown, no lists, no em-dashes, no preamble.',
+    'Output ONLY this JSON (no markdown, no fences, no prose outside the object):',
+    '{ "lead": "...", "points": [{ "label": "...", "text": "...", "tone": "bad|warn|pos|muted" }], "question": "...", "grounded": "..." }',
+    '- lead: one line naming the worst recurring pattern.',
+    '- points: 2-3 labelled points (e.g. Worst area / Why it costs / What to do), tones tinted by severity.',
+    '- question: one reflective question.',
+    '- grounded: the source line, e.g. "Based on your last N games."',
+    'Plain language. No markdown, no bullet lists, no em-dashes.',
   ].join('\n');
 
   try {
@@ -122,7 +179,7 @@ async function handleCoachNarrative() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 300,
+        max_tokens: 400,
         system: PROMPT_A_SYSTEM,
         messages: [{ role: 'user', content: 'DIGEST:\n' + JSON.stringify(digest, null, 2) }],
       }),
@@ -130,14 +187,12 @@ async function handleCoachNarrative() {
     const data = await resp.json();
     if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${JSON.stringify(data).slice(0, 200)}`);
     const raw  = (data.content && data.content[0] && data.content[0].text) || '';
-    const text = raw.replace(/\*\*(.+?)\*\*/g, '$1').replace(/[—–]/g, ',').replace(/\s{2,}/g, ' ').trim();
-    out.textContent = text || fallbackReason(digest);
-    out.style.display = '';
+    const parsed = parseCoachJson(raw) || narrativeFallbackCard(digest);
+    renderNarrative(out, parsed);
     btn.textContent = 'Done';
   } catch (err) {
-    // LLM failed — show deterministic fallback and re-enable the button.
-    out.textContent = fallbackReason(digest);
-    out.style.display = '';
+    // LLM failed — show deterministic structured fallback and re-enable the button.
+    renderNarrative(out, narrativeFallbackCard(digest));
     btn.disabled = false;
     btn.textContent = 'Coach: how did you play?';
   }

@@ -16,6 +16,7 @@ import { puzzleAccuracy, setAttemptComponent, renderCpBar } from './grade.js';
 import { bestMoveAnswerText } from './review.js';
 import { renderPending, clearPending } from './pending.js';
 import { refreshSessionWrap } from '/js/session-wrap.js';
+import { shouldShowIntro, showIntro, markIntroLinesReady } from './intro.js';
 
 export function pickHeadline(grade, repeated, accuracy) {
   if (repeated && grade.tier === 'outside') return 'Same move as in your game, same mistake.';
@@ -378,17 +379,33 @@ export function resetPuzzleStateAndRender(opts) {
   }
   $('gate-card').classList.add('hidden');
   if (!keepReview) clearCoachLog();
-  renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs(); renderBoard();
-  // §31 — the feedback card occupies its slot from a PENDING state so the board
-  // never shifts when a verdict later appears.
-  renderCpBar();
-  renderPending();
+  renderTitleAndMeta(); renderFilterTabs(); renderCategoryTabs();
+  // Mistake intro ("what happened in your game"): for a fresh own-game mistake
+  // with a recorded continuation, show the replay+analysis intro before the
+  // solve. showIntro sets phase='intro', renders the board at the pre-mistake
+  // position, and hides the play controls. Otherwise render the solve surface.
+  const introMode = shouldShowIntro(puzzle, opts);
+  if (introMode) {
+    showIntro(puzzle);
+  } else {
+    renderBoard();
+    // §31 — the feedback card occupies its slot from a PENDING state so the board
+    // never shifts when a verdict later appears.
+    renderCpBar();
+    renderPending();
+  }
   refreshSessionWrap(); // keep the persistent session bar in sync as items advance
   if (state.engineReady) {
+    // Analyse the SOLVE position (puzzle.fen) by string, not live state.chess —
+    // the intro replay mutates state.chess, so we must not read it back here.
+    const solveFen = puzzle.fen;
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
-    analyzePosition(state.chess.fen(), STOCKFISH_DEPTH).then(() => {
-      state.positionSummary = buildPositionSummary(state.chess.fen());
+    analyzePosition(solveFen, STOCKFISH_DEPTH).then(() => {
+      state.positionSummary = buildPositionSummary(solveFen);
       setInlineStatus('');
+      // Intro is showing — lines are ready; enable "Solve it" and stay in intro
+      // until the user dismisses it. The solve phase opens from beginSolveFromIntro.
+      if (state.phase === 'intro') { markIntroLinesReady(); return; }
       // Choose phase: drill / review / keep-gate go straight to playing; deep
       // (fresh puzzle) opens the CCTO gate.
       if (state.reviewPuzzleId || state.mode === 'drill' || keepGate) {

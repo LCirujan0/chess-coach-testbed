@@ -9,13 +9,15 @@
 // is tagged, a "Drill this motif" CTA deep-links into a focused puzzle session.
 //
 // Reuses the canonical static board (js/board-static.js renderStaticBoard) and
-// the Chess pin (games/lib.js). The §17 review card is rendered self-contained
-// here (inline styles) so games.html stays decoupled from the puzzle CSS.
+// the Chess pin (games/lib.js). The §17 review card is rendered through the ONE
+// shared renderer (js/coach-card.js renderCoachCard); ensureCoachCardStyles()
+// injects the canonical .rv-* rules so review.html needs no extra stylesheet.
 // ============================================================================
 import { renderStaticBoard } from '/js/board-static.js';
 import { Chess } from './lib.js';
 import { $, escapeHtml } from './dom.js';
 import { MOTIF_LABELS } from '/js/puzzle/config.js';
+import { renderCoachCard, parseCoachJson, ensureCoachCardStyles } from '/js/coach-card.js';
 
 const KEY_MOVES = 'chess-coach-game-moves-v1';
 const KEY_MISTAKES = 'chess-coach-mistakes-v1';
@@ -204,7 +206,7 @@ async function explainMistake(m) {
     const data = await r.json();
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const text = (data.content && data.content[0] && data.content[0].text) || '';
-    const review = parseReviewJson(text) || fallbackReview(m);
+    const review = parseCoachJson(text) || fallbackReview(m);
     explainCache.set(m.id, review);
     renderReviewCard(coach, review);
   } catch (e) {
@@ -226,57 +228,26 @@ function fallbackReview(m) {
   };
 }
 
-// Minimal, self-contained JSON parser for the §17 review shape (mirrors
-// js/puzzle/dom.js parseReviewMessage; inlined to keep games.html decoupled
-// from the puzzle module graph).
-function parseReviewJson(text) {
-  if (!text || typeof text !== 'string') return null;
-  let body = text.trim();
-  const fence = body.match(/^```(?:json)?\s*([\s\S]+?)\s*```$/);
-  if (fence) body = fence[1].trim();
-  const start = body.indexOf('{');
-  if (start === -1) return null;
-  let depth = 0, end = -1;
-  for (let i = start; i < body.length; i++) {
-    if (body[i] === '{') depth++;
-    else if (body[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
-  }
-  if (end === -1) return null;
-  let parsed;
-  try { parsed = JSON.parse(body.slice(start, end + 1)); } catch { return null; }
-  if (!parsed || typeof parsed !== 'object') return null;
-  if (typeof parsed.lead !== 'string' || typeof parsed.question !== 'string') return null;
-  if (parsed.points && !Array.isArray(parsed.points)) return null;
-  return parsed;
-}
-
-// Self-contained §17 card (inline styles matching the puzzle/coach surfaces:
-// Plus Jakarta 800 lead, 70px label column, tone-tinted points, italic
-// question with a top border, muted grounded footnote) + the Drill CTA.
-const TONE = { bad: 'var(--bad)', warn: 'var(--warn)', pos: 'var(--pos)', muted: 'var(--muted)' };
+// Render one per-mistake review through the ONE shared §17 card
+// (js/coach-card.js). The game is over so naming the better move is the
+// deliverable, not a spoiler (§12 carve-out). The "Drill this motif" deep-link
+// is passed as a card CTA (href) when the mistake is tagged. review.html links
+// train.css but not the .rv-* block, so ensureCoachCardStyles() injects the
+// canonical rules once on first render.
 function renderReviewCard(container, review) {
-  const pts = (review.points || []).slice(0, 4).map((p) => `
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <div style="flex:none;width:70px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:2px;">${escapeHtml(String(p.label || '').slice(0, 24))}</div>
-      <div style="flex:1;font-size:14px;line-height:1.5;color:${TONE[p.tone] || 'var(--ink)'};">${escapeHtml(p.text || '')}</div>
-    </div>`).join('');
-  const drill = currentMotifCta();
-  container.innerHTML = `
-    <div class="panel" style="margin:0;">
-      <div style="font-family:'Plus Jakarta Sans','Inter',sans-serif;font-weight:800;font-size:16px;line-height:1.3;">${escapeHtml(review.lead || '')}</div>
-      ${pts}
-      ${review.question ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-style:italic;font-size:13px;color:var(--ink);">${escapeHtml(review.question)}</div>` : ''}
-      ${review.grounded ? `<div style="margin-top:8px;font-size:11px;color:var(--muted);">${escapeHtml(review.grounded)}</div>` : ''}
-      ${drill}
-    </div>`;
+  ensureCoachCardStyles();
+  const cta = currentMotifCta();
+  const parsed = cta ? { ...review, cta: [cta] } : review;
+  renderCoachCard(container, parsed, { append: false, scroll: false });
 }
 
-// "Drill this motif" CTA for the currently-displayed mistake (if tagged).
+// "Drill this motif" CTA descriptor for the currently-displayed mistake (if
+// tagged) — shaped for the shared card's cta[] (label + href).
 function currentMotifCta() {
   const m = reviewState.plyIndex > 0 ? reviewState.mistakesByPly[reviewState.plyIndex - 1] : null;
-  if (!m || !m.motif || m.motif === 'none-tactical') return '';
+  if (!m || !m.motif || m.motif === 'none-tactical') return null;
   const label = MOTIF_LABELS[m.motif] || m.motif;
-  return `<a class="btn" href="/puzzle.html?motif=${encodeURIComponent(m.motif)}&source=review" style="display:inline-block;margin-top:12px;text-decoration:none;">Drill ${escapeHtml(label)} mistakes →</a>`;
+  return { label: `Drill ${label} mistakes →`, href: `/puzzle.html?motif=${encodeURIComponent(m.motif)}&source=review`, primary: true };
 }
 
 // ---------------------------------------------------------------------------

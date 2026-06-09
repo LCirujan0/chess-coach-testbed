@@ -6,11 +6,11 @@ The brand reference. Every screen should feel like the same product: same header
 
 ## Brand identity
 
-- **Name:** KnightPath. **Mark:** the knight icon (`/brand-icons/knight-mark.png`). **Signature colour:** accent green `#2F9E76`.
+- **Name:** KnightPath. **Mark:** the knight icon (`/brand-icons/knight-mark-sm.png`). **Signature colour:** accent green `#2F9E76`.
 - **The brand signature is the header.** Every page opens with the same branded bar: the knight mark + **KnightPath** wordmark (accent green, Plus Jakarta 800) + a **screen chip** naming the page (uppercase, muted pill). This is the single most recognizable element — it must be identical everywhere.
   ```html
   <div class="header-bar">
-    <img class="brand-mark" src="/brand-icons/knight-mark.png" alt="" aria-hidden="true">
+    <img class="brand-mark" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
     <span class="brand-word">KnightPath</span>
     <span class="screen-chip">PAGE NAME</span>
   </div>
@@ -60,7 +60,13 @@ One system. Canonical classes: **`.btn`** (base) · **`.btn.primary`** (accent f
 The header is consistent app-wide (v0.65) and the shell migration is done (v0.66). Remaining debt found in the 2026-06-08 audit:
 
 1. ~~7 pages don't link `shell.css`~~ **DONE (v0.66, US-17):** today, practice, games, insights, coach, completed, roadmap now link `shell.css` + `nav.css` and the duplicated inline chrome (header/nav/body/container/tab-bar + the desktop `@media`) was removed. Each page's chrome now computes identically to the board screens (560/1100 container, 224px pinned nav, mobile-only tab-bar, branded static header). Verified by computed-style parity + QA.
-2. **No shared `.panel`/card component** — defined inline on games/insights/review with different padding/shadow. Create one shared card (in train.css) and migrate.
-3. **Button naming drift** — games.html uses inline `.btn-secondary`/`.btn-danger` (not in train.css). Migrate to `.btn` / `.btn.ghost` once games links train.css.
-4. **Hardcoded values** — pages hardcode the body gradient (`#FFFFFF/#EDF0F3`), header blur, and some semantic colours (`#FBF0ED` ≈ bad-soft) instead of tokens. Tokenise as part of (1).
-5. ~~`header.css` ⇄ `shell.css` duplication~~ **DONE (v0.66):** the v0.65 `header.css` was a transitional shim; now every page links `shell.css`, so `header.css` was deleted and the branded header is single-sourced in `shell.css`.
+2. **Shared `.panel` card** — **DONE for the literal `.panel` pages (v0.73):** one canonical `.panel` now lives in `shell.css` (universally linked) — `var(--r-card)` / 18px / `1px var(--line)` / one soft shadow / `var(--surface)`; games/insights/review reduced to margin-only and now compute **identically** (verified by computed-style parity). **Still open:** the *bespoke* cards that use other class names (`.session` on today, `.mode-card` on practice, `.loop` on roadmap, `.op-panel` on openings, `.summary-bar` on completed) — migrating them needs HTML re-classing + per-card padding checks (layout-shift risk → visual QA on a preview).
+3. **Button fork** — **DONE in `train.css` (v0.73):** `.btn.btn-primary` and `.btn.primary` are now one rule (both selectors), so the two class names render identically; puzzle.html's phantom `.btn-secondary` → `.btn.ghost`. **Still open:** `games.html` re-rolls its own `.btn` (accent-fill base) + `.btn-secondary`/`.btn-danger` and doesn't link `train.css` — migrating it changes every button's look (visual-QA gate).
+4. **Hardcoded values** — body gradient, header blur, and the semantic soft/line colours. **Partly done (v0.72):** the soft/line **tokens now exist** (`--bad-soft/-line/-ink`, `--warn-soft/-line`, `--pos-soft`, `--accent-line`, `--app-bg-start/-end` in `tokens.css`) and are used by the new intro card; the ~17 existing hardcoded hexes across pages still need migrating to them.
+5. ~~`header.css` ⇄ `shell.css` duplication~~ **DONE (v0.66).**
+
+### v0.72 consistency pass (2026-06-09 audit) — done
+- ✅ **`.eyebrow` + `.lede` promoted to `type.css`** (single source). Fixes **review.html's unstyled eyebrow** (a live brand break — it had no definition) and unifies the two drifting values (10.5px vs 11px) → every page-intro eyebrow now computes identically (accent / 10.5px / 700 / .12em / 5px margin). Verified by computed-style parity across review/today/insights.
+- ✅ **"More"-group nav icons** (Sync games / Roadmap / Completed) were emoji (`⟳ ▤ ✓`); replaced app-wide with line-icon SVGs matching the nav set (24×24, stroke-width 1.9, `currentColor` so active-state white inherits).
+- ✅ **Brand-mark perf+hygiene** — the header/nav used `knight-mark.png` (**843 KB**, 1254² rendered at 24px) on every page; now a downscaled `knight-mark-sm.png` (**12.9 KB**, 128², visually identical) + immutable caching on `/brand-icons/*`.
+- ✅ Misc: `insights.html` stray comment moved inside `<style>`; `openings.css` off-scale `6px` radius → `var(--r-panel)`; the `none-tactical` "Drill this theme" CTA is now disabled (it had no library supply).

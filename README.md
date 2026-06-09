@@ -1,21 +1,24 @@
-# Chess Coach — Connection Testbed
+# KnightPath
 
-This is the v2 testbed. It deploys to Vercel and tests every dependency we need before building the full app.
+A chess coaching PWA. Fetches your Chess.com games, turns your real mistakes into puzzles, and coaches you through each position without giving the answer away.
 
-## Files
+**Stack:** Vanilla HTML/CSS/JS · Vercel (static + serverless) · Stockfish 17.1 WASM · Anthropic API
 
-- `index.html` — the testbed page with 6 tests
-- `vercel.json` — sets HTTP headers for CORS/COOP/COEP (needed for some Stockfish builds)
-- `README.md` — this file
+See `CLAUDE.md` for the full architecture, module map, project rules, and current status.
 
-## What gets tested
+## Key files
 
-1. **localStorage** — persistence across browser sessions
-2. **Chess.com API** — fetching game archives, known to be flaky for CORS
-3. **chess.js library** — PGN parsing via the standard JS library (loaded from esm.sh)
-4. **Stockfish online API** — the fallback engine (stockfish.online)
-5. **Stockfish WASM** — the primary engine, running locally in your browser via Web Worker
-6. **Anthropic API** — coaching commentary (needs your personal API key)
+- `today.html` — user home (daily session)
+- `puzzle.html` — primary training screen (`/` redirects here)
+- `review.html` — game review (replay + per-mistake coach + "drill this motif")
+- `board-vision.html` — Board Vision warm-up (drills + hide-the-board tracker)
+- `games.html` — Sync games (Chess.com ingestion)
+- `api/coach.js` — Anthropic proxy (keeps the API key server-side)
+- `api/tag.js` — AI puzzle motif classifier
+- `js/puzzle/` · `js/games/` · `js/board-vision/` — page module engines (see `CLAUDE.md` for the module map)
+- `css/tokens.css` — design system foundation (all CSS variables live here); `docs/design-system.md` is the brand reference
+- `docs/learnings.md` — key architectural decisions and their rationale
+- `qa/` — Playwright test suite + CI workflow
 
 ## Deploy to Vercel — 5 minute setup
 
@@ -52,21 +55,22 @@ vercel
 
 ## After deploying
 
-1. Open the Vercel URL on your iPhone (or any browser)
-2. Type your Chess.com username (defaults to LCirujano)
-3. Tap "Run all tests"
-4. Look at the status badges. Tap "Show output" on any failure to see the raw error.
-5. Send me the results.
+1. Set `ANTHROPIC_API_KEY` in Vercel → Project Settings → Environment Variables
+2. Open the deployed URL — it redirects to `/puzzle.html`
+3. Go to `games.html` to ingest your Chess.com games
+4. Set up CI: add `VERCEL_AUTOMATION_BYPASS_SECRET` as a GitHub secret (see `qa/VERCEL-SETUP.md`)
 
-## What I'm looking for in the results
+## Running the QA suite
 
-- **Test 2 (Chess.com):** does it work from a real https origin? If yes, we can skip the serverless proxy.
-- **Test 3 (chess.js):** does the library load and parse a real game? If not, we may need a different library or to ship it bundled.
-- **Test 5 (Stockfish WASM):** does it work from a CDN? If not, we'll bundle Stockfish files in the Vercel deploy.
-- **Test 6 (Anthropic):** does it work with `anthropic-dangerous-direct-browser-access`?
+```powershell
+cd qa
+npm install
+npx playwright install chromium webkit
+npm test               # full suite, local
+npm run test:smoke     # fastest signal
+npm run integrity      # file integrity only, no browser
+```
 
-## Why this matters
-
-Last time I built the app first and then found CORS/dependency issues at runtime. This time we verify each dependency in isolation, then build only on what's confirmed working. No more "this should work" guesses.
+See `qa/README.md` for full details and `docs/qa-checklist.md` for the manual checklist.
 
 <!-- deploy pipeline test: 2026-06-02T10:09Z -->

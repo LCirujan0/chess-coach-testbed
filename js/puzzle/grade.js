@@ -6,8 +6,10 @@ import {
   STOCKFISH_DEPTH_FOLLOW, STORAGE_KEY_SESSION,
 } from './config.js';
 import { state } from './state.js';
+import { Chess } from './lib.js';
 import { $, appendCoachMessage, setInlineStatus } from './dom.js';
 import { saveAttempts } from './storage.js';
+import { markLichessSolved } from './lichess.js';
 import { analyzePosition, normalizeEval, buildPositionSummary } from './engine.js';
 import { renderBoard, renderTitleAndMeta } from './board.js';
 import { renderFilterTabs, renderCategoryTabs, isSolved, getCurrentPuzzle } from './queue.js';
@@ -39,10 +41,20 @@ export function gradeMove(userUci) {
 }
 
 export async function commitAndEvaluate(move) {
+  // Spec 17 — Lichess supply puzzles grade against their known solution line,
+  // not the engine MultiPV. This is an ADDITIVE branch keyed on the puzzle's
+  // source; the own-game (mistake) grade path below is reached only when the
+  // current puzzle is NOT a Lichess entry, and is behaviourally unchanged.
+  const _cur = getCurrentPuzzle();
+  if (_cur && _cur.source === 'lichess') {
+    return commitAndEvaluateLichess(move, _cur);
+  }
+
   const fenBefore = state.chess.fen();
 
   const played = state.chess.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
   state.lastMove = { from: move.from, to: move.to };
+  state.animateMove = { from: move.from, to: move.to }; // Spec 19 — slide this move
   state.selectedSquare = null;
   state.legalMovesFromSelected = [];
 
@@ -142,6 +154,76 @@ export async function commitAndEvaluate(move) {
   await finishPuzzle({ grade, played, terminal: 'wrong_move' });
 }
 
+// ============================================================================
+// Spec 17 — Lichess solution-line grading (self-contained, source==='lichess')
+// ============================================================================
+// Grades the player's move against the puzzle's stored solution line (UCI), NOT
+// the engine. v1 grades the FIRST solver move as pass/fail (the key motif move).
+// Correct = the move matches solutionLine[0] (from+to, promotion-aware).
+// No Stockfish call; no MultiPV dependency. Fully isolated from the mistake
+// grade path above. Resolves through the SHARED finishPuzzle/result surface so
+// the Completed view and card behave consistently across sources.
+export async function commitAndEvaluateLichess(move, puzzle) {
+  const fenBefore = state.chess.fen();
+  const played = state.chess.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
+  state.lastMove = { from: move.from, to: move.to };
+  state.animateMove = { from: move.from, to: move.to }; // Spec 19 — slide this move
+  state.selectedSquare = null;
+  state.legalMovesFromSelected = [];
+  state.annotations = [];
+  state.pieceHintSquare = null;
+
+  const userUci = move.from + move.to + (move.promotion || '');
+  const expected = (puzzle.solutionLine && puzzle.solutionLine[0]) || '';
+  // Compare from+to; if the expected move carries a promotion, require it too.
+  const userKey = userUci.slice(0, 4);
+  const expKey = expected.slice(0, 4);
+  let correct = userKey === expKey;
+  if (correct && expected.length > 4) {
+    correct = (move.promotion || '').toLowerCase() === expected.slice(4, 5).toLowerCase();
+  }
+
+  // Synthesise a grade in the same shape the result/result-card code reads.
+  // Correct → tier 'best' (rank 1, 0 cp loss); wrong → tier 'outside' (rank
+  // null), which the shared result surface renders as "Not solved".
+  const grade = correct
+    ? { rank: 1, tier: 'best', cpLoss: 0 }
+    : { rank: null, tier: 'outside', cpLoss: null };
+
+  // Provide the correct first move as the "engine best at point" so the result
+  // card's contrast line ("You X · Best Y") and the earned-reveal show the real
+  // solution move, in SAN, without any engine call.
+  const expSan = sanForUci(fenBefore, expected);
+  state.userMovesMade++;
+  state.moveCpLoss.push(0);
+  state.attemptHistory.push({
+    mover: 'user', fenBefore, san: played.san, uci: userUci, grade,
+    engineBestAtPoint: expSan ? { san: expSan, uci: expected, pvSan: [expSan] } : null,
+    evalBeforeCp: null,
+    userEvalAfterCp: null,
+    ply: state.attemptHistory.length,
+  });
+  renderTitleAndMeta();
+  renderBoard();
+  renderComparison({ live: true });
+  renderCpBar();
+
+  // v1: resolve on the first solver move (pass or fail). No multi-move solve
+  // loop — keeps the Lichess path entirely self-contained.
+  await finishPuzzle({ grade, played, terminal: correct ? undefined : 'wrong_move' });
+}
+
+// SAN for a UCI move from a given FEN, without mutating shared state. Returns
+// null on any error (the contrast line then simply omits the best-move SAN).
+function sanForUci(fen, uci) {
+  if (!fen || !uci || uci.length < 4) return null;
+  try {
+    const c = new Chess(fen);
+    const m = c.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci.slice(4, 5) : undefined });
+    return m ? m.san : null;
+  } catch { return null; }
+}
+
 export async function playEngineResponseAndRearm() {
   setInlineStatus('Engine thinking…', 'thinking');
   try {
@@ -152,6 +234,7 @@ export async function playEngineResponseAndRearm() {
   const engineFenBefore = state.chess.fen();
   const engObj = state.chess.move({ from: eng.uci.slice(0,2), to: eng.uci.slice(2,4), promotion: eng.uci.slice(4,5) || undefined });
   state.lastMove = { from: eng.uci.slice(0,2), to: eng.uci.slice(2,4) };
+  state.animateMove = { from: eng.uci.slice(0,2), to: eng.uci.slice(2,4) }; // Spec 19 — slide the engine reply
   state.attemptHistory.push({ mover: 'engine', fenBefore: engineFenBefore, san: engObj ? engObj.san : eng.san, uci: eng.uci, ply: state.attemptHistory.length });
   renderTitleAndMeta(); renderBoard();
   // v0.7: the per-move "Move N: <san> ✓  ·  engine replied <san>" chatter that
@@ -299,6 +382,10 @@ export function recordAttempt(grade) {
     cur.solved = true;
     if (typeof cur.firstAccuracy !== 'number' && accuracy !== null) cur.firstAccuracy = accuracy;
     if (accuracy !== null) cur.lastAccuracy = accuracy;
+    // Spec 17 — mirror a solved Lichess puzzle into the lean solved-id set so
+    // the themed-drill top-up skips it on re-draw (the attempt is also recorded
+    // under its `lichess:<id>` id in the attempts ledger above).
+    if (puzzle.source === 'lichess') markLichessSolved(puzzle.id);
   } else {
     cur.failedAttempts = (cur.failedAttempts || 0) + 1;
     // Per-session counter — drives reveal mode independent of historical fails.

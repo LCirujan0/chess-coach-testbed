@@ -48,6 +48,7 @@ import {
   triedCounts, startThemeDrill, endThemeDrill,
 } from './queue.js';
 import { resetPuzzleStateAndRender } from './result.js';
+import { replayContinuation, beginSolveFromIntro } from './intro.js';
 import { navBack, navForward, activatePieceHint } from './review.js';
 import { forceReveal } from './grade.js';
 import { sendCoachMessage, fireCoachExplanation } from './coach.js';
@@ -157,7 +158,7 @@ async function loadStaticPuzzleSets() {
   const existing = new Set(state.puzzles.map((p) => p && p.id).filter(Boolean));
   // Endgame curriculum lessons (data/endgames.json → { lessons: [...] }).
   try {
-    const res = await fetch('/data/endgames.json', { cache: 'no-store' });
+    const res = await fetch('/data/endgames.json', { cache: 'force-cache' });
     if (res.ok) {
       const data = await res.json();
       const arr = (data && Array.isArray(data.lessons)) ? data.lessons : [];
@@ -174,7 +175,7 @@ async function loadStaticPuzzleSets() {
   // NOTE: these carry their puzzle-type in `puzzleType` ('recognition'); their
   // `type` field holds the material signature (e.g. 'KPvK').
   try {
-    const res = await fetch('/data/endgame-recognition.json', { cache: 'no-store' });
+    const res = await fetch('/data/endgame-recognition.json', { cache: 'force-cache' });
     if (res.ok) {
       const data = await res.json();
       const arr = (data && Array.isArray(data.positions)) ? data.positions : [];
@@ -216,16 +217,37 @@ async function loadStaticPuzzleSets() {
 await loadStaticPuzzleSets();
 rebuildQueue();
 
-// Spec 11 — game-review "Drill this motif" deep-link: /puzzle.html?motif=<tag>.
-// Runs after the deck is built (startThemeDrill filters state.puzzles). Yields
-// to a Today session deep-link if one is active (mutually exclusive in practice).
-(function activateMotifFromUrl() {
+// Spec 17 (Part C) + Spec 11 — ONE shared motif deep-link activator. Two param
+// names land here:
+//   • ?theme=<motif>          (Spec 17 hub "Tactics by theme" card) — preselect
+//                              the motif filter + open the Theme panel; the deck
+//                              renders filtered. Add &drill=1 to auto-start the
+//                              themed drill (with the Part B Lichess top-up).
+//   • ?motif=<tag>            (Spec 11 game-review "Drill this motif" CTA) —
+//                              preselect + auto-drill (back-compat: the review
+//                              CTA always drilled, so ?motif implies drill).
+// Invalid/missing motif → normal Puzzles, no error (no dead end). Yields to a
+// Today session deep-link if one is active (mutually exclusive in practice).
+(function activateThemeFromUrl() {
   if (state.sessionMode) return;
-  const m = urlParams.get('motif');
-  if (!m || !MOTIFS.includes(m)) return;
+  const themeParam = urlParams.get('theme');
+  const motifParam = urlParams.get('motif');
+  const m = themeParam || motifParam;
+  if (!m || !MOTIFS.includes(m)) return;   // invalid/absent → normal Puzzles
   state.motifFilter = m;
   saveLastMotif(m);
-  startThemeDrill();
+  rebuildQueue();
+  // Open the Theme panel + reflect the selection in the filter UI.
+  const themeToggle = $('theme-toggle');
+  const themePanel = $('theme-panel');
+  if (themeToggle && themePanel) {
+    themeToggle.classList.add('open');
+    themePanel.classList.remove('hidden');
+  }
+  resetPuzzleStateAndRender();
+  // Auto-drill when ?motif=… (review CTA, always drilled) or ?theme=…&drill=1.
+  const wantDrill = !!motifParam || urlParams.get('drill') === '1';
+  if (wantDrill) startThemeDrill();
 })();
 
 // Reset restarts the same puzzle position without re-opening the CCTO gate
@@ -241,6 +263,10 @@ $('next-btn').addEventListener('click', () => nextPuzzle());
 $('nav-back').addEventListener('click', navBack);
 $('nav-forward').addEventListener('click', navForward);
 $('show-piece-btn').addEventListener('click', activatePieceHint);
+// Mistake intro ("what happened in your game") — replay the played sequence,
+// then dismiss to solve the position.
+{ const r = $('intro-replay'); if (r) r.addEventListener('click', () => replayContinuation()); }
+{ const s = $('intro-solve'); if (s) s.addEventListener('click', () => beginSolveFromIntro()); }
 
 // §30.2 — result-card actions. One dominant action per state; the buttons
 // follow the card (data-action set by showResult): 'tryagain' soft-resets to the

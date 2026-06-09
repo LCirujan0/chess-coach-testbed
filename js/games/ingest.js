@@ -57,6 +57,7 @@ async function ingest(username, numGames, depth, onProgress) {
   // scores at read-time on Insights / Practice.
   const newScorecards = {};
   const gameMoves = {}; // Spec 11 — SAN move lists for the game-review replay
+  const gameMeta = {};  // Spec 24 — per-game Chess.com enrichment (rating/accuracy/rated/time control)
   let gameIndex = 0;
 
   for (const { game, headers, userIsWhite, history } of parsedGames) {
@@ -213,6 +214,7 @@ async function ingest(username, numGames, depth, onProgress) {
       newScorecards[gameKey] = finalCard;
     }
     const userRatingForGame = userIsWhite ? (game.white && game.white.rating) : (game.black && game.black.rating);
+    const oppRatingForGame = userIsWhite ? (game.black && game.black.rating) : (game.white && game.white.rating);
     perGameSummary.push({
       gameUrl: game.url || game.uuid || '',
       opponent,
@@ -230,8 +232,34 @@ async function ingest(username, numGames, depth, onProgress) {
     // game-review replay. Keyed to match the mistake-record join in review.js.
     const movesKey = game.url || game.uuid || ('game-' + gameIndex);
     gameMoves[movesKey] = { moves: history.map((h) => h.san), userIsWhite, result, opponent, dateStr };
+    // Spec 24 — per-game enrichment, already on the game object (~0 cost). Powers
+    // the rating trajectory (rated flag filters noise), the accuracy cross-check
+    // (accuracies are present only when a Game Review ran — null otherwise), and
+    // breadth signals (time control, termination). Same idempotent key scheme.
+    const acc = game.accuracies || null;
+    const userAccuracy = acc ? (userIsWhite ? acc.white : acc.black) : null;
+    const oppAccuracy = acc ? (userIsWhite ? acc.black : acc.white) : null;
+    const termination = userIsWhite ? (game.white && game.white.result) : (game.black && game.black.result);
+    const oppTermination = userIsWhite ? (game.black && game.black.result) : (game.white && game.white.result);
+    gameMeta[movesKey] = {
+      rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
+      oppRating: (typeof oppRatingForGame === 'number') ? oppRatingForGame : null,
+      endTime: game.end_time || null,
+      result,
+      resultForUser,
+      userColorName,
+      opponent,
+      eco,
+      openingName,
+      rated: (typeof game.rated === 'boolean') ? game.rated : null,
+      timeControl: game.time_control || null,
+      userAccuracy: (typeof userAccuracy === 'number') ? userAccuracy : null,
+      oppAccuracy: (typeof oppAccuracy === 'number') ? oppAccuracy : null,
+      termination: termination || null,
+      oppTermination: oppTermination || null,
+    };
   }
 
-  return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards, moves: gameMoves };
+  return { mistakes: freshMistakes, perGameSummary, scorecards: newScorecards, moves: gameMoves, meta: gameMeta };
 }
 export { ingest };

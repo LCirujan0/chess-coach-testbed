@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "vienna",
+  "name": "Vienna Game",
+  "eco": "C25–C29",
+  "side": "w",
+  "lines": [
+    {
+      "id": "main-bc4",
+      "name": "Vienna — Classical 3.Bc4",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "Bc4", "Nc6", "d3", "Bb4", "Nge2", "d6", "O-O"],
+      "idea": "Calm classical setup: develop the bishop to c4 eyeing f7, support e4 with d3, and route the knight via e2 so the c-pawn and f-pawn stay free. Castle and play for f4 later."
+    },
+    {
+      "id": "gambit-accepted",
+      "name": "Vienna Gambit — Accepted",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "e5", "Qe7", "Qe2", "Ng8", "Nf3", "d6"],
+      "idea": "The Vienna Gambit: 3.f4 strikes at e5. After ...exf4 the e5 push gains time on the f6-knight, and Qe2 holds the centre. White trades the f4-pawn back later with active piece play down the f-file."
+    },
+    {
+      "id": "gambit-declined-d5",
+      "name": "Vienna Gambit — Declined with 3...d5",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "d4", "O-O"],
+      "idea": "Black's best reply 3...d5 counterstrikes in the centre. Take on e5, let Black grab e4, then build a broad pawn centre with Nf3 and d4. White has a healthy space advantage and the e5-pawn cramps Black."
+    },
+    {
+      "id": "falkbeer-style",
+      "name": "Vienna Gambit — 3...exf4 sideline",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "f4", "exf4", "Nf3", "g5", "h4", "g4", "Ng5", "h6"],
+      "idea": "If Black tries to cling to the f4-pawn with ...g5, undermine the pawn chain with h4. The knight jumps to g5 hitting f7; Black must spend time defending while White's attack rolls on the kingside."
+    },
+    {
+      "id": "early-bc5",
+      "name": "Vienna — 2...Nc6 with Bc4",
+      "moves": ["e4", "e5", "Nc3", "Nc6", "Bc4", "Bc5", "Qg4", "Qf6", "Nd5", "Qxf2"],
+      "idea": "Against the natural 2...Nc6 3...Bc5, the aggressive Qg4 hits g7 and pressures f7. Nd5 piles in with threats on c7 and f6. A sharp tactical line where White seizes the initiative early."
+    },
+    {
+      "id": "max-lange",
+      "name": "Vienna — 3.g3 fianchetto",
+      "moves": ["e4", "e5", "Nc3", "Nf6", "g3", "Bc5", "Bg2", "Nc6", "Nge2", "d6", "O-O", "a6"],
+      "idea": "A quieter positional try: fianchetto the bishop to g2 to pressure the long diagonal and the d5/e4 squares. Castle short, complete development with Nge2, and prepare d3 and f4 for a slow kingside expansion."
+    }
+  ]
+}

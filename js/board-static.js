@@ -84,4 +84,55 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
     }
   }
   boardEl.replaceChildren(frag);
+  // Spec 19 — when this render reflects a single played move (animate + lastMove),
+  // slide the moved piece from its origin to its destination instead of teleporting.
+  if (opts.animate && lastMove && lastMove.from && lastMove.to) {
+    animateMoveFLIP(boardEl, lastMove.from, lastMove.to);
+  }
+}
+
+// ============================================================================
+// Spec 19 — FLIP piece-slide animation (shared by the static board AND the
+// interactive puzzle board). Pure presentation: no engine, no state, §12-safe.
+// Computes purely from the NEW DOM (both squares exist post-render), so it needs
+// no snapshot of the prior position — the grid is fixed, only pieces move.
+// ============================================================================
+const SLIDE_MS = 180;
+
+export function animateMoveFLIP(boardEl, from, to) {
+  if (!boardEl || !from || !to || from === to) return;
+  // Respect the user's reduced-motion preference — no slide, instant render.
+  if (typeof window !== 'undefined' && window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const fromSq = boardEl.querySelector(`.square[data-square="${from}"]`);
+  const toSq = boardEl.querySelector(`.square[data-square="${to}"]`);
+  if (!fromSq || !toSq) return;
+  const img = toSq.querySelector('.pc-img');
+  if (!img) return;
+  const fr = fromSq.getBoundingClientRect();
+  const tr = toSq.getBoundingClientRect();
+  const dx = fr.left - tr.left;
+  const dy = fr.top - tr.top;
+  if (!dx && !dy) return;
+  // First/Invert: place the moved piece visually back on its origin square.
+  img.style.transition = 'none';
+  img.style.transform = `translate(${dx}px, ${dy}px)`;
+  img.style.zIndex = '5';
+  img.style.willChange = 'transform';
+  void img.offsetWidth; // force reflow so the inverted transform is committed
+  // Play: next frame, transition to the real (destination) position.
+  requestAnimationFrame(() => {
+    img.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.61,.36,1)`;
+    img.style.transform = 'translate(0, 0)';
+  });
+  const cleanup = () => {
+    img.style.transition = '';
+    img.style.transform = '';
+    img.style.zIndex = '';
+    img.style.willChange = '';
+    img.removeEventListener('transitionend', cleanup);
+  };
+  img.addEventListener('transitionend', cleanup);
+  // Safety net in case transitionend doesn't fire (e.g. element re-rendered).
+  setTimeout(cleanup, SLIDE_MS + 80);
 }

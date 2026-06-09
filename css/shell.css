@@ -66,6 +66,19 @@ h1, .page-title, .nav-brand-name, .nav-drawer-title { font-family: "Plus Jakarta
 
 .hidden { display: none !important; }
 
+/* ---- Canonical content card (the shared .panel) -------------------------------
+   ONE card recipe for every page's content panels (games/insights/review and on).
+   Pages set only their own MARGIN (layout-specific); the surface/border/radius/
+   padding/shadow live here so cards read identically across screens. Was drifting:
+   3 radii + 4 shadow recipes + 4 paddings across 8 pages (design-system.md #2). */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 18px;
+  box-shadow: 0 10px 24px -18px rgba(20,30,55,.22);
+}
+
 .nav-drawer-link.coming .nav-soon { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--surface2); color: var(--muted); padding: 2px 7px; border-radius: 9px; }
 .nav-drawer-link.active .nav-soon { background: rgba(255,255,255,.2); color: #fff; }
 .tab-bar a.coming { opacity: .55; }

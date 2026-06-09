@@ -5,6 +5,7 @@ import { Chess } from './lib.js';
 import { FILES_STD, RANKS_STD, PIECE_IMG, PIECE_GLYPH } from './config.js';
 import { state } from './state.js';
 import { $ } from './dom.js';
+import { animateMoveFLIP } from '/js/board-static.js';
 import { attemptsCount, failedCount, getCurrentPuzzle } from './queue.js';
 // runtime dep — commitAndEvaluate is in grade.js; called from onSquareTap inside a function body
 import { commitAndEvaluate } from './grade.js';
@@ -96,6 +97,7 @@ export function renderBoard() {
   const staticSig = fen + '|' + files.join('') + '|' + ranks.join('') + '|' + (locked ? 'L' : 'P');
   if (state._renderSig === staticSig && boardEl.querySelector('.square')) {
     softUpdateBoard();
+    state.animateMove = null; // no rebuild → nothing to slide
     return;
   }
   state._renderSig = staticSig;
@@ -139,6 +141,12 @@ export function renderBoard() {
   boardEl.replaceChildren(frag);
   // Apply the dynamic-state layer (last-move, selected, legal markers, hint).
   softUpdateBoard();
+  // Spec 19 — if this rebuild reflects a just-played move, slide the piece.
+  // Only the live position animates (never ◀▶ navigation or a reveal overlay).
+  if (state.animateMove && state.viewIndex === null && !state.revealOverlay) {
+    animateMoveFLIP(boardEl, state.animateMove.from, state.animateMove.to);
+  }
+  state.animateMove = null;
 }
 
 // Soft-update path — toggles classes + swaps legal-move markers on the
