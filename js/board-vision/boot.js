@@ -6,7 +6,7 @@
 // ./generators.js + ./tracker.js, board via the canonical js/board-static.js,
 // state in one localStorage key.
 // ============================================================================
-import { renderStaticBoard } from '/js/board-static.js';
+import { renderStaticBoard, PIECE_IMG } from '/js/board-static.js';
 import { REPS, genCoord, genKnight, genWalk, grade } from './generators.js';
 import { genTracker, TRACKER_REPS, TRACKER_PASS, TRACKER_LEVELS } from './tracker.js';
 
@@ -45,6 +45,17 @@ function wireBoardOnce() {
   boardEl().addEventListener('click', (e) => { const sq = e.target.closest('.square'); if (sq && sq.dataset.square && onTap) onTap(sq.dataset.square); });
 }
 function mark(alg, cls) { const sq = boardEl().querySelector(`.square[data-square="${alg}"]`); if (sq) sq.classList.add(cls); }
+function panels({ prompt, moves, question }) {
+  $('bv-prompt-card').classList.toggle('hidden', !prompt);
+  $('bv-moves-card').classList.toggle('hidden', !moves);
+  $('bv-tracker-q').classList.toggle('hidden', !question);
+}
+function renderMoves(moves) {
+  $('bv-moves').innerHTML = moves.map((m, i) =>
+    `<div class="bv-move"><span class="bv-move-n">${i + 1}</span>` +
+    `<img class="bv-move-pc" src="${PIECE_IMG(m.color, m.piece)}" alt="" draggable="false">` +
+    `<span class="bv-move-ar">${m.arrow}</span><span class="bv-move-lb">${m.label}</span></div>`).join('');
+}
 let quit = false;
 
 // ----- foundational drill rep -----
@@ -53,7 +64,7 @@ function runRep(q, timing) {
     boardEl().classList.remove('bv-hidden');
     renderStaticBoard(boardEl(), q.board, { orientation: 'w' });
     $('bv-prompt').textContent = q.prompt;
-    $('bv-tracker-q').classList.add('hidden');
+    panels({ prompt: true });
     $('bv-feedback').textContent = '';
     if (q.origin) mark(q.origin, 'bv-origin');
     const optionSet = q.options ? new Set(q.options) : null;
@@ -90,18 +101,21 @@ async function runDrill(name) {
 function runTrackerRep(q) {
   return new Promise((resolve) => {
     $('bv-drill-title').textContent = `Sequence tracker · Level ${q.level}`;
-    $('bv-prompt').textContent = 'Watch the position…';
-    $('bv-tracker-q').classList.add('hidden');
+    $('bv-prompt').textContent = 'Watch the position, then picture the moves.';
     $('bv-tracker-q').innerHTML = '';
+    panels({ prompt: true });
     $('bv-feedback').textContent = '';
     boardEl().classList.remove('bv-hidden');
     renderStaticBoard(boardEl(), q.startFen, { orientation: 'w' });
 
-    const finish = (correct) => {
+    const finish = (correct, tappedSq) => {
       onTap = null; abortRep = null;
       boardEl().classList.remove('bv-hidden');
       renderStaticBoard(boardEl(), q.finalFen, { orientation: 'w' });
-      for (const m of q.moves) { mark(m.from, 'bv-origin'); mark(m.to, correct ? 'bv-correct' : 'bv-wrong'); }
+      // Replay the true path: each move's origin (amber) -> landing (green).
+      for (const m of q.moves) { mark(m.from, 'bv-origin'); mark(m.to, 'bv-correct'); }
+      // On a wrong tap-question, mark where the student tapped (red).
+      if (!correct && tappedSq && tappedSq !== q.question.answer) mark(tappedSq, 'bv-wrong');
       $('bv-feedback').textContent = correct ? 'Correct' : `Answer: ${q.question.answer}`;
       $('bv-feedback').className = 'bv-feedback ' + (correct ? 'ok' : 'bad');
       setTimeout(() => resolve(correct), 1500);
@@ -110,15 +124,16 @@ function runTrackerRep(q) {
 
     const ask = () => {
       boardEl().classList.add('bv-hidden'); // pieces hidden — visualise from here
-      $('bv-prompt').innerHTML = q.moves.map((m, i) => `<div class="bv-mv"><b>Move ${i + 1}:</b> ${m.desc}</div>`).join('');
-      const qEl = $('bv-tracker-q'); qEl.classList.remove('hidden');
+      renderMoves(q.moves);
+      panels({ moves: true, question: true });
+      const qEl = $('bv-tracker-q');
       if (q.question.mode === 'tap') {
         qEl.innerHTML = `<div class="bv-q-prompt">${q.question.prompt}</div>`;
         for (const o of q.question.options) mark(o, 'bv-option');
-        onTap = (sq) => { if (!q.question.options.includes(sq)) return; finish(sq === q.question.answer); };
+        onTap = (sq) => { if (!q.question.options.includes(sq)) return; finish(sq === q.question.answer, sq); };
       } else {
         qEl.innerHTML = `<div class="bv-q-prompt">${q.question.prompt}</div><div class="bv-choices">` +
-          q.question.options.map((o) => `<button class="btn btn-secondary bv-choice" type="button" data-v="${o}">${o}</button>`).join('') + '</div>';
+          q.question.options.map((o) => `<button class="btn bv-choice" type="button" data-v="${o}">${o}</button>`).join('') + '</div>';
         qEl.querySelectorAll('.bv-choice').forEach((b) => b.addEventListener('click', () => finish(b.dataset.v === q.question.answer)));
       }
     };
@@ -184,7 +199,7 @@ function complete(scores, opts) {
   $('bv-scores').innerHTML = rows.join('');
   $('bv-coach').textContent = coachLine(scores);
   const actions = $('bv-complete-actions');
-  if (opts.session) actions.innerHTML = '<a class="btn" href="/session.html">Continue session →</a><a class="btn btn-ghost" href="/today.html">Back to Today</a>';
+  if (opts.session) actions.innerHTML = '<a class="btn primary" href="/session.html">Continue session →</a><a class="btn ghost" href="/today.html">Back to Today</a>';
   else { actions.innerHTML = '<button class="btn" id="bv-again" type="button">Back to Board Vision</button>'; $('bv-again').addEventListener('click', () => { show('bv-hub'); renderHub(); }); }
 }
 

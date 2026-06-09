@@ -43,6 +43,21 @@ function knightVerbal(dr, dc) {
   const v = `${Math.abs(dr)} ${dr < 0 ? 'up' : 'down'}`, h = `${Math.abs(dc)} ${dc < 0 ? 'left' : 'right'}`;
   return Math.abs(dr) >= Math.abs(dc) ? `${v}, ${h}` : `${h}, ${v}`;
 }
+// Directional arrow glyph for the visual move panel (knights → net direction).
+const ARROWS = { '-1,0': '↑', '1,0': '↓', '0,-1': '←', '0,1': '→', '-1,-1': '↖', '-1,1': '↗', '1,-1': '↙', '1,1': '↘' };
+function sgn(n) { return n < 0 ? -1 : n > 0 ? 1 : 0; }
+function arrowFor(from, to) {
+  const A = algToRC(from), B = algToRC(to);
+  return ARROWS[`${sgn(B.row - A.row)},${sgn(B.col - A.col)}`] || '•';
+}
+// Concise label for the visual row (no destination algebraic).
+function labelFor(piece, from, to) {
+  const A = algToRC(from), B = algToRC(to);
+  const dr = B.row - A.row, dc = B.col - A.col;
+  if (piece === 'n') return knightVerbal(dr, dc);
+  const dist = Math.max(Math.abs(dr), Math.abs(dc));
+  return `${dist} ${dirWord(dr, dc)}`;
+}
 function descMove(piece, from, to) {
   const A = algToRC(from), B = algToRC(to);
   const dr = B.row - A.row, dc = B.col - A.col;
@@ -109,7 +124,7 @@ export function genTracker(level) {
       if (!legal.length) { ok = false; break; }
       const mv = pick(legal);
       chess.move(mv);
-      moves.push({ piece: mv.piece, from: mv.from, to: mv.to, san: mv.san, captured: mv.captured || null, desc: descMove(mv.piece, mv.from, mv.to) });
+      moves.push({ piece: mv.piece, color: mv.color, from: mv.from, to: mv.to, san: mv.san, captured: mv.captured || null, desc: descMove(mv.piece, mv.from, mv.to), arrow: arrowFor(mv.from, mv.to), label: labelFor(mv.piece, mv.from, mv.to) });
     }
     if (!ok || moves.length < n) continue;
     return { level: n, startFen, finalFen: chess.fen(), moves, question: buildQuestion(chess, moves), showMs: trackerShowMs(n) };

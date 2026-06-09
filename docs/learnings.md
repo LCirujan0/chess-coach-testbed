@@ -4,6 +4,18 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.63 — Board Vision UI consistency pass (2026-06-08)
+
+Jorge flagged that v0.62 Board Vision looked clunky and off-brand — it had hand-rolled its own layout + unstyled (default-HTML) buttons + pure-text move lists, violating the shared-component rule. Fixed:
+
+- **Adopt the canonical training-screen shell.** The drill view now uses `css/screen.css` `.layout-grid` (board left @640px, info/feedback rail right) — pixel-identical placement to puzzle/endgames/recognition. The page now links `screen.css` + `train.css` (it didn't before — which is *why* the `.btn` classes rendered as default HTML: the stylesheet that defines them wasn't loaded). **Rule reinforced:** a board screen that doesn't link `screen.css`+`board.css`+`train.css` and use `.layout-grid` is a bug.
+- **Visual move panel for the tracker.** The hide-the-board moves were plain text ("Move 1: the rook slides 2 squares right"); now each move is a row with the piece icon (`PIECE_IMG` Celtic SVG) + a direction arrow + a concise label — visual, on the right of the board, same principle as the other screens' rail panels.
+- **Replay highlight fix:** the true move path renders green (origin amber → landing green); only a wrong tap renders red (previously the correct landing was painted red on a wrong answer).
+
+No new behaviour/keys; full QA 60 passed.
+
+---
+
 ## v0.62 — Board Vision: three procedural drills + hide-the-board tracker (Spec 14) (2026-06-08)
 
 The calculation/visualisation pillar — a daily ~3–4 min board-sight warm-up. New page `board-vision.html` + `js/board-vision/{generators,tracker,boot}.js` + `css/board-vision.css`. Built "Both" designs in one hub: three foundational drills (on-ramp) + a 6-level hide-the-board sequence tracker.

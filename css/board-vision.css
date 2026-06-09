@@ -1,13 +1,15 @@
 /* ============================================================================
- * css/board-vision.css — Spec 14 page layout (hub, drill runner, ladder,
- * complete screen). Board styling itself lives in css/board.css (§22); this is
- * page chrome only.
+ * css/board-vision.css — Spec 14 page chrome ONLY. The training-screen layout
+ * comes from css/screen.css (.layout-grid), the board from css/board.css, the
+ * buttons/cards from css/train.css. This file styles the hub, the right-rail
+ * drill panels, the visual move list, and the complete screen — nothing the
+ * shared components already own.
  * ========================================================================== */
 
 .bv-streak { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--warn); }
 
-/* hub */
-.bv-start { width: 100%; margin: 14px 0 18px; }
+/* ---- hub ---- */
+.bv-start { margin: 14px 0 18px; }
 .bv-onramp { display: flex; flex-direction: column; gap: 8px; }
 .bv-card {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px;
@@ -18,9 +20,9 @@
 .bv-card:active { transform: scale(.99); }
 .bv-card-ic { font-size: 22px; width: 30px; text-align: center; flex: none; }
 .bv-card-bd { flex: 1; min-width: 0; }
-.bv-card-bd b { font-weight: 700; display: block; }
+.bv-card-bd b { font-weight: 700; display: block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
 .bv-card-bd small { color: var(--muted); font-size: 12px; }
-.bv-card-m { flex: none; font-size: 12px; color: var(--muted); }
+.bv-card-m { flex: none; font-size: 12px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
 .bv-sharp { font-size: 10px; font-weight: 800; letter-spacing: .04em; color: var(--pos); margin-left: 6px; }
 
 .bv-ladder-head { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
@@ -28,32 +30,49 @@
 .bv-rung { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--surface); }
 .bv-rung-n { width: 22px; height: 22px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: 700; background: var(--surface2); color: var(--muted); }
 .bv-rung-l { font-size: 13px; }
+.bv-rung-s { margin-left: auto; font-size: 12px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
 .bv-rung.done .bv-rung-n { background: var(--accent-soft); color: var(--accent); }
 .bv-rung.cur { border-color: var(--accent); }
 .bv-rung.cur .bv-rung-n { background: var(--accent); color: #fff; }
 .bv-rung.lock { opacity: .55; }
-
-/* drill runner */
-.bv-drill-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
-.bv-drill-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 18px; }
-.bv-drill-rep { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
-.bv-prompt { font-size: 16px; line-height: 1.45; margin-bottom: 12px; min-height: 44px; }
-.bv-board-wrap { max-width: 360px; margin: 0 auto; }
-.bv-tracker-q { margin-top: 14px; }
-.bv-q-prompt { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 10px; }
-.bv-choices { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.bv-choice { width: auto; min-width: 64px; }
-.bv-mv { font-size: 15px; line-height: 1.7; }
-.bv-mv b { font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 13px; color: var(--muted); margin-right: 6px; }
-.bv-rung-s { margin-left: auto; font-size: 12px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
 .bv-rung:not(.lock) { cursor: pointer; }
 .bv-rung:not(.lock):hover { background: var(--surface2); }
-.bv-feedback { text-align: center; min-height: 22px; margin-top: 12px; font-size: 14px; font-weight: 600; }
+
+/* ---- drill runner: head + right-rail panels (board/controls = shared) ---- */
+.bv-drill-head { display: flex; align-items: baseline; justify-content: space-between; }
+.bv-drill-title { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 18px; }
+.bv-drill-rep { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
+
+.bv-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; box-shadow: 0 8px 22px -16px rgba(30,40,70,.3); }
+.bv-panel-h { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.bv-prompt { font-size: 15px; line-height: 1.5; }
+
+/* visual move list — piece icon + direction arrow + concise label */
+.bv-moves { display: flex; flex-direction: column; gap: 8px; }
+.bv-move { display: flex; align-items: center; gap: 12px; padding: 8px 10px; background: var(--surface2); border-radius: var(--r-btn); }
+.bv-move-n { flex: none; width: 18px; font-size: 11px; font-weight: 700; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
+.bv-move-pc { flex: none; width: 26px; height: 26px; object-fit: contain; }
+.bv-move-ar { flex: none; font-size: 22px; line-height: 1; color: var(--accent); width: 22px; text-align: center; }
+.bv-move-lb { font-size: 13px; font-weight: 600; }
+
+/* tracker question */
+.bv-q-prompt { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.bv-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.bv-choice.btn { width: auto; min-width: 58px; padding: 9px 16px; }
+
+.bv-feedback { min-height: 22px; font-size: 14px; font-weight: 600; text-align: center; }
 .bv-feedback.ok { color: var(--pos); }
 .bv-feedback.bad { color: var(--bad); }
-.bv-quit { display: block; margin: 16px auto 0; }
 
-/* complete */
+/* mobile single-column order for the board-vision landmarks (screen.css owns
+   board-wrap=8 / controls=10; place head before, rail panels after). */
+.layout-grid .bv-drill-head { order: 3; }
+.layout-grid #bv-prompt-card { order: 11; }
+.layout-grid #bv-moves-card  { order: 12; }
+.layout-grid #bv-tracker-q   { order: 13; }
+.layout-grid #bv-feedback    { order: 14; }
+
+/* ---- complete ---- */
 .bv-scores { margin: 14px 0; display: flex; flex-direction: column; gap: 6px; }
 .bv-score-row { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-btn); font-size: 14px; }
 .bv-coach { padding: 12px 14px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 14px; line-height: 1.5; margin-bottom: 16px; }

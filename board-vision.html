@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/type.css">
 <link rel="stylesheet" href="/css/board.css">
+<link rel="stylesheet" href="/css/screen.css">
+<link rel="stylesheet" href="/css/train.css">
 <link rel="stylesheet" href="/css/board-vision.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +34,7 @@
     <h1>Board Vision</h1>
     <p class="lede">A 3–4 minute warm-up that builds the mental board model under calculation. Tap a drill to do it solo, or start the full warm-up.</p>
 
-    <button class="btn bv-start" id="bv-start-all" type="button">Start warm-up →</button>
+    <button class="btn primary bv-start" id="bv-start-all" type="button">Start warm-up →</button>
 
     <div class="bv-onramp" id="bv-onramp">
       <div class="bv-card" data-drill="coord">
@@ -56,17 +58,29 @@
     <div class="bv-ladder" id="bv-ladder"></div>
   </section>
 
-  <!-- DRILL RUNNER -->
+  <!-- DRILL RUNNER — canonical training-screen shell (css/screen.css) -->
   <section id="bv-drill" class="hidden">
-    <div class="bv-drill-top">
-      <span class="bv-drill-title" id="bv-drill-title"></span>
-      <span class="bv-drill-rep" id="bv-drill-rep"></span>
+    <div class="layout-grid">
+      <div class="lg-head">
+        <div class="bv-drill-head">
+          <span class="bv-drill-title" id="bv-drill-title"></span>
+          <span class="bv-drill-rep" id="bv-drill-rep"></span>
+        </div>
+      </div>
+      <div class="lg-left">
+        <div class="board-wrap"><div class="board" id="bv-board"></div></div>
+        <div class="controls"><button class="btn ghost" id="bv-quit" type="button">Quit drill</button></div>
+      </div>
+      <div class="lg-right">
+        <div class="bv-panel" id="bv-prompt-card"><div class="bv-prompt" id="bv-prompt"></div></div>
+        <div class="bv-panel hidden" id="bv-moves-card">
+          <div class="bv-panel-h">The moves — picture them</div>
+          <div class="bv-moves" id="bv-moves"></div>
+        </div>
+        <div class="bv-panel hidden" id="bv-tracker-q"></div>
+        <div class="bv-feedback" id="bv-feedback"></div>
+      </div>
     </div>
-    <div class="bv-prompt" id="bv-prompt"></div>
-    <div class="bv-board-wrap"><div class="board" id="bv-board"></div></div>
-    <div class="bv-tracker-q hidden" id="bv-tracker-q"></div>
-    <div class="bv-feedback" id="bv-feedback"></div>
-    <button class="btn btn-ghost bv-quit" id="bv-quit" type="button">Quit</button>
   </section>
 
   <!-- COMPLETE -->
