@@ -1,5 +1,5 @@
 // ============================================================================
-// material.js — shared material-difference indicator. Renders captured pieces
+// material.js, shared material-difference indicator. Renders captured pieces
 // + net advantage IDENTICALLY to the mistakes screen (board.js mbRowHtml), so
 // every training screen shows material the same way. Reads the rendered board
 // (<img class="pc-img" src=".../wP.svg">); no engine/state dependency.

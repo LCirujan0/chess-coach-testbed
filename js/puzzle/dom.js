@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 3 — DOM helpers + Nav drawer
+// SECTION 3. DOM helpers + Nav drawer
 // ============================================================================
 import { state } from './state.js';
 import { renderCoachCard, parseCoachJson, sanitiseCoachText as sharedSanitise } from '/js/coach-card.js';
@@ -17,7 +17,7 @@ export function setInlineStatus(text, cls = '') {
 // Strip markdown bold/italic markers and em dashes from coach output even if
 // the model ignores the style instructions. Belt-and-braces: the system prompt
 // asks for clean prose, but this guarantees it. The implementation now lives in
-// js/coach-card.js (the shared coach renderer) — re-exported here so existing
+// js/coach-card.js (the shared coach renderer), re-exported here so existing
 // importers (puzzle/dom.js consumers) keep working unchanged.
 export const sanitiseCoachText = sharedSanitise;
 
@@ -50,8 +50,7 @@ export function appendCoachMessage(role, text) {
 
 // §17 structured review bubble. Renders headline + labelled points + optional
 // turning-point chip + reflective question + optional CTAs into a single coach
-// turn. Used by the post-puzzle review (puzzle.html) and — when Spec 05 lands —
-// the per-game "how you played" + aggregated read in coach.html / games.html.
+// turn. Used by the post-puzzle review (puzzle.html) and, when Spec 05 lands, // the per-game "how you played" + aggregated read in coach.html / games.html.
 // Shape (validated upstream by parseReviewMessage):
 //   {
 //     lead:      string,                                   // §17 [lead]
@@ -76,8 +75,7 @@ export function appendCoachReview(review) {
 
 // Parse the LLM's response into the §17 review shape. Delegates to the shared
 // parser in js/coach-card.js so puzzle.html and every other surface validate
-// identically. Returns null when the response isn't recognisably structured —
-// callers fall back to the plain bubble in that case rather than erroring.
+// identically. Returns null when the response isn't recognisably structured, // callers fall back to the plain bubble in that case rather than erroring.
 export function parseReviewMessage(text) {
   return parseCoachJson(text);
 }

@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { $ } from './dom.js';
 import { Chess } from './lib.js';
 // ============================================================================
-// SECTION 5 — ENGINE (Stockfish over Web Worker)
+// SECTION 5. ENGINE (Stockfish over Web Worker)
 // ----------------------------------------------------------------------------
 // Same primitives as puzzle.html. We hold a single worker for the page,
 // reused across many positions during ingestion.

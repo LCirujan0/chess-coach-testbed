@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Session</title>
+<title>KnightPath. Session</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/type.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   html, body {
@@ -28,14 +28,15 @@
   .railwrap { flex:1; min-width:0; }
   .railtxt { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:6px; }
   .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:15.5px; } .railtxt .now small { color:var(--muted); font-weight:600; }
-  .railtxt .of { font-family:"Spline Sans Mono"; font-size:13.5px; color:var(--muted); flex-shrink:0; }
+  .railtxt .of { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:13.5px; color:var(--muted); flex-shrink:0; }
   .rail { display:flex; gap:8px; }
   .blockseg { display:flex; flex-direction:column; gap:3px; }
   .blockseg .pips { display:flex; gap:3px; flex-wrap:wrap; }
-  .blockseg .pip { width:14px; height:5px; border-radius:3px; background:var(--surface3); }
+  .blockseg .pip { width:14px; height:6px; border-radius:3px; background:var(--surface3); box-sizing:border-box; }
   .blockseg .pip.done { background:var(--accent); }
-  .blockseg .pip.cur { background:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
-  .blockseg .bl { font-size:11px; font-family:"Spline Sans Mono"; color:var(--muted); }
+  /* current = in play, never "done": hollow + accent ring (owner fix 2026-06-10) */
+  .blockseg .pip.cur { background:var(--surface); border:1.5px solid var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+  .blockseg .bl { font-size:11px; font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; color:var(--muted); }
   .modepill { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); border:1px solid var(--line); border-radius:14px; padding:4px 10px; flex-shrink:0; }
 
   .wrap { max-width:560px; margin:0 auto; padding:22px 16px 40px; }
@@ -46,7 +47,7 @@
   .blockcard .ic svg { width:25px; height:25px; stroke:var(--accent); fill:none; stroke-width:1.8; }
   .blockcard h2 { font-size:21px; font-weight:800; letter-spacing:-.01em; }
   .blockcard .sub { color:var(--muted); font-size:13px; margin:5px auto 4px; max-width:360px; }
-  .blockcard .meta { font-family:"Spline Sans Mono"; font-size:14px; color:var(--muted); margin:10px 0 18px; }
+  .blockcard .meta { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:14px; color:var(--muted); margin:10px 0 18px; }
 
   .btn { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:14px; padding:13px 16px; border-radius:12px; border:1px solid transparent; cursor:pointer; width:100%; display:block; text-align:center; text-decoration:none; }
   .btn.primary { background:var(--accent); color:#fff; box-shadow:0 10px 22px -10px var(--accent); transition:filter .15s ease; }
@@ -82,7 +83,7 @@
   /* error / empty */
   .ebanner { background:var(--bad-soft); border:1px solid var(--bad-line); border-radius:12px; padding:13px 15px; }
   .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
-  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+  .ebanner .raw { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
   .empty { text-align:center; padding:36px 18px; } .empty h2 { font-size:20px; font-weight:800; } .empty p { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:320px; } .empty .btn { max-width:280px; margin:0 auto; }
 </style>
 <script src="/js/coach-memory.js"></script>
@@ -93,11 +94,11 @@
 <div id="focus-head"></div>
 <div class="wrap" id="session-root"><!-- rendered by JS --></div>
 
-<!-- App-level session streak (window.Streak) — marked on session completion. -->
+<!-- App-level session streak (window.Streak), marked on session completion. -->
 <script src="/js/streak.js"></script>
 <script>
 /* ============================================================================
- * session.html — the in-session WRAPPER (Loop 1, rebuilt v1.0 to Design's
+ * session.html, the in-session WRAPPER (Loop 1, rebuilt v1.0 to Design's
  * rethink). Spec: redesign-spec §18 + design-explorations/in-session-flow.html
  * (2026-06-01, "session wrapper, not a launchpad").
  *
@@ -113,7 +114,7 @@
  * Progress is recomputed from chess-coach-attempts-v1 each load, so it stays
  * correct whether puzzle.html wrote `done` or not.
  *
- * NO-SPOILER: never shows a puzzle's answer/motif/eval — only block titles,
+ * NO-SPOILER: never shows a puzzle's answer/motif/eval, only block titles,
  * counts, and aggregate session stats.
  * ==========================================================================*/
 (function () {
@@ -163,7 +164,7 @@
   // No active plan for today -> not a dead end.
   if (!plan || !Array.isArray(plan.blocks) || !plan.blocks.length || plan.date !== todayKey()) {
     head.innerHTML = '<div class="focus-top"><span class="exit" id="exit-btn" title="Exit to Today">✕</span><div class="railwrap"><div class="railtxt"><span class="now">Session</span></div></div></div>';
-    root.innerHTML = '<div class="empty"><h2>No active session</h2><p>Head back to Today and tap Start session — the coach builds one from your recent games.</p><a class="btn primary" href="/today.html">Go to Today</a></div>';
+    root.innerHTML = '<div class="empty"><h2>No active session</h2><p>Head back to Today and tap Start session, the coach builds one from your recent games.</p><a class="btn primary" href="/today.html">Go to Today</a></div>';
     wireExit();
     return;
   }
@@ -186,7 +187,7 @@
     if (b && b.id === 'endgames') return 'endgame';
     return 'mistake';
   }
-  // RESOLVED (attempted) this session — pass OR fail. This is the progress
+  // RESOLVED (attempted) this session, pass OR fail. This is the progress
   // count; `correct` is tracked separately (v0.58-c2: the bar/summary used to
   // count only solves, so failed items never advanced).
   function resolvedInSession(type, id) {
@@ -209,7 +210,7 @@
     b.correct = Math.min(Math.max(b.correct || 0, correctCt), b.done);
   });
   function blockComplete(b) { return (b.done || 0) >= (b.count || 0); }
-  // Spec 21 — recognition runs on its own page under the same session chrome
+  // Spec 21, recognition runs on its own page under the same session chrome
   // (persistent bar + the shared onItemResolved counting); other types run on
   // the canonical puzzle shell. Deep-links the right surface for the block.
   function blockHref(b) {
@@ -275,7 +276,7 @@
     var pctToTarget = (rating != null) ? Math.max(0, Math.min(100, Math.round((rating - 950) / ((typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) - 950) * 100))) : null;
     var read = 'Cleared your recent mistakes and the cards due today.';
     save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, correct: st.correct, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
-    // Mark today's session streak here — this is where the session actually
+    // Mark today's session streak here, this is where the session actually
     // completes (the "Streak secured" copy is shown below). markSessionDone is
     // idempotent for the day, so today.html re-marking on return is harmless.
     var streakNow = null;
@@ -296,7 +297,7 @@
       '<div class="ssub">' + (streakNow ? streakNow + '-day streak secured' : 'Streak secured') + ' · ' + st.correct + ' of ' + st.reps + ' correct</div>' +
       '<div class="stats">' +
         '<div class="stat"><div class="v">' + st.correct + '<small>/' + st.reps + '</small></div><div class="k">Correct</div></div>' +
-        '<div class="stat"><div class="v">' + (st.accuracy != null ? st.accuracy + '<small>%</small>' : '—') + '</div><div class="k">Accuracy</div></div>' +
+        '<div class="stat"><div class="v">' + (st.accuracy != null ? st.accuracy + '<small>%</small>' : ', ') + '</div><div class="k">Accuracy</div></div>' +
         thirdStat +
       '</div>' +
       '<div class="moved" id="debrief-slot"><span class="ava"></span><div class="txt">' + read + '</div></div>' +
@@ -308,7 +309,7 @@
   }
 
   // =====================================================================
-  // SESSION DEBRIEF (v0.79) — the ONE proactive coach moment. Rule 5 (coach
+  // SESSION DEBRIEF (v0.79), the ONE proactive coach moment. Rule 5 (coach
   // panel discipline) forbids auto-injected coach messages MID-SOLVE; the
   // session boundary is the deliberate exception (logged in learnings v0.79):
   // a teacher debriefs you when the lesson ends. Aggregate-only no-spoiler
@@ -385,7 +386,7 @@
         var card = { lead: parsed.lead, points: parsed.points, question: parsed.question, grounded: parsed.grounded };
         save(KEY_DEBRIEF, { date: todayKey(), card: card, at: new Date().toISOString() });
         renderDebriefCard(card);
-        // Memory consolidation — the debrief is the ONE writer (coach-memory.js).
+        // Memory consolidation, the debrief is the ONE writer (coach-memory.js).
         try {
           if (typeof CoachMemory !== 'undefined' && Array.isArray(parsed.memory_notes)) {
             CoachMemory.write(CoachMemory.applyUpdate(CoachMemory.read(), parsed.memory_notes));

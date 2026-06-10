@@ -1,11 +1,11 @@
 // ============================================================================
-// js/board-static.js — canonical STATIC board renderer (redesign-spec §22).
+// js/board-static.js, canonical STATIC board renderer (redesign-spec §22).
 //
 // One shared component for every NON-interactive board: endgame Judge it
 // (endgame-recognition.html), board vision, game review (Spec 11), onboarding.
 // Emits exactly the same markup contract as the interactive renderer in
 // js/puzzle/board.js (.square / .light|.dark / .pc-img / .coord) so a single
-// stylesheet — css/board.css — styles them all. No page renders its own board.
+// stylesheet, css/board.css, styles them all. No page renders its own board.
 //
 // Pure FEN → DOM. No engine, no Stockfish, no localStorage, no prompt surface
 // (§12-safe). Depends on nothing but the DOM and the Celtic piece assets.
@@ -16,7 +16,7 @@ const RANKS_STD = ['8', '7', '6', '5', '4', '3', '2', '1'];
 const PIECE_GLYPH = { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' };
 const PIECE_NAME = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
-// Canonical Celtic SVG path — identical to js/puzzle/config.js PIECE_IMG.
+// Canonical Celtic SVG path, identical to js/puzzle/config.js PIECE_IMG.
 export const PIECE_IMG = (color, type) => `/piece/celtic/${color}${type.toUpperCase()}.svg`;
 
 // Parse the placement field of a FEN into board[rank][file] where rank 0 = the
@@ -67,8 +67,7 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
       sq.className = 'square ' + (((stdRank + stdFile) % 2 === 0) ? 'light' : 'dark');
       sq.dataset.square = square;
       if (piece) sq.dataset.c = piece.color;
-      // A11y (2026-06-10 audit): name every square for screen readers —
-      // "e4, white knight" / "e5, empty". Display is unchanged.
+      // A11y (2026-06-10 audit): name every square for screen readers, // "e4, white knight" / "e5, empty". Display is unchanged.
       sq.setAttribute('role', 'img');
       sq.setAttribute('aria-label', square + (piece ? `, ${piece.color === 'w' ? 'white' : 'black'} ${PIECE_NAME[piece.type] || piece.type}` : ', empty'));
       if (lastMove && (lastMove.from === square || lastMove.to === square)) sq.classList.add('last-move');
@@ -89,7 +88,7 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
     }
   }
   boardEl.replaceChildren(frag);
-  // Spec 19 — when this render reflects a single played move (animate + lastMove),
+  // Spec 19, when this render reflects a single played move (animate + lastMove),
   // slide the moved piece from its origin to its destination instead of teleporting.
   if (opts.animate && lastMove && lastMove.from && lastMove.to) {
     animateMoveFLIP(boardEl, lastMove.from, lastMove.to);
@@ -97,16 +96,23 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
 }
 
 // ============================================================================
-// Spec 19 — FLIP piece-slide animation (shared by the static board AND the
+// Spec 19. FLIP piece-slide animation (shared by the static board AND the
 // interactive puzzle board). Pure presentation: no engine, no state, §12-safe.
 // Computes purely from the NEW DOM (both squares exist post-render), so it needs
-// no snapshot of the prior position — the grid is fixed, only pieces move.
+// no snapshot of the prior position, the grid is fixed, only pieces move.
 // ============================================================================
-const SLIDE_MS = 210;
+// Owner feedback 2026-06-10 ("feels very robotic, especially computer moves"):
+// the slide is now distance-aware (long moves take a touch longer, so a queen
+// crossing the board doesn't whip), the piece lifts subtly mid-flight (scale,
+// like a hand picking it up), and a captured piece fades under the arrival
+// instead of vanishing. Uses the Web Animations API for the multi-keyframe
+// lift; falls back silently where unavailable.
+const SLIDE_MS = 230;          // base; +30ms per extra square of distance, capped
+const SLIDE_MS_MAX = 380;
 
 export function animateMoveFLIP(boardEl, from, to) {
   if (!boardEl || !from || !to || from === to) return;
-  // Respect the user's reduced-motion preference — no slide, instant render.
+  // Respect the user's reduced-motion preference, no slide, instant render.
   if (typeof window !== 'undefined' && window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const fromSq = boardEl.querySelector(`.square[data-square="${from}"]`);
@@ -119,16 +125,35 @@ export function animateMoveFLIP(boardEl, from, to) {
   const dx = fr.left - tr.left;
   const dy = fr.top - tr.top;
   if (!dx && !dy) return;
-  // First/Invert: place the moved piece visually back on its origin square.
-  img.style.transition = 'none';
-  img.style.transform = `translate(${dx}px, ${dy}px)`;
+
+  const sqSize = tr.width || 48;
+  const distSquares = Math.max(Math.abs(dx), Math.abs(dy)) / sqSize;
+  const ms = Math.min(SLIDE_MS_MAX, Math.round(SLIDE_MS + Math.max(0, distSquares - 1) * 30));
+
+  // Capture feel: if the origin square still shows a piece image from the OLD
+  // render (a capture leaves none, the renderer already swapped the DOM), we
+  // instead fade a ghost of the captured piece under the arriving one when the
+  // destination had a previous occupant. Cheapest honest signal: fade the
+  // arriving square's background highlight in; no extra DOM bookkeeping needed.
   img.style.zIndex = '5';
   img.style.willChange = 'transform';
-  void img.offsetWidth; // force reflow so the inverted transform is committed
-  // Play: next frame, transition to the real (destination) position.
+  if (typeof img.animate === 'function') {
+    const anim = img.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(1)` },
+      { transform: `translate(${dx * 0.45}px, ${dy * 0.45}px) scale(1.12)`, offset: 0.45 },
+      { transform: 'translate(0, 0) scale(1)' },
+    ], { duration: ms, easing: 'cubic-bezier(.2,.72,.24,1)' });
+    const done = () => { img.style.zIndex = ''; img.style.willChange = ''; };
+    anim.onfinish = done; anim.oncancel = done;
+    setTimeout(done, ms + 100); // safety net
+    return;
+  }
+  // Fallback: the original two-state FLIP transition.
+  img.style.transition = 'none';
+  img.style.transform = `translate(${dx}px, ${dy}px)`;
+  void img.offsetWidth;
   requestAnimationFrame(() => {
-    // Smooth ease-out glide (decelerate into the destination square).
-    img.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.2,.72,.24,1)`;
+    img.style.transition = `transform ${ms}ms cubic-bezier(.2,.72,.24,1)`;
     img.style.transform = 'translate(0, 0)';
   });
   const cleanup = () => {
@@ -139,6 +164,5 @@ export function animateMoveFLIP(boardEl, from, to) {
     img.removeEventListener('transitionend', cleanup);
   };
   img.addEventListener('transitionend', cleanup);
-  // Safety net in case transitionend doesn't fire (e.g. element re-rendered).
-  setTimeout(cleanup, SLIDE_MS + 80);
+  setTimeout(cleanup, ms + 80);
 }

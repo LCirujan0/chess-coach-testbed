@@ -1,5 +1,5 @@
 // ============================================================================
-// classify.js — entry-point module for endgame-recognition.html (Phase 1b)
+// classify.js, entry-point module for endgame-recognition.html (Phase 1b)
 // ============================================================================
 // Handles the endgame recognition drill. Loads recognition positions from
 // state.puzzles (merged in by boot.js Phase 1a), renders a static board,
@@ -31,7 +31,7 @@ import { onItemResolved } from './resolved.js';
 // ?session=today&block=recognition, the recognition drill renders the
 // persistent session-wrap bar and routes every classify result through the
 // shared onItemResolved callback so attempt + result counting matches the
-// mistake type (Spec 21 — recognition folded into the one session host).
+// mistake type (Spec 21, recognition folded into the one session host).
 const SESS = (() => {
   try {
     const p = new URLSearchParams(window.location.search);
@@ -80,7 +80,7 @@ function recordResult(pos, correct) {
   saveJson(STORAGE_KEY, storage);
   updateScorePill();
 
-  // Spec 21 — when running inside a Today session, route the result through the
+  // Spec 21, when running inside a Today session, route the result through the
   // single onItemResolved callback so the persistent bar + session counts pick
   // up this attempt and its outcome (the same path the mistake type uses). The
   // callback writes the per-position `seen` marker into the recognition store
@@ -108,7 +108,7 @@ function setStatus(text) {
   if (el) el.textContent = text;
 }
 
-// ── Board rendering (static — no click handler unless playout phase) ───────
+// ── Board rendering (static, no click handler unless playout phase) ───────
 function renderBoard(interactive) {
   const boardEl = document.getElementById('board');
   if (!boardEl || !state.chess || !state.orientation) return;
@@ -239,11 +239,11 @@ async function handlePlayOutMove() {
 
   if (state.chess.isGameOver()) {
     if (state.chess.isCheckmate()) {
-      showPlayoutVerdict(pos, 'pass', 'Checkmate — clean finish.');
+      showPlayoutVerdict(pos, 'pass', 'Checkmate, clean finish.');
     } else {
       const isDraw = pos.result === 'draw';
       showPlayoutVerdict(pos, isDraw ? 'pass' : 'fail',
-        isDraw ? 'Draw secured.' : 'Stalemate — win slipped.');
+        isDraw ? 'Draw secured.' : 'Stalemate, win slipped.');
     }
     return;
   }
@@ -271,11 +271,11 @@ async function handlePlayOutMove() {
   if (state.chess.isGameOver()) {
     if (state.chess.isCheckmate()) {
       showPlayoutVerdict(pos, 'fail',
-        pos.result === 'draw' ? 'Checkmated — draw lost.' : 'Checkmated — loss.');
+        pos.result === 'draw' ? 'Checkmated, draw lost.' : 'Checkmated, loss.');
     } else {
       const isDraw = pos.result === 'draw';
       showPlayoutVerdict(pos, isDraw ? 'pass' : 'fail',
-        isDraw ? 'Draw secured.' : 'Stalemate — win escaped.');
+        isDraw ? 'Draw secured.' : 'Stalemate, win escaped.');
     }
     return;
   }
@@ -328,11 +328,14 @@ function loadPosition(idx) {
   cl.consecutiveFails = 0;
   cl.failMoveNum = null;
 
-  // Update side-to-move label
+  // Update side-to-move label. Prominent + unambiguous (owner 2026-06-10:
+  // "it's not clear if you're playing as white or black"): a side swatch plus
+  // explicit judging copy, always from the side to move's point of view.
   const sideLabel = document.getElementById('side-to-move-label');
   if (sideLabel) {
-    const sideStr = color === 'b' ? 'Black' : 'White';
-    sideLabel.textContent = 'Side to move: ' + sideStr;
+    const isBlack = color === 'b';
+    sideLabel.innerHTML = '<i class="stm ' + (isBlack ? 'b' : 'w') + '"></i>' +
+      'You judge for ' + (isBlack ? 'Black' : 'White') + ' (to move)';
   }
 
   // Show classify buttons, hide playout + verdict areas
@@ -380,7 +383,7 @@ function onClassify(userVerdict) {
   if (verdictArea) {
     const verdictLabel = pos.result === 'win' ? 'Winning' : pos.result === 'draw' ? 'Drawn' : 'Losing';
     const badgeClass = correct ? 'correct' : 'wrong';
-    const badgeText = correct ? '✓ Correct — ' + verdictLabel : '✗ Wrong — it\'s ' + verdictLabel;
+    const badgeText = correct ? '✓ Correct, ' + verdictLabel : '✗ Wrong, it\'s ' + verdictLabel;
     verdictArea.innerHTML =
       '<div class="verdict-badge ' + badgeClass + '">' + badgeText + '</div>' +
       '<div class="keyfactor"><strong>' + escHtml(pos.type || '') + ':</strong> ' +
@@ -447,7 +450,7 @@ async function activatePlayout() {
   }
 
   renderBoard(true);
-  setStatus('Your turn — play to win.');
+  setStatus('Your turn, play to win.');
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────
@@ -528,7 +531,7 @@ async function boot() {
   }
 
   if (SESS) {
-    // Session mode — scope to this block's ids in plan order (the persistent
+    // Session mode, scope to this block's ids in plan order (the persistent
     // bar counts these), and render the bar. The exit chip returns to the
     // session screen so the wrapper stays consistent with the mistake type.
     const blockIds = sessionBlockIds();
@@ -537,7 +540,7 @@ async function boot() {
     cl.positions = scoped.length ? scoped : pool;
     refreshSessionWrap({ exitHref: '/session.html' });
   } else {
-    // Standalone — full bank, shuffled.
+    // Standalone, full bank, shuffled.
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];

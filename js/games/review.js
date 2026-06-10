@@ -1,10 +1,10 @@
 // ============================================================================
-// review.js — Spec 11 interactive game review.
+// review.js. Spec 11 interactive game review.
 // ----------------------------------------------------------------------------
 // Turns the Games page's "Review" surface into a ply-by-ply board replay. At
 // each SAVED mistake a severity badge + "Why?" affordance appears; tapping it
 // asks the coach to explain that one move (grounded in the stored mistake
-// record — the game is over, so naming the better move is the deliverable, NOT
+// record, the game is over, so naming the better move is the deliverable, NOT
 // a spoiler; §12 NAMING_RULES deliberately do not apply here). If the mistake
 // is tagged, a "Drill this motif" CTA deep-links into a focused puzzle session.
 //
@@ -31,7 +31,7 @@ function loadJson(key, fb) {
 }
 
 // Group the game's saved mistakes by ply index, parsed from the record id
-// (`${gameKey}|${plyIndex}`). Exact join — the id encodes the history index.
+// (`${gameKey}|${plyIndex}`). Exact join, the id encodes the history index.
 function mistakesByPlyFor(gameKey) {
   const all = loadJson(KEY_MISTAKES, []) || [];
   const out = {};
@@ -56,7 +56,7 @@ const explainCache = new Map(); // mistake id -> rendered review object
 
 // ---------------------------------------------------------------------------
 // Review list. Bug fix (2026-06-10, owner report "review pulls no games"):
-// this listed ONLY chess-coach-game-moves-v1 — but games ingested before
+// this listed ONLY chess-coach-game-moves-v1, but games ingested before
 // move-capture existed (or on another origin) live only in the scorecard /
 // meta / mistakes stores, so the list looked empty while "Saved games" showed
 // data. Now the list is the UNION of all per-game stores; games without a
@@ -71,7 +71,7 @@ export function renderReviewList() {
   const meta = loadJson(KEY_META, {}) || {};
   const allMistakes = loadJson(KEY_MISTAKES, []) || [];
   const keys = new Set([...Object.keys(moves), ...Object.keys(scorecards), ...Object.keys(meta)]);
-  // Mistake records carry their gameUrl — surface games known ONLY from mistakes too.
+  // Mistake records carry their gameUrl, surface games known ONLY from mistakes too.
   for (const m of allMistakes) { const k = m.gameUrl || (m.id || '').split('|')[0]; if (k) keys.add(k); }
   if (!keys.size) {
     host.innerHTML = '<div class="sub" style="padding:4px 0;">No games yet. Sync your Chess.com games first, then review them here.</div>';
@@ -101,7 +101,7 @@ export function renderReviewList() {
     const res = g.result ? ' · ' + resultLabel(g.result, g.userIsWhite !== false) : '';
     const action = g.replayable
       ? `<button class="btn btn-secondary" data-review-open="${escapeHtml(g.k)}" type="button" style="flex:none;">Review →</button>`
-      : `<a class="btn btn-secondary" href="/games.html" style="flex:none;text-decoration:none;" title="This game predates replay capture — one re-sync makes it replayable.">Re-sync to replay</a>`;
+      : `<a class="btn btn-secondary" href="/games.html" style="flex:none;text-decoration:none;" title="This game predates replay capture, one re-sync makes it replayable.">Re-sync to replay</a>`;
     // Chess.com enrichment (v0.80): opening, per-game performance estimate, and
     // accuracy (present only when a chess.com Game Review ran on the game).
     const bits = [];
@@ -132,11 +132,11 @@ function resultLabel(result, userIsWhite) {
   if (result === '1-0') return userIsWhite ? 'Win' : 'Loss';
   if (result === '0-1') return userIsWhite ? 'Loss' : 'Win';
   if (result === '1/2-1/2') return 'Draw';
-  return result || '—';
+  return result || ', ';
 }
 
 // ---------------------------------------------------------------------------
-// Review mode — open / replay / close
+// Review mode, open / replay / close
 // ---------------------------------------------------------------------------
 function openReview(gameKey) {
   const moves = loadJson(KEY_MOVES, {}) || {};
@@ -160,7 +160,7 @@ function openReview(gameKey) {
 // as a jumpable strip + a "Next key moment" control, so review WALKS the user
 // through what mattered instead of leaving them to step 80 plies blind.
 // Jumping to a moment auto-asks the coach about it (the jump IS the explicit
-// user action — rule 5 holds; responses are cached per mistake id).
+// user action, rule 5 holds; responses are cached per mistake id).
 // ---------------------------------------------------------------------------
 function momentPlies() {
   return Object.keys(reviewState.mistakesByPly).map(Number).sort((a, b) => a - b);
@@ -188,7 +188,7 @@ function renderMoments() {
   const host = $('review-moments');
   if (!host) return;
   const plies = momentPlies();
-  if (!plies.length) { host.innerHTML = gameMetaLine() + '<div class="sub" style="margin:0 0 10px;">No saved mistakes in this game — a clean one. Step through at your own pace.</div>'; return; }
+  if (!plies.length) { host.innerHTML = gameMetaLine() + '<div class="sub" style="margin:0 0 10px;">No saved mistakes in this game, a clean one. Step through at your own pace.</div>'; return; }
   const worst = plies.reduce((w, p) => {
     const m = reviewState.mistakesByPly[p];
     return (!w || (m.cpLoss || 0) > (w.cpLoss || 0)) ? m : w;
@@ -209,7 +209,7 @@ function jumpToMoment(ply) {
   reviewState.plyIndex = ply + 1; // show the position AFTER the mistake move
   renderPly();
   renderMoments();
-  explainMistake(m); // cached per id — repeat jumps are free
+  explainMistake(m); // cached per id, repeat jumps are free
 }
 function nextKeyMoment() {
   const plies = momentPlies();
@@ -233,7 +233,7 @@ function renderPly() {
     try { lm = c.move(moves[k]); } catch { lm = null; break; }
   }
   reviewState.lastMove = lm ? { from: lm.from, to: lm.to } : null;
-  // Slide the piece only on a single forward step (▶) — back/jumps render instantly.
+  // Slide the piece only on a single forward step (▶), back/jumps render instantly.
   const animate = (reviewState._prevPly != null && plyIndex === reviewState._prevPly + 1 && !!reviewState.lastMove);
   reviewState._prevPly = plyIndex;
   renderStaticBoard($('review-board'), c.fen(), {
@@ -242,6 +242,24 @@ function renderPly() {
     animate,
   });
   $('review-ply').textContent = `Move ${plyIndex} of ${moves.length}`;
+  // Visual position track: fill + mistake markers (built once per game).
+  const track = $('review-progress');
+  if (track) {
+    const fill = track.querySelector('i');
+    if (fill) fill.style.width = (moves.length ? Math.round(100 * plyIndex / moves.length) : 0) + '%';
+    if (track.dataset.game !== reviewState.gameKey) {
+      track.dataset.game = reviewState.gameKey;
+      track.querySelectorAll('.rp-mark').forEach((m) => m.remove());
+      for (const p of Object.keys(reviewState.mistakesByPly)) {
+        const m = reviewState.mistakesByPly[p];
+        const dot = document.createElement('span');
+        dot.className = 'rp-mark ' + (m.severity || 'mistake');
+        dot.style.left = (moves.length ? ((Number(p) + 1) / moves.length) * 100 : 0) + '%';
+        dot.title = `Move ${m.fullmove}: ${m.severity}`;
+        track.appendChild(dot);
+      }
+    }
+  }
   $('review-prev').disabled = plyIndex <= 0;
   $('review-next').disabled = plyIndex >= moves.length;
 
@@ -291,7 +309,7 @@ const REVIEW_SYSTEM = (rating) => [
   `to that band: concrete patterns and one-move-ahead ideas, not advanced structural vocabulary.`,
   ``,
   `You are given the position, the move the student played, the engine's preferred move and`,
-  `lines, the centipawn cost, and the tactical motif. The game is over — there is no answer to`,
+  `lines, the centipawn cost, and the tactical motif. The game is over, there is no answer to`,
   `hide. Explain plainly what they played, what was better, and WHY, grounded ONLY in the`,
   `supplied data. Do not invent moves, pieces, or evaluations not present in the data.`,
   ``,
@@ -303,7 +321,7 @@ const REVIEW_SYSTEM = (rating) => [
   `- grounded: the source line, e.g. "Engine: ${'$'}{bestMove} was N pawns better."`,
 ].join('\n') + coachMemoryBlock();
 
-// The coach's per-user memory (js/coach-memory.js window global) — the same
+// The coach's per-user memory (js/coach-memory.js window global), the same
 // teacher remembering this student across surfaces. Empty when none.
 function coachMemoryBlock() {
   try { if (typeof CoachMemory !== 'undefined') return CoachMemory.promptBlock(CoachMemory.read()); } catch { /* optional */ }
@@ -364,7 +382,7 @@ function renderReviewCard(container, review) {
 }
 
 // "Drill this motif" CTA descriptor for the currently-displayed mistake (if
-// tagged) — shaped for the shared card's cta[] (label + href).
+// tagged), shaped for the shared card's cta[] (label + href).
 function currentMotifCta() {
   const m = reviewState.plyIndex > 0 ? reviewState.mistakesByPly[reviewState.plyIndex - 1] : null;
   if (!m || !m.motif || m.motif === 'none-tactical') return null;
@@ -373,7 +391,7 @@ function currentMotifCta() {
 }
 
 // ---------------------------------------------------------------------------
-// Mount — wire controls once + render the list. Idempotent.
+// Mount, wire controls once + render the list. Idempotent.
 // ---------------------------------------------------------------------------
 let wired = false;
 export function initReview() {
@@ -393,7 +411,7 @@ export function initReview() {
     const chip = e.target.closest('[data-moment]');
     if (chip) jumpToMoment(parseInt(chip.getAttribute('data-moment'), 10));
   });
-  // Wipe this device (v0.80): local-only — the Supabase copy survives, so
+  // Wipe this device (v0.80): local-only, the Supabase copy survives, so
   // signing back in restores everything without re-ingesting.
   const wipe = $('wipe-device-btn');
   if (wipe) wipe.addEventListener('click', () => { if (window.KPSync) window.KPSync.wipeDevice(); });

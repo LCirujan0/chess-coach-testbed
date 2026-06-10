@@ -1,5 +1,5 @@
 // ============================================================================
-// session-wrap.js — render the PERSISTENT in-session Today wrapper (v0.55)
+// session-wrap.js, render the PERSISTENT in-session Today wrapper (v0.55)
 // ----------------------------------------------------------------------------
 // Shared component. Renders the "Mistake 3 of 8 · Block 1 of 2" progress band
 // (css/session-wrap.css) INSIDE a training surface so the Today block progress
@@ -40,7 +40,7 @@ function loadPlan() {
 // progress count: a mistake counts once it is attempted (pass OR fail), a
 // recognition position once it is answered. The previous version counted only
 // SOLVED items, so the bar stalled whenever an item was failed and never
-// reflected attempts/results (Jorge, v0.58-c1) — the bug this release fixes.
+// reflected attempts/results (Jorge, v0.58-c1), the bug this release fixes.
 // `done` advances on every resolution; `correct` is tracked separately.
 //
 // type per block: recognition uses the `seen:{ [id]: {at,correct} }` markers
@@ -151,7 +151,8 @@ export function renderSessionWrap(el, opts = {}) {
   const nowText = block.title || (BLOCK_SHORT[block.id] || 'Block');
   const correctText = done ? (' · ' + correct + '/' + done + ' correct') : '';
   const ofText = (count ? (noun + ' ' + cursor + ' of ' + count + ' · Block ' + (activeIdx + 1) + ' of ' + plan.blocks.length) : ('Block ' + (activeIdx + 1) + ' of ' + plan.blocks.length)) + correctText;
-  const mode = (block.mode === 'deep') ? 'Deep' : (block.mode === 'drill') ? 'Drill' : '';
+  // mode pill removed (owner 2026-06-10): "Drill" in the tracker meant nothing
+  // to the user; the rail + readout carry all the session info.
 
   // segmented rail: one segment per block, a pip per item, current block lit.
   let rail = '';
@@ -178,10 +179,12 @@ export function renderSessionWrap(el, opts = {}) {
       '<div class="sw-line"><span class="sw-now">' + esc(nowText) + '</span>' +
         '<span class="sw-of">' + esc(ofText) + '</span></div>' +
       '<div class="sw-rail">' + rail + '</div>' +
-    '</div>' +
-    (mode ? '<span class="sw-mode">' + esc(mode) + '</span>' : '');
+    '</div>';
 
   el.classList.remove('hidden');
+  // Focus mode: while a Today block is active, the host page hides its
+  // open-queue chrome (css/session-wrap.css body.kp-focus rules).
+  document.body.classList.add('kp-focus');
   return true;
 }
 

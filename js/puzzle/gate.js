@@ -1,11 +1,11 @@
 // ============================================================================
-// SECTION 8 — Thinking gate (Deep mode)
+// SECTION 8. Thinking gate (Deep mode)
 // ============================================================================
 import { GATE_SECONDS } from './config.js';
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { getCurrentPuzzle } from './queue.js';
-// runtime dep — renderBoard called inside event listener body
+// runtime dep, renderBoard called inside event listener body
 import { renderBoard } from './board.js';
 import { renderPending } from './pending.js';
 
@@ -72,7 +72,7 @@ $('gate-submit')?.addEventListener('click', async () => {
   if (state.gateInterval) { clearInterval(state.gateInterval); state.gateInterval = null; }
   $('gate-card').classList.add('hidden');
   renderBoard(); // re-render so square locked-cursor goes away
-  renderPending(); // §31 — show the calm PENDING feedback card once the board unlocks
+  renderPending(); // §31, show the calm PENDING feedback card once the board unlocks
   // v0.7: the auto-fired pre-move CCTO coach feedback used to land here. It's
   // been removed for two reasons: (1) it was an auto-generated message mid-solve,
   // which violates Jorge's "coach panel = coach + Jorge only" rule from v0.6
@@ -80,6 +80,6 @@ $('gate-submit')?.addEventListener('click', async () => {
   // prompt to "validate against engine truth", which is exactly the no-spoiler
   // class of leak the P1 fix in this release closes (`Brief: ...`). If we want
   // CCTO feedback back, it must be SOCRATIC, opt-in (button-triggered), and
-  // grounded only in POSITION SUMMARY — never engine lines. See
+  // grounded only in POSITION SUMMARY, never engine lines. See
   // `docs/learnings.md` v0.7 entry for the rationale.
 });

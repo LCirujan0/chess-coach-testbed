@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 17 — Lichess supply loader (Spec 17 — themed-drilling cross-source
+// SECTION 17. Lichess supply loader (Spec 17, themed-drilling cross-source
 // supply). Lazy-fetch + in-memory cache of the bundled Lichess puzzle pack;
 // normalise entries into the puzzle-record shape the queue/board expect; expose
 // topUpMotif() so startThemeDrill() can fill a thin own-game pool to target.
@@ -72,8 +72,7 @@ export function markLichessSolved(packId) {
 // `solutionLine` for the solution-line grader. `solverMoves` is the solver's
 // own moves only (odd indices of the original line), for reference.
 //
-// Returns null when the entry is malformed or moves[0] is illegal (defensive —
-// a bad row is skipped, never queued).
+// Returns null when the entry is malformed or moves[0] is illegal (defensive, // a bad row is skipped, never queued).
 export function normalizeLichessPuzzle(entry) {
   if (!entry || !entry.id || !entry.fen || typeof entry.moves !== 'string') return null;
   const uciList = entry.moves.trim().split(/\s+/).filter(Boolean);
@@ -120,7 +119,7 @@ function applyUci(chess, uci) {
 // window centred on `ratingCenter`, excluding ids in `excludeIds` and any
 // already-solved Lichess ids. Widens the rating window in steps when the narrow
 // band is thin (Spec 17 §thin-pool: widen, then queue what exists). Returns an
-// array (possibly shorter than `count`, possibly empty) — never throws.
+// array (possibly shorter than `count`, possibly empty), never throws.
 export async function topUpMotif(motif, opts) {
   const o = opts || {};
   const count = Math.max(0, o.count | 0);
@@ -167,7 +166,7 @@ export async function topUpMotif(motif, opts) {
       if (band.length >= count || mult === 4) { chosen = band; break; }
     }
     if (!chosen || chosen.length < count) {
-      // Still short — take everything, ordered by rating proximity.
+      // Still short, take everything, ordered by rating proximity.
       chosen = candidates.slice().sort((a, b) =>
         Math.abs((a.rating ?? center) - center) - Math.abs((b.rating ?? center) - center));
     } else {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Game Review</title>
+<title>KnightPath. Game Review</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/css/tokens.css">
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   .panel { margin-bottom: 14px; } /* visual props from shared .panel (shell.css) */
   .panel > h2 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
@@ -32,8 +32,15 @@
   #review-moments .rm-dot.mistake { background: var(--bad); }
   #review-moments .rm-dot.blunder { background: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
   /* review-mode rail (board screen uses the canonical .layout-grid) */
-  #review-ply { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
-  .review-mode-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #review-ply { font-size: 13px; color: var(--muted); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; flex-shrink: 0; }
+  .review-mode-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  /* Visual game-position track (owner ask: show "Move 12 of 64" as a picture):
+     thin bar with the mistake plies marked, so key moments are visible at a glance. */
+  .rp-track { position: relative; flex: 1; height: 5px; border-radius: 3px; background: var(--surface3); }
+  .rp-track > i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .2s ease; }
+  .rp-track .rp-mark { position: absolute; top: -2px; width: 9px; height: 9px; border-radius: 50%; transform: translateX(-50%); border: 1.5px solid var(--surface); }
+  .rp-track .rp-mark.inaccuracy { background: var(--warn); }
+  .rp-track .rp-mark.mistake, .rp-track .rp-mark.blunder { background: var(--bad); }
 </style>
 <script src="/js/coach-memory.js"></script>
 <script src="/js/profile.js"></script>
@@ -59,15 +66,16 @@
       <div class="review-list" id="review-list"></div>
     </div>
     <a class="btn ghost" href="/games.html" style="text-decoration:none; text-align:center;">＋ Sync more games from Chess.com</a>
-    <button class="btn ghost" id="wipe-device-btn" type="button" style="margin-top:8px;" title="Clears this device only — your training stays synced to your username and comes back when you sign in again.">Wipe this device</button>
+    <button class="btn ghost" id="wipe-device-btn" type="button" style="margin-top:8px;" title="Clears this device only, your training stays synced to your username and comes back when you sign in again.">Wipe this device</button>
   </section>
 
-  <!-- REVIEW MODE — canonical training-screen shell (css/screen.css) -->
+  <!-- REVIEW MODE, canonical training-screen shell (css/screen.css) -->
   <section id="review-mode" class="hidden">
     <div class="layout-grid">
       <div class="lg-head">
         <div class="review-mode-head">
           <button class="btn ghost" id="review-back" type="button" style="width:auto; padding:8px 14px;">← All games</button>
+          <div class="rp-track" id="review-progress" aria-hidden="true"><i></i></div>
           <span id="review-ply">Move 0</span>
         </div>
       </div>
@@ -97,7 +105,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>

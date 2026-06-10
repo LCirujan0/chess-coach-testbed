@@ -1,5 +1,5 @@
 /* ============================================================================
- * coach-stats.js — the shared compute-on-read stats module for Chess Coach.
+ * coach-stats.js, the shared compute-on-read stats module for Chess Coach.
  *
  * ONE module behind three surfaces:
  *   spec 06 MEASURES  -> scoreAttributes()  (7 attribute scores, secondary to the Chess.com rating)
@@ -8,7 +8,7 @@
  *
  * Dependency-free. Works in the browser (window.CoachStats) and in node (module.exports).
  * Pure functions: inputs are the localStorage stores; output is a view model. Nothing
- * is persisted here — recompute from the stores so scores can never go stale.
+ * is persisted here, recompute from the stores so scores can never go stale.
  *
  * All chess facts come from Stockfish/chess.js at ingest; this module only aggregates
  * and scores. The LLM (conductor narration) consumes buildDigest() output and never
@@ -112,11 +112,11 @@
       var comps = [], conf = 0;
       if (pz[a].w>0){ var acc=100*pz[a].succ/pz[a].w; comps.push([acc, pz[a].w]); conf+=pz[a].w; }
       if (gm[a].w>0){ var gs=gm[a].score/gm[a].w; comps.push([gs, gm[a].w]); conf+=gm[a].w; }
-      if (!comps.length){ out[a]={score:null,tier:'—',conf:0,status:'no data'}; return; }
+      if (!comps.length){ out[a]={score:null,tier:', ',conf:0,status:'no data'}; return; }
       var num=0, den=0; comps.forEach(function(c){ num+=c[0]*c[1]; den+=c[1]; });
       var blended = num/den, score = shrink(blended, conf);
       var status = conf>=CONFIG.CONF_FLOOR ? 'ok' : 'calibrating';
-      out[a]={ score:round1(score), tier: status==='ok'?tier(score):'—', conf:round1(conf), status:status };
+      out[a]={ score:round1(score), tier: status==='ok'?tier(score):', ', conf:round1(conf), status:status };
     });
     return out;
   }
@@ -128,7 +128,7 @@
 
   // ===========================================================================
   // INGEST-TIME per-game scorecard (spec 06 Part A). Slots into the existing
-  // games.html per-user-move loop — feed each analysed user move, then finalize.
+  // games.html per-user-move loop, feed each analysed user move, then finalize.
   // ===========================================================================
   function newScorecard(meta){
     var phases = { opening:{moves:0,cpl:0}, middlegame:{moves:0,cpl:0}, endgame:{moves:0,cpl:0} };
@@ -249,7 +249,7 @@
   }
 
   // ===========================================================================
-  // PHASE SCORES (Insights headers — opening/middlegame/endgame). Pure games-side:
+  // PHASE SCORES (Insights headers, opening/middlegame/endgame). Pure games-side:
   // MEDIAN of per-game phase ACPL (robust to blow-out games) -> the calibrated
   // acplToScore curve -> tier. Confidence floor on phase exposure (games + moves
   // reaching the phase) so endgame honestly reads "calibrating" until ~6 games.
@@ -282,7 +282,7 @@
   //
   // Input:  phases object from phaseScores()
   // Output: { opening: {eloEquivalent, isBest, ratingImpact} | null, ... }
-  //   • null  → status !== 'ok' — show nothing on the card
+  //   • null  → status !== 'ok', show nothing on the card
   //   • isBest → "your {phase} plays like a ~{eloEquivalent} player"
   //   • !isBest → "~{ratingImpact} rating points behind your best phase"
   // ===========================================================================
@@ -306,14 +306,14 @@
   }
 
   // ===========================================================================
-  // RETENTION HELPERS (docs/retention-and-gamification.md). Pure, additive — the
+  // RETENTION HELPERS (docs/retention-and-gamification.md). Pure, additive, the
   // daily-goal tiers, the macro goal-gradient toward the next rating band, and a
   // formatter for the richer rating profile (peak / record / tactics / RD
   // settledness). today.html + insights.html consume these; nothing persists here.
   // ===========================================================================
 
   // SDT autonomy: the user picks the target. Tiers map to a small, completable
-  // item count — "casual" must still feel finishable on a tired day (Fogg B=MAP).
+  // item count. "casual" must still feel finishable on a tired day (Fogg B=MAP).
   var GOAL_TIERS = [
     { tier:'casual',  target:3,  label:'Casual',  hint:'3 items · keep the habit alive' },
     { tier:'regular', target:6,  label:'Regular', hint:'6 items · steady progress' },
@@ -355,7 +355,7 @@
     if (target <= 0) return '';
     if (remaining <= 0) return "Today's goal met. Nice.";
     if (remaining === 1) return 'One more to finish today.';
-    if (remaining === 2) return 'Two to go — almost there.';
+    if (remaining === 2) return 'Two to go, almost there.';
     return remaining + ' to reach today’s goal.';
   }
 
@@ -383,8 +383,8 @@
         known:true, rd:Math.round(rd), settled:settled,
         label: settled ? 'settled' : 'still settling',
         note: settled
-          ? 'Your rapid rating is settled — recent gains are real.'
-          : 'Your rapid rating is still settling — treat recent swings as provisional.'
+          ? 'Your rapid rating is settled, recent gains are real.'
+          : 'Your rapid rating is still settling, treat recent swings as provisional.'
       };
     }
     var rapid = profile.rapid || {};
@@ -403,9 +403,9 @@
   }
 
   // ===========================================================================
-  // COACH'S READ (retention #5 — variable, data-grounded reward). A short, warm,
+  // COACH'S READ (retention #5, variable, data-grounded reward). A short, warm,
   // SPECIFIC observation about the player's actual play, varied day-to-day so it
-  // feels fresh (variable reward) but ALWAYS tied to a real number — never empty
+  // feels fresh (variable reward) but ALWAYS tied to a real number, never empty
   // praise (the explicit anti-pattern). Pure: the caller assembles the signals +
   // a dayKey ("YYYY-MM-DD") that rotates which eligible read surfaces.
   //   coachRead({ view, profile, history, streak, dayKey }) -> { kind, text }
@@ -419,44 +419,44 @@
     var history = Array.isArray(input.history) ? input.history.filter(function(h){return h && typeof h.rating==='number';}) : [];
     var reads = [];
 
-    // 0) Spaced-review due (SRS) — the most ACTIONABLE nudge, so it outranks the
+    // 0) Spaced-review due (SRS), the most ACTIONABLE nudge, so it outranks the
     // rest when there's a meaningful backlog. Count is passed in by the caller.
     if (typeof input.reviewDue === 'number' && input.reviewDue >= 3) {
       reads.push({ kind:'review-due', weight:6,
-        text: input.reviewDue + ' patterns are due for review — a few minutes today locks them back in before they fade.' });
+        text: input.reviewDue + ' patterns are due for review, a few minutes today locks them back in before they fade.' });
     }
 
-    // 1) Trajectory — the moat: net rapid change over the recent window.
+    // 1) Trajectory, the moat: net rapid change over the recent window.
     if (history.length >= 2){
       var win = history.slice(-20);
       var delta = win[win.length-1].rating - win[0].rating, span = win.length - 1;
-      if (delta >= 10) reads.push({ kind:'trajectory-up', weight:5, text:'Your rapid is up '+delta+' over your last '+span+' games — the training is showing.' });
-      else if (delta <= -10) reads.push({ kind:'trajectory-down', weight:3, text:'Rapid dipped '+Math.abs(delta)+' across your last '+span+' games. Improvement shows over weeks, not games — keep working the leaks.' });
+      if (delta >= 10) reads.push({ kind:'trajectory-up', weight:5, text:'Your rapid is up '+delta+' over your last '+span+' games, the training is showing.' });
+      else if (delta <= -10) reads.push({ kind:'trajectory-down', weight:3, text:'Rapid dipped '+Math.abs(delta)+' across your last '+span+' games. Improvement shows over weeks, not games, keep working the leaks.' });
     }
     // 2) Peak proximity / new peak.
     if (typeof rapid.current === 'number' && typeof rapid.best === 'number' && rapid.best > 0){
       if (rapid.current >= rapid.best) reads.push({ kind:'peak', weight:5, text:"You're at your peak rapid rating ("+rapid.best+"). Press the advantage." });
-      else { var off = rapid.best - rapid.current; if (off > 0 && off <= 60) reads.push({ kind:'near-peak', weight:3, text:"You're only "+off+" off your peak of "+rapid.best+" — within reach." }); }
+      else { var off = rapid.best - rapid.current; if (off > 0 && off <= 60) reads.push({ kind:'near-peak', weight:3, text:"You're only "+off+" off your peak of "+rapid.best+", within reach." }); }
     }
     // 3) Streak.
-    if (typeof streak.current === 'number' && streak.current >= 3) reads.push({ kind:'streak', weight:4, text:'A '+streak.current+'-day streak — consistency is doing the quiet work.' });
+    if (typeof streak.current === 'number' && streak.current >= 3) reads.push({ kind:'streak', weight:4, text:'A '+streak.current+'-day streak, consistency is doing the quiet work.' });
     // 4) Strongest area (focus is ranked weakest-first; last = strongest).
     var focus = Array.isArray(view.focus) ? view.focus : [];
     if (focus.length >= 2 && focus[focus.length-1] && focus[focus.length-1].attribute)
-      reads.push({ kind:'strength', weight:3, text:'Your '+humaniseAttr(focus[focus.length-1].attribute)+' is your sharpest area right now — lean on it.' });
+      reads.push({ kind:'strength', weight:3, text:'Your '+humaniseAttr(focus[focus.length-1].attribute)+' is your sharpest area right now, lean on it.' });
     // 5) Mistakes-turned-puzzles (competence / volume).
     if (typeof counts.puzzles === 'number' && counts.puzzles >= 10)
-      reads.push({ kind:'volume', weight:2, text:"You've turned "+counts.puzzles+' of your own mistakes into trainable puzzles — that deck IS your curriculum.' });
+      reads.push({ kind:'volume', weight:2, text:"You've turned "+counts.puzzles+' of your own mistakes into trainable puzzles, that deck IS your curriculum.' });
     // 6) Settled + trending up (honest meta-reward).
     if (rapid.settledness && rapid.settledness.known && rapid.settledness.settled && history.length >= 2 &&
         (history[history.length-1].rating - history[0].rating) > 0)
-      reads.push({ kind:'settled-up', weight:3, text:'Your rapid is settled (RD '+rapid.settledness.rd+') and trending up — that gain is real, not noise.' });
+      reads.push({ kind:'settled-up', weight:3, text:'Your rapid is settled (RD '+rapid.settledness.rd+') and trending up, that gain is real, not noise.' });
     // 7) Tactics rating.
-    if (typeof profile.tactics === 'number') reads.push({ kind:'tactics', weight:1, text:'Your Chess.com puzzle rating is '+profile.tactics+' — pattern recognition is a real asset of yours.' });
+    if (typeof profile.tactics === 'number') reads.push({ kind:'tactics', weight:1, text:'Your Chess.com puzzle rating is '+profile.tactics+', pattern recognition is a real asset of yours.' });
 
     if (!reads.length){
-      if ((counts.games||0) === 0) return { kind:'coldstart', text:"Sync a few of your Chess.com games and I'll start reading your play — your strengths, your leaks, and where the rating's heading." };
-      return { kind:'warm', text:'Keep clearing your mistake deck — the patterns compound. I read more into your play as the games add up.' };
+      if ((counts.games||0) === 0) return { kind:'coldstart', text:"Sync a few of your Chess.com games and I'll start reading your play, your strengths, your leaks, and where the rating's heading." };
+      return { kind:'warm', text:'Keep clearing your mistake deck, the patterns compound. I read more into your play as the games add up.' };
     }
     // Daily rotation: ordered by weight, rotated by the day seed so it varies
     // across days without flipping on every refresh (variable, not random).

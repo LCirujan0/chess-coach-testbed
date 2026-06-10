@@ -1,11 +1,11 @@
 /* ============================================================================
- * today.html — the daily launchpad (Loop 1, rebuilt v1.0 to Design's
+ * today.html, the daily launchpad (Loop 1, rebuilt v1.0 to Design's
  * session-wrapper rethink). Spec: redesign-spec §8/§18 + design-explorations/
  * today-screen.html (2026-06-01) + engineering spec 05 (deterministic fallback).
  *
  * SESSION = BUILT BLOCKS ONLY. Only block types that actually exist are live
  * and counted: recent mistakes + review due. Endgames + board vision are shown
- * as LOCKED "coming soon" rows — never sequenced, never counted (so a block can
+ * as LOCKED "coming soon" rows, never sequenced, never counted (so a block can
  * never dead-end into the open Puzzles tab). The session runs inside the wrapper
  * (session.html); puzzle.html (Releases-A v0.13) does the per-block round-trip.
  *
@@ -29,7 +29,7 @@
   var KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
   var KEY_SESSION    = 'chess-coach-session-v1';
   var KEY_COMPLETE   = 'chess-coach-session-complete-v1';
-  var KEY_GOAL       = 'chess-coach-daily-goal-v1';   // { tier, target } — SDT autonomy
+  var KEY_GOAL       = 'chess-coach-daily-goal-v1';   // { tier, target }. SDT autonomy
   var KEY_PROFILE    = 'chess-coach-rating-profile-v1';
   var KEY_HISTORY    = 'chess-coach-rating-history-v1';
   var KEY_EG         = 'chess-coach-eg-results-v1';
@@ -50,7 +50,7 @@
   var ICON = {
     mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
     review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
-    // Keyed by BLOCK id — the endgame session block's id is 'endgames'
+    // Keyed by BLOCK id, the endgame session block's id is 'endgames'
     // (v0.80 audit fix: the old 'endgame' key rendered literal "undefined"
     // in the block row whenever endgame technique was the day's focus).
     endgame:  '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
@@ -78,7 +78,7 @@
   var TODAY = todayKey();
 
   // ---- session streak (app-level, generalised from Board Vision via js/streak.js) ----
-  // The streak lives on the MEANINGFUL action — completing today's session — and
+  // The streak lives on the MEANINGFUL action, completing today's session, and
   // is persisted in chess-coach-streak-v1. We resolve any elapsed gap on read so
   // the displayed value is honest; the actual increment happens on the done-today
   // path (markSessionDone), never on a mere app-open (anti-pattern guard).
@@ -89,10 +89,10 @@
       Streak.writeStreak(resolved.state);            // persist a freeze-consume / lapse on read
       streakInfo = Streak.describe(resolved.state, Streak.todayStr());
     }
-  } catch (e) { /* streak is non-essential chrome — never block the page */ }
+  } catch (e) { /* streak is non-essential chrome, never block the page */ }
   var streak = streakInfo.current;
 
-  // ---- daily goal (SDT autonomy — Casual / Regular / Serious) ----
+  // ---- daily goal (SDT autonomy. Casual / Regular / Serious) ----
   var goal = { tier: 'regular', target: 6 };
   try {
     var storedGoal = loadJson(KEY_GOAL, null);
@@ -117,7 +117,7 @@
   } catch (e) { overallTier = null; focusData = null; }
 
   // =====================================================================
-  // BLOCK ASSEMBLY — built block types ONLY (recent mistakes + review).
+  // BLOCK ASSEMBLY, built block types ONLY (recent mistakes + review).
   // =====================================================================
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
   function isTried(id) { return !!attempts[id]; }
@@ -126,7 +126,7 @@
     return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
   });
 
-  // Block 1 — Recent mistakes: newest untried, top up with unsolved-tried if thin.
+  // Block 1. Recent mistakes: newest untried, top up with unsolved-tried if thin.
   var untried = byNewest.filter(function (m) { return m && m.id && !isTried(m.id); });
   var unsolvedTried = byNewest.filter(function (m) { return m && m.id && isTried(m.id) && !isSolved(m.id); });
   var b1ids = untried.slice(0, 8).map(function (m) { return m.id; });
@@ -137,9 +137,9 @@
   byNewest.slice(0, 12).forEach(function (m) { if (m.gameUrl) recentGames[m.gameUrl] = 1; });
   var nGames = Object.keys(recentGames).length;
 
-  // Block 2 — Spaced review (SRS, js/review-srs.js): previously-attempted
-  // mistakes that are DUE to resurface — failed ones immediately, solved ones
-  // after a growing interval — so patterns are re-exposed just before they fade.
+  // Block 2. Spaced review (SRS, js/review-srs.js): previously-attempted
+  // mistakes that are DUE to resurface, failed ones immediately, solved ones
+  // after a growing interval, so patterns are re-exposed just before they fade.
   // Excludes the fresh block (b1). Falls back to the old unsolved-tried proxy.
   var b2ids;
   if (typeof ReviewSRS !== 'undefined') {
@@ -151,12 +151,12 @@
     b2ids = unsolvedTried.filter(function (m) { return b1ids.indexOf(m.id) === -1; }).slice(0, 5).map(function (m) { return m.id; });
   }
 
-  // Block 3 — Endgame recognition (Spec 21 — folded into the session host).
+  // Block 3. Endgame recognition (Spec 21, folded into the session host).
   // Gated behind a recognition-focus flag so it's only queued when relevant;
   // ids are the recognition bank's stable rec-<n> ids (data/endgame-recognition
   // .json, 1,001 positions: rec-0..rec-1000). Least-recently-seen first using
   // the recognition store's `seen` markers, capped small to keep a daily
-  // session light. No fetch needed — the id space is fixed and contiguous.
+  // session light. No fetch needed, the id space is fixed and contiguous.
   var RECOG_BANK_SIZE = 1001;     // data/endgame-recognition.json position count
   var RECOG_BLOCK_CAP = 4;        // positions per daily recognition block
   var recognitionStore = {};
@@ -187,13 +187,13 @@
     b3ids = allRecIds.slice(0, RECOG_BLOCK_CAP);
   }
 
-  // Block 4 — Endgame play-out (Spec 21 — folded into the session host).
+  // Block 4. Endgame play-out (Spec 21, folded into the session host).
   // Gated behind the existing endgame-focus flag (focusData.attribute ===
   // 'endgame_technique'): only queued when endgame technique is today's biggest
   // leak. ids are the 20 canonical endgame-lesson ids (data/endgames.json),
   // least-mastered / least-recently-played first using the eg-results store
   // (chess-coach-eg-results-v1, written by playout.js). Capped small to keep a
-  // daily session light. No fetch — the id space is fixed.
+  // daily session light. No fetch, the id space is fixed.
   var ENDGAME_LESSON_IDS = ['kq','kr','2b','bn','2r','opp','rookpawn','square','outside','distopp','lucena','philidor','vancura','behindpasser','kpvr','ocb0','ocbwin','wrongb','connected','qvr'];
   var ENDGAME_BLOCK_CAP = 4;        // lessons per daily endgame block
   var endgameStore = {};
@@ -222,7 +222,7 @@
   if (b3ids.length) blocks.push({ id: 'recognition', title: 'Endgame recognition', sub: 'Winning, drawn, or losing?', count: b3ids.length, mode: 'drill', done: 0, ids: b3ids });
   if (b4ids.length) blocks.push({ id: 'endgames', title: 'Endgame play-out', sub: 'Convert the win, hold the draw', count: b4ids.length, mode: 'drill', done: 0, ids: b4ids });
 
-  // LOCKED "coming soon" rows — shown on the plan, never sequenced/counted.
+  // LOCKED "coming soon" rows, shown on the plan, never sequenced/counted.
   // Endgame is now live (spec 07 + 08); only Board vision remains locked.
   var coming = [
     { id: 'vision', title: 'Board vision', sub: 'Visualisation · calculation' }
@@ -239,11 +239,11 @@
     if (b1ids.length) parts.push('your <b>recent mistakes</b>');
     if (b2ids.length) parts.push('the cards <b>due for review</b>');
     var lead = parts.length ? ('Today is ' + (parts.length === 2 ? parts[0] + ' plus ' + parts[1] : parts[0]) + '.') : 'Nothing new to drill today.';
-    var endgameTail = endgameInFocus ? ' <b>Endgame technique</b> is your focus today — drills queued below.' : ' Endgame practice is now available as an optional extra.';
+    var endgameTail = endgameInFocus ? ' <b>Endgame technique</b> is your focus today, drills queued below.' : ' Endgame practice is now available as an optional extra.';
     return lead + endgameTail;
   }
 
-  // ---- coach’s read (retention #5 — variable, data-grounded reward) ----
+  // ---- coach’s read (retention #5, variable, data-grounded reward) ----
   // A short, specific, VARIED line tied to a real number (never empty praise).
   // Rotates day-to-day so it feels fresh; falls back to the session framing.
   function coachReadHtml() {
@@ -256,7 +256,7 @@
     return (r && r.text) ? esc(r.text) : coachFraming();
   }
 
-  // ---- mastery milestones (retention #7) — earned capability markers ----
+  // ---- mastery milestones (retention #7), earned capability markers ----
   // Derived from real data; a freshly-earned one is dot-highlighted (the reward
   // moment), then recorded in chess-coach-mastery-seen-v1 so it's only "new" once.
   function milestonesHtml() {
@@ -283,7 +283,7 @@
       return '<p class="plan-focus plan-focus-muted">Ingest a few games to unlock your daily focus.</p>';
     }
     var label = focusData.attribute.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-    return '<p class="plan-focus">Today\'s focus: <b>' + esc(label) + '</b> — your biggest leak.</p>';
+    return '<p class="plan-focus">Today\'s focus: <b>' + esc(label) + '</b>, your biggest leak.</p>';
   }
 
   // ---- endgame block rows (for in-session and extra section) ----
@@ -339,7 +339,7 @@
   }
   function glanceHtml() {
     if (rating == null) {
-      return '<a href="/insights.html" class="glance"><div><div class="num">—</div><div class="gl-sub">Sync your rating in Puzzles to see your trajectory.</div></div><span class="go">Insights ›</span></a>';
+      return '<a href="/insights.html" class="glance"><div><div class="num">, </div><div class="gl-sub">Sync your rating in Puzzles to see your trajectory.</div></div><span class="go">Insights ›</span></a>';
     }
     var pct = Math.max(0, Math.min(100, Math.round((rating - 950) / ((typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) - 950) * 100)));
     return '<a href="/insights.html" class="glance">' + ringSvg() +
@@ -399,7 +399,7 @@
     var nb = CoachStats.nextBand(rating);
     if (!nb) return '';
     var top, pct;
-    if (nb.atTarget) { top = 'You’ve reached <b>' + (typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) + '</b> — the target.'; pct = 100; }
+    if (nb.atTarget) { top = 'You’ve reached <b>' + (typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) + '</b>, the target.'; pct = 100; }
     else { top = '<b>' + nb.points + ' pts</b> to ' + nb.band + '.'; pct = nb.pctOfBand; }
     return '<a href="/insights.html" class="bandbar"><div class="bb-main"><div class="bb-top">' + top + '</div>' +
       '<div class="bb-track"><i style="width:' + pct + '%"></i></div></div><span class="bb-go">Insights ›</span></a>';
@@ -420,7 +420,7 @@
       '<span class="ct">🔒 soon</span></div>';
   }
   function comingHtml() {
-    // Board Vision is now live (Spec 14) — render it as a real warm-up link, not
+    // Board Vision is now live (Spec 14), render it as a real warm-up link, not
     // a locked row. Kept here (below the sequenced blocks) as an optional extra.
     return '<div class="coming-wrap">' + coming.map(function (c) {
       return '<a class="block" href="/board-vision.html"><div class="ic">' + ICON[c.id] + '</div>' +
@@ -429,7 +429,7 @@
     }).join('') + '</div>';
   }
   function sessionCardHtml() {
-    // Spec 21 — endgame play-out + recognition are now SEQUENCED session blocks
+    // Spec 21, endgame play-out + recognition are now SEQUENCED session blocks
     // (built above into `blocks` when in focus), rendered as proper block rows
     // here. The old non-sequenced full-page endgame links in the session card
     // are dropped to avoid a duplicate entry; standalone access stays available
@@ -508,7 +508,7 @@
       '<h2>' + esc(doneMsg) + '</h2>' +
       '<p>' + (detailStr || 'Nice work today.') + '</p>' +
       '<a class="btn primary" href="/session.html">One more set</a></div>' +
-      '<a href="/coach.html" class="coachnote" style="margin-top:14px;"><span class="ava">C</span><div class="txt">' + coachReadHtml() + '</div></a>' +
+      '<a href="/coach.html" class="coachnote" style="margin-top:14px;"><span class="ava">♞</span><div class="txt">' + coachReadHtml() + '</div></a>' +
       bandBarHtml() +
       milestonesHtml() +
       glanceHtml();
@@ -522,7 +522,7 @@
     var minsLeft = Math.max(2, Math.round((totalPlanned - done) * 1.0 + blocksLeft * 2));
     var idxHuman = Math.min((savedSession.blocks || []).filter(function (b) { return (b.done || 0) >= (b.count || 0); }).length + 1, (savedSession.blocks || []).length);
     root.innerHTML = headerHtml('') +
-      '<a href="/session.html" class="coachnote"><span class="ava">C</span><div class="txt">You’re partway through. <b>' + blocksLeft + ' block' + (blocksLeft === 1 ? '' : 's') + ' left</b>, about ' + minsLeft + ' minutes.</div></a>' +
+      '<a href="/session.html" class="coachnote"><span class="ava">♞</span><div class="txt">You’re partway through. <b>' + blocksLeft + ' block' + (blocksLeft === 1 ? '' : 's') + ' left</b>, about ' + minsLeft + ' minutes.</div></a>' +
       goalBarHtml() +
       '<a class="btn primary" href="/session.html">Resume session · block ' + idxHuman + ' of ' + (savedSession.blocks || []).length + '</a>' +
       '<div style="margin-top:10px;"><button class="btn ghost" id="start-fresh">Start fresh instead</button></div>' +
@@ -538,7 +538,7 @@
     return;
   }
 
-  // No live blocks (everything cleared) — caught up, not a dead end.
+  // No live blocks (everything cleared), caught up, not a dead end.
   if (!blocks.length) {
     persistPlan();
     root.innerHTML = headerHtml('') +
@@ -550,10 +550,10 @@
     return;
   }
 
-  // POPULATED — assemble + persist a fresh plan.
+  // POPULATED, assemble + persist a fresh plan.
   persistPlan();
   root.innerHTML = headerHtml('A pre-built session from your games. One tap to start.') +
-    '<a href="/coach.html" class="coachnote"><span class="ava">C</span><div class="txt">' + coachReadHtml() + '</div></a>' +
+    '<a href="/coach.html" class="coachnote"><span class="ava">♞</span><div class="txt">' + coachReadHtml() + '</div></a>' +
     goalBarHtml() +
     sessionCardHtml() +
     bandBarHtml() +

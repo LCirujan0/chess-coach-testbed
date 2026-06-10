@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 10 — Grading + move flow + wrong-move punishment
+// SECTION 10. Grading + move flow + wrong-move punishment
 // ============================================================================
 import {
   MAX_CP_LOSS_PER_MOVE, MAX_CP_LOSS_TOTAL, MAX_USER_MOVES_PER_PUZZLE,
@@ -13,7 +13,7 @@ import { markLichessSolved } from './lichess.js';
 import { analyzePosition, normalizeEval, buildPositionSummary } from './engine.js';
 import { renderBoard, renderTitleAndMeta } from './board.js';
 import { renderFilterTabs, renderCategoryTabs, isSolved, getCurrentPuzzle } from './queue.js';
-// runtime deps — called inside function bodies only; live bindings handle the cycles
+// runtime deps, called inside function bodies only; live bindings handle the cycles
 import { showResult } from './result.js';
 import { buildViewHistory, updateNavLabel, renderComparison, annotateForViewIndex, revealAnswerOnBoard } from './review.js';
 import { renderPending } from './pending.js';
@@ -41,7 +41,7 @@ export function gradeMove(userUci) {
 }
 
 export async function commitAndEvaluate(move) {
-  // Spec 17 — Lichess supply puzzles grade against their known solution line,
+  // Spec 17. Lichess supply puzzles grade against their known solution line,
   // not the engine MultiPV. This is an ADDITIVE branch keyed on the puzzle's
   // source; the own-game (mistake) grade path below is reached only when the
   // current puzzle is NOT a Lichess entry, and is behaviourally unchanged.
@@ -54,11 +54,11 @@ export async function commitAndEvaluate(move) {
 
   const played = state.chess.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
   state.lastMove = { from: move.from, to: move.to };
-  state.animateMove = { from: move.from, to: move.to }; // Spec 19 — slide this move
+  state.animateMove = { from: move.from, to: move.to }; // Spec 19, slide this move
   state.selectedSquare = null;
   state.legalMovesFromSelected = [];
 
-  // Clear right-click annotations once the player commits a move — they belong
+  // Clear right-click annotations once the player commits a move, they belong
   // to the thinking phase, not the post-move state.
   state.annotations = [];
   // Clear the piece hint after the move is made (the hint stays once-per-puzzle
@@ -67,12 +67,12 @@ export async function commitAndEvaluate(move) {
 
   const userUci = move.from + move.to + (move.promotion || '');
   const grade = gradeMove(userUci);
-  // v0.13 (Spec 05 §"Per-puzzle multi-move review — corrected"): capture the
+  // v0.13 (Spec 05 §"Per-puzzle multi-move review, corrected"): capture the
   // engine's full intended line from the START on the first user decision,
   // and per-step engine PV + before/after evals on every user move. Used by
   // the rewritten review prompt to compare whole-user-line vs whole-engine-
   // line. All data is already in state.engineLines from the existing MultiPV
-  // pass — no extra Stockfish.
+  // pass, no extra Stockfish.
   const evalToCp = (ev) => {
     if (!ev) return null;
     if (typeof ev.cp === 'number') return ev.cp;
@@ -80,7 +80,7 @@ export async function commitAndEvaluate(move) {
     return null;
   };
   if (state.userMovesMade === 0 && state.engineLines[0]) {
-    // First user decision — snapshot the engine's whole line as ground truth
+    // First user decision, snapshot the engine's whole line as ground truth
     // for the line-vs-line comparison. Captured BEFORE the user move so the
     // PV reflects "what the engine would have played from the puzzle start".
     state.engineLineFromStart = {
@@ -89,7 +89,7 @@ export async function commitAndEvaluate(move) {
     };
   }
   state.userMovesMade++;
-  // Phase 2 — record per-move cp loss and running total
+  // Phase 2, record per-move cp loss and running total
   const moveCp = grade.cpLoss ?? 0;
   state.moveCpLoss.push(moveCp);
   state.totalCpLoss += moveCp;
@@ -117,7 +117,7 @@ export async function commitAndEvaluate(move) {
   });
   renderTitleAndMeta();
   renderBoard();
-  // Live comparison — shows the "You played" column from move 1, with engine
+  // Live comparison, shows the "You played" column from move 1, with engine
   // and original-game columns hidden until the puzzle resolves.
   renderComparison({ live: true });
 
@@ -142,10 +142,9 @@ export async function commitAndEvaluate(move) {
     return;
   }
 
-  // §30.0 (v0.50) — THE reveal-counter fix. A wrong move now resolves the
+  // §30.0 (v0.50). THE reveal-counter fix. A wrong move now resolves the
   // attempt immediately via finishPuzzle(), which calls recordAttempt() and so
-  // increments state.sessionFailures[id] the moment the move resolves wrong —
-  // independent of any consequence playback. The old flow parked at
+  // increments state.sessionFailures[id] the moment the move resolves wrong, // independent of any consequence playback. The old flow parked at
   // phase:'punishment' behind "Show Follow-up" and only finalised if the player
   // tapped it; a player who tapped Try again never finalised, the fail never
   // counted, and the sessionFails>=3 reveal never fired (they could miss
@@ -155,7 +154,7 @@ export async function commitAndEvaluate(move) {
 }
 
 // ============================================================================
-// Spec 17 — Lichess solution-line grading (self-contained, source==='lichess')
+// Spec 17. Lichess solution-line grading (self-contained, source==='lichess')
 // ============================================================================
 // Grades the player's move against the puzzle's stored solution line (UCI), NOT
 // the engine. v1 grades the FIRST solver move as pass/fail (the key motif move).
@@ -167,7 +166,7 @@ export async function commitAndEvaluateLichess(move, puzzle) {
   const fenBefore = state.chess.fen();
   const played = state.chess.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
   state.lastMove = { from: move.from, to: move.to };
-  state.animateMove = { from: move.from, to: move.to }; // Spec 19 — slide this move
+  state.animateMove = { from: move.from, to: move.to }; // Spec 19, slide this move
   state.selectedSquare = null;
   state.legalMovesFromSelected = [];
   state.annotations = [];
@@ -209,7 +208,7 @@ export async function commitAndEvaluateLichess(move, puzzle) {
   renderCpBar();
 
   // v1: resolve on the first solver move (pass or fail). No multi-move solve
-  // loop — keeps the Lichess path entirely self-contained.
+  // loop, keeps the Lichess path entirely self-contained.
   await finishPuzzle({ grade, played, terminal: correct ? undefined : 'wrong_move' });
 }
 
@@ -234,12 +233,12 @@ export async function playEngineResponseAndRearm() {
   const engineFenBefore = state.chess.fen();
   const engObj = state.chess.move({ from: eng.uci.slice(0,2), to: eng.uci.slice(2,4), promotion: eng.uci.slice(4,5) || undefined });
   state.lastMove = { from: eng.uci.slice(0,2), to: eng.uci.slice(2,4) };
-  state.animateMove = { from: eng.uci.slice(0,2), to: eng.uci.slice(2,4) }; // Spec 19 — slide the engine reply
+  state.animateMove = { from: eng.uci.slice(0,2), to: eng.uci.slice(2,4) }; // Spec 19, slide the engine reply
   state.attemptHistory.push({ mover: 'engine', fenBefore: engineFenBefore, san: engObj ? engObj.san : eng.san, uci: eng.uci, ply: state.attemptHistory.length });
   renderTitleAndMeta(); renderBoard();
   // v0.7: the per-move "Move N: <san> ✓  ·  engine replied <san>" chatter that
   // used to fire here has been removed. The coach log now contains only coach
-  // turns and Jorge's typed messages — no auto-generated mid-solve noise. The
+  // turns and Jorge's typed messages, no auto-generated mid-solve noise. The
   // engine's reply is already visible on the board itself (lastMove highlight
   // + the piece in its new square), so the SAN was redundant duplication too.
   setInlineStatus('Computing top 5 lines…');
@@ -253,13 +252,13 @@ export async function playEngineResponseAndRearm() {
   // active again so the player can ask for a hint on this fresh decision.
   state.pieceHintSquare = null;
   $('show-piece-btn').disabled = false;
-  renderPending(); // §31 — refresh the in-progress feedback face for the new turn
+  renderPending(); // §31, refresh the in-progress feedback face for the new turn
 }
 
 export async function finishPuzzle({ grade, played, terminal }) {
   state.phase = 'resolved';
   setInlineStatus('');
-  // §30.0 — count the attempt FIRST so the result card + reveal gate read the
+  // §30.0, count the attempt FIRST so the result card + reveal gate read the
   // live sessionFailures count for THIS attempt (the whole fix: the fail is
   // recorded the moment the move resolves, not when a follow-up is viewed).
   recordAttempt(grade);
@@ -288,7 +287,7 @@ export async function finishPuzzle({ grade, played, terminal }) {
   applyResolutionUI({ grade, played, terminal });
 }
 
-// §30.2/§30.3 — render the post-attempt surface: hide the play controls, show
+// §30.2/§30.3, render the post-attempt surface: hide the play controls, show
 // the result card in its state (TRYING / STOP-ANSWER / REVIEW), and reveal the
 // answer (arrows + auto-play) only when earned. Shared by finishPuzzle and the
 // quiet "Show me the answer" escape (forceReveal), so both render identically.
@@ -319,7 +318,7 @@ export function applyResolutionUI({ grade, played, terminal }) {
     // STOP/ANSWER (a revealed fail): auto-play the correct move once, arrow up.
     if (!solved) revealAnswerOnBoard();
   } else {
-    // TRYING — answer hidden: no arrows, no comparison, board stays clean. The
+    // TRYING, answer hidden: no arrows, no comparison, board stays clean. The
     // card's "Try again" sends the player back to think (§29.2).
     state.annotations = [];
     state.correctSquares = null;
@@ -329,7 +328,7 @@ export function applyResolutionUI({ grade, played, terminal }) {
   }
 }
 
-// §30.6 #3 — the quiet "Show me the answer" escape (offered from the 2nd miss).
+// §30.6 #3, the quiet "Show me the answer" escape (offered from the 2nd miss).
 // Reveals the answer without waiting for the 3rd fail; re-renders the same
 // resolution surface so the STOP/ANSWER state (arrow + auto-play + AI review)
 // appears exactly as it would on the 3rd miss.
@@ -382,13 +381,13 @@ export function recordAttempt(grade) {
     cur.solved = true;
     if (typeof cur.firstAccuracy !== 'number' && accuracy !== null) cur.firstAccuracy = accuracy;
     if (accuracy !== null) cur.lastAccuracy = accuracy;
-    // Spec 17 — mirror a solved Lichess puzzle into the lean solved-id set so
+    // Spec 17, mirror a solved Lichess puzzle into the lean solved-id set so
     // the themed-drill top-up skips it on re-draw (the attempt is also recorded
     // under its `lichess:<id>` id in the attempts ledger above).
     if (puzzle.source === 'lichess') markLichessSolved(puzzle.id);
   } else {
     cur.failedAttempts = (cur.failedAttempts || 0) + 1;
-    // Per-session counter — drives reveal mode independent of historical fails.
+    // Per-session counter, drives reveal mode independent of historical fails.
     state.sessionFailures[puzzle.id] = (state.sessionFailures[puzzle.id] || 0) + 1;
   }
   // Capture this attempt's move sequence so future reviews can spot patterns.
@@ -403,7 +402,7 @@ export function recordAttempt(grade) {
   // Capture #2 (Spec 04 §"Required captures", v0.7): per-attempt mode +
   // gateCompleted are captured at the moment of attempt resolution. `component`
   // starts null and is filled by setAttemptComponent() when the user taps a
-  // component pill on the post-puzzle reflection row (Deep mode only — Drill
+  // component pill on the post-puzzle reflection row (Deep mode only. Drill
   // skips reflection per coaching-style.md). These three fields unlock the
   // high-fidelity component tiers in Insights once enough data accrues.
   cur.attemptLog.push({
@@ -420,11 +419,11 @@ export function recordAttempt(grade) {
   if (cur.attemptLog.length > 10) cur.attemptLog = cur.attemptLog.slice(-10);
   state.attempts[puzzle.id] = cur;
   saveAttempts(state.attempts);
-  // v0.13 — session-mode write-back. When this attempt resolves inside a
+  // v0.13, session-mode write-back. When this attempt resolves inside a
   // Today block, recompute `done` from the count of solved ids and persist.
   // Always derive from the truth (attempts store) rather than incrementing
   // so partial re-runs / retries don't double-count.
-  // Spec 21 §2.3 — route the mistake resolution through the single
+  // Spec 21 §2.3, route the mistake resolution through the single
   // onItemResolved callback so attempt + result counting is uniform across
   // types (it recomputes the block's done=ATTEMPTED + correct, persists, and
   // refreshes the persistent bar). The bar now advances on every resolved
@@ -445,7 +444,7 @@ export function recordAttempt(grade) {
 // `correct` (= items solved this session) from the attempts ledger on its
 // queueIds, persist to localStorage. Called after each resolved attempt and
 // on the final block-complete bounce in queue.js. `done` now advances on every
-// resolution (pass OR fail) — the v0.58-c1 bug was that it counted only solves,
+// resolution (pass OR fail), the v0.58-c1 bug was that it counted only solves,
 // so a failed item never advanced and nothing read as an attempt/result.
 // Vision blocks (queueIds=[]) keep no per-id progress (harmless no-op).
 export function sessionModeWriteBack() {
@@ -458,7 +457,7 @@ export function sessionModeWriteBack() {
   const ids = Array.isArray(block.ids) ? block.ids : [];
   if (!ids.length) return; // vision-style block: no per-id progress
   // Count only items resolved DURING this session (last attempt at/after the
-  // plan's createdAt), not lifetime — so a drill over previously-seen items
+  // plan's createdAt), not lifetime, so a drill over previously-seen items
   // doesn't pre-count.
   const since = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
   block.done = ids.filter((id) => { const a = state.attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= since); }).length;
@@ -469,7 +468,7 @@ export function sessionModeWriteBack() {
 // Tag the just-finished attempt with the training component the student
 // believes the puzzle was about. Called from the result-panel component
 // picker (Deep mode). Writes to the LAST attemptLog entry and to a rollup
-// field on the puzzle's attempt record. Idempotent — re-tapping just
+// field on the puzzle's attempt record. Idempotent, re-tapping just
 // overwrites with the new choice.
 export function setAttemptComponent(componentName) {
   const puzzle = getCurrentPuzzle();

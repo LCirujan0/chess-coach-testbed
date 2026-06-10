@@ -1,11 +1,11 @@
 // ============================================================================
-// js/openings/boot.js — Openings trainer UI runner (hub + drill loop).
+// js/openings/boot.js. Openings trainer UI runner (hub + drill loop).
 // ----------------------------------------------------------------------------
 // Two surfaces:
-//   HUB   — list repertoire openings from the registry as cards, plus a "Your
+//   HUB, list repertoire openings from the registry as cards, plus a "Your
 //           openings" panel (personal.js) showing which the user actually plays
 //           and where results cluster. Each card opens that opening's drill.
-//   DRILL — spaced-repetition recall of one curated line. We replay the book
+//   DRILL, spaced-repetition recall of one curated line. We replay the book
 //           moves so far, render the position via the canonical static board,
 //           and the user inputs the next BOOK move by tapping origin then
 //           destination (delegated tap, mirroring Board Vision). chess.js
@@ -89,7 +89,7 @@ function renderPersonal(openings) {
   const panel = $('op-personal');
   if (!hasGameData()) {
     panel.innerHTML = `<div class="op-panel-h">Your openings</div>
-      <p class="op-personal-empty">Sync your Chess.com games and we'll show which of these openings you actually play — and where your results need work.
+      <p class="op-personal-empty">Sync your Chess.com games and we'll show which of these openings you actually play, and where your results need work.
       <a href="/games.html">Sync games →</a></p>`;
     return;
   }
@@ -109,7 +109,7 @@ function renderPersonal(openings) {
     </button>`;
   }).join('');
   panel.innerHTML = `<div class="op-panel-h">Your openings</div>
-    <p class="op-personal-lede">From your synced games — where your repertoire shows up in real play.</p>
+    <p class="op-personal-lede">From your synced games, where your repertoire shows up in real play.</p>
     <div class="op-personal-list">${rowsHtml}</div>`;
   for (const b of panel.querySelectorAll('.op-personal-row')) b.addEventListener('click', () => startDrill(b.dataset.open));
 }
@@ -150,7 +150,7 @@ function beginLine(opening, line) {
     boardEl: $('op-board'),
   };
   show('op-drill');
-  $('op-line-name').textContent = `${opening.name} — ${line.name}`;
+  $('op-line-name').textContent = `${opening.name}, ${line.name}`;
   $('op-idea').textContent = line.idea || '';
   advance();
 }
@@ -170,7 +170,7 @@ function advance() {
   showWhy(D.idx - 1); // explain the move that led to this position (opponent's reply)
   const ply = D.idx; // user's move number for display
   const moveNo = Math.floor(ply / 2) + 1;
-  $('op-prompt').innerHTML = `Your move — find <b>${esc(D.side === 'w' ? 'White' : 'Black')}</b>'s book move (move ${moveNo}). Tap the piece, then its destination.`;
+  $('op-prompt').innerHTML = `Your move, find <b>${esc(D.side === 'w' ? 'White' : 'Black')}</b>'s book move (move ${moveNo}). Tap the piece, then its destination.`;
   $('op-feedback').textContent = '';
   $('op-feedback').className = 'op-feedback';
   updateProgress();
@@ -196,7 +196,7 @@ function markSquare(alg, cls) { const sq = D.boardEl.querySelector(`.square[data
 
 // Show the coach's "why" for the move at `ply` (the one that produced the current
 // position). Hidden when there's no note (e.g. the very first prompt). This is the
-// ChessReps-style per-move explanation — understanding the WHY, not just the move.
+// ChessReps-style per-move explanation, understanding the WHY, not just the move.
 function showWhy(ply) {
   const card = $('op-why-card'); if (!card) return;
   const why = (ply >= 0 && D && Array.isArray(D.whys) && D.whys[ply]) ? D.whys[ply] : '';
@@ -224,7 +224,7 @@ function onBoardTap(alg) {
 
 // Try origin->dest as the next book move. Promotions default to queen (none of
 // the curated opening lines promote, but we stay safe). We compare by the
-// resolved FROM/TO squares of the book move — not its SAN string — so an
+// resolved FROM/TO squares of the book move, not its SAN string, so an
 // over-disambiguated book SAN (e.g. "Nge2" where only one knight can reach e2,
 // which chess.js renders as "Ne2") still matches the correct origin->dest tap.
 function attemptMove(from, to) {
@@ -245,7 +245,7 @@ function attemptMove(from, to) {
     D.idx++;
     renderBoard({ from, to });
     showWhy(D.idx - 1); // explain the move the user just found
-    flash(true, `${expectedSan} — correct`);
+    flash(true, `${expectedSan}, correct`);
     setTimeout(advance, 1200);
   } else {
     D.perfect = false;
@@ -283,8 +283,8 @@ function finishLine() {
 // ============================================================================
 function renderComplete(card) {
   show('op-complete');
-  $('op-complete-h').textContent = D.perfect ? 'Line complete — clean recall' : 'Line complete';
-  $('op-complete-line').textContent = `${D.opening.name} — ${D.line.name}`;
+  $('op-complete-h').textContent = D.perfect ? 'Line complete, clean recall' : 'Line complete';
+  $('op-complete-line').textContent = `${D.opening.name}, ${D.line.name}`;
   $('op-complete-idea').textContent = D.line.idea || '';
   $('op-complete-coach').textContent = coachLine(D.perfect, card);
   const next = pickNextSummary(D.opening, D.line);
@@ -298,9 +298,9 @@ function renderComplete(card) {
 
 // Deterministic encouraging line (no AI, no randomness in the message).
 function coachLine(perfect, card) {
-  if (perfect && card.box >= 4) return 'Locked in. This line is well into long-term memory — it will only resurface occasionally now.';
+  if (perfect && card.box >= 4) return 'Locked in. This line is well into long-term memory, it will only resurface occasionally now.';
   if (perfect) return 'Clean recall. We pushed this line further out; keep showing up and it becomes automatic.';
-  if (card.lapses >= 2) return 'This one keeps slipping — that is exactly the line worth drilling. We reset it so you see it again soon.';
+  if (card.lapses >= 2) return 'This one keeps slipping, that is exactly the line worth drilling. We reset it so you see it again soon.';
   return 'Good rep. The miss is logged, so this line comes back sooner until it sticks.';
 }
 

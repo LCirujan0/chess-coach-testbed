@@ -4,15 +4,30 @@
    App-shell chrome -> shell.css; layout -> screen.css; shared components
    (board, coach, buttons, controls, material) -> train.css.
    ============================================================================ */
-.board-side-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); font-family: "Plus Jakarta Sans", sans-serif; margin-bottom: 8px; }
+/* Whose position you are judging. Was an 11px muted whisper the owner missed
+   entirely (2026-06-10): now a clear pill with a side swatch above the board. */
+.board-side-label { display: flex; align-items: center; justify-content: center; gap: 7px; width: fit-content; margin: 0 auto 9px; padding: 6px 14px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--ink); font-family: "Plus Jakarta Sans", sans-serif; box-shadow: 0 2px 6px -3px rgba(20,30,55,.2); }
+.board-side-label .stm { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid var(--ink); flex-shrink: 0; }
+.board-side-label .stm.w { background: #fff; }
+.board-side-label .stm.b { background: var(--ink); }
 
 /* Win / draw / loss panel */
 .classify-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px -10px rgba(30,40,70,.3); }
 .prompt { text-align: center; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 14px; font-family: "Plus Jakarta Sans", sans-serif; }
 .classify-btns { display: flex; gap: 10px; margin-bottom: 14px; }
-.vbtn { flex: 1; padding: 13px 8px; border-radius: var(--r-btn); border: 2px solid var(--line); font-size: 14px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
-.vbtn:hover:not(:disabled) { background: var(--surface2); border-color: var(--accent); }
-.vbtn:active { transform: translateY(1px); }
+/* On-brand verdict buttons (owner 2026-06-10): the canonical .btn family look
+   (1px line, soft shadow, token radius) with a tone dot per judgement so the
+   three options carry meaning before you read them. */
+.vbtn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border-radius: var(--r-btn); border: 1px solid var(--line); font-size: 14px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; background: var(--surface); color: var(--ink); cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,.03); transition: border-color .15s, background .15s, transform .15s cubic-bezier(0.34,1.56,0.64,1), box-shadow .15s; }
+.vbtn::before { content: ""; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+#btn-winning::before { background: var(--pos); }
+#btn-drawn::before   { background: var(--muted); }
+#btn-losing::before  { background: var(--bad); }
+.vbtn:hover:not(:disabled) { background: var(--surface2); }
+#btn-winning:hover:not(:disabled) { border-color: var(--pos); }
+#btn-drawn:hover:not(:disabled)   { border-color: var(--muted); }
+#btn-losing:hover:not(:disabled)  { border-color: var(--bad); }
+.vbtn:active:not(:disabled) { transform: scale(.96) translateY(1px); }
 .vbtn:disabled { opacity: .45; cursor: default; transform: none; }
 
 /* Verdict reveal */

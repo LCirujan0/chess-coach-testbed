@@ -1,9 +1,9 @@
 // ============================================================================
-// js/board-vision/tracker.js — Spec 14 hide-the-board sequence tracker.
+// js/board-vision/tracker.js. Spec 14 hide-the-board sequence tracker.
 // ----------------------------------------------------------------------------
 // Procedural (no dataset): start from a small set of sparse base positions,
 // play `level` random LEGAL moves via chess.js, then describe each move by
-// distance/shape (never algebraic — that gives the answer away) and ask one
+// distance/shape (never algebraic, that gives the answer away) and ask one
 // verification question, all derived + graded from chess.js game state. The
 // board renders through the canonical js/board-static.js with a pieces-hidden
 // state during the question.

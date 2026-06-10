@@ -1,10 +1,10 @@
 // ============================================================================
-// js/openings/data.js — Openings registry + per-opening loaders.
+// js/openings/data.js. Openings registry + per-opening loaders.
 // ----------------------------------------------------------------------------
 // Fetches and caches data/openings/index.json (the registry) and each
 // per-opening file (e.g. data/openings/vienna.json). Adding a new opening to
 // the trainer is pure DATA: drop a file in data/openings/ and add one registry
-// entry — no code change here.
+// entry, no code change here.
 //
 // Pure fetch + in-memory cache. No DOM, no chess.js, no localStorage.
 // ============================================================================

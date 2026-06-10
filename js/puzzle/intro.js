@@ -1,12 +1,12 @@
 // ============================================================================
-// SECTION 11b — Mistake intro ("what happened in your game" → then solve)
+// SECTION 11b. Mistake intro ("what happened in your game" → then solve)
 // ----------------------------------------------------------------------------
 // For own-game MISTAKE puzzles, the solve is preceded by a short intro that
 // replays the move sequence the player actually played, names the move and how
 // many centipawns it cost, then hands the (pre-mistake) position over to be
 // solved.
 //
-// NO-SPOILER: the intro shows only what the player DID — their move, the real
+// NO-SPOILER: the intro shows only what the player DID, their move, the real
 // game continuation, the cp cost, the severity. It NEVER shows the engine's
 // better move, eval lines, or motif. The answer stays hidden until the player
 // solves the position themselves (the existing thinking-gate + solve flow).
@@ -96,7 +96,7 @@ function resetIntroBoard(puzzle) {
 }
 
 // Replay the player's actual game continuation from the pre-mistake position,
-// animating each ply. Pure presentation — never touches the attempt/grade flow.
+// animating each ply. Pure presentation, never touches the attempt/grade flow.
 export async function replayContinuation() {
   const puzzle = getCurrentPuzzle();
   if (!puzzle || replaying) return;
@@ -108,7 +108,7 @@ export async function replayContinuation() {
   resetIntroBoard(puzzle);
   await sleep(360);
   for (const ply of seq) {
-    if (state.phase !== 'intro') break; // user advanced to solving — stop
+    if (state.phase !== 'intro') break; // user advanced to solving, stop
     let m = null;
     try { m = state.chess.move(ply.san); } catch { m = null; }
     if (!m) break;

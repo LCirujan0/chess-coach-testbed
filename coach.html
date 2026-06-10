@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Coach</title>
+<title>KnightPath. Coach</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/js/coach-stats.js"></script>
 <style>
   /* Page chrome = shared shell.css + nav.css. */
@@ -76,12 +76,12 @@
   <div id="prompt-chips" class="prompt-chips"></div>
   <div class="coach-card">
     <div class="coach-header">
-      <span class="coach-avatar">C</span>
+      <span class="coach-avatar">♞</span>
       <span class="coach-title">Coach</span>
       <span class="coach-status">Online</span>
     </div>
     <div class="coach-log" id="coach-log">
-      <div class="msg system">Ask anything about chess — or tap “Plan today” above for your personal focus.</div>
+      <div class="msg system">Ask anything about chess, or tap “Plan today” above for your personal focus.</div>
     </div>
     <form class="coach-input-row" id="coach-form">
       <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach&#8230;" autocomplete="off">
@@ -98,7 +98,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
@@ -134,7 +134,7 @@ window.addEventListener('unhandledrejection',function(e){_surfaceError('Unhandle
 // Both the general chat (structured replies) and the "Plan today" card render
 // through renderCoachCard; sanitiseCoachText is the shared scrubber. No more
 // hand-rolled copy of the §17 renderer lived here (it had drifted from the
-// canonical one in js/puzzle/dom.js — they are now a single module).
+// canonical one in js/puzzle/dom.js, they are now a single module).
 import { renderCoachCard, parseCoachJson, sanitiseCoachText } from '/js/coach-card.js';
 
 function appendCoachMessage(role,text){var log=document.getElementById('coach-log');var ph=log.querySelector('.msg.system');if(ph&&role!=='system')ph.remove();var div=document.createElement('div');div.className='msg '+role;div.textContent=(role==='coach')?sanitiseCoachText(text):text;log.appendChild(div);log.scrollTop=log.scrollHeight;}
@@ -142,7 +142,7 @@ function appendCoachReview(review){var log=document.getElementById('coach-log');
 window.__coach={appendCoachMessage:appendCoachMessage,appendCoachReview:appendCoachReview};
 
 // General coach chat. The student may ask for a quick answer (plain bubble) OR
-// the digest-grounded chips below request a structured read — when the model
+// the digest-grounded chips below request a structured read, when the model
 // returns the §17 JSON shape we render the shared card, otherwise a plain
 // bubble. Context: the CoachStats digest (real weak areas) is appended so the
 // coach can cite the student's actual leaks instead of guessing. No position is
@@ -157,17 +157,17 @@ function coachDigestContext(){
     var view=CoachStats.computeCoachView({rating:loadJsonCoach('chess-coach-user-rating-v1',null),mistakes:loadJsonCoach('chess-coach-mistakes-v1',[]),attempts:loadJsonCoach('chess-coach-attempts-v1',{}),scorecards:loadJsonCoach('chess-coach-game-scorecards-v1',{}),nowMs:Date.now()});
     var digest=CoachStats.buildDigest(view);
     if(!digest)return '';
-    return '\n\nSTUDENT DIGEST (their real scorecard data — ground any weakness claim ONLY in this):\n'+JSON.stringify(digest);
+    return '\n\nSTUDENT DIGEST (their real scorecard data, ground any weakness claim ONLY in this):\n'+JSON.stringify(digest);
   }catch{return '';}
 }
-// The coach's per-user memory (js/coach-memory.js window global) — same
+// The coach's per-user memory (js/coach-memory.js window global), same
 // teacher, remembers this student across surfaces and sessions.
 function coachMemoryContext(){try{if(typeof CoachMemory!=='undefined')return CoachMemory.promptBlock(CoachMemory.read());}catch{}return '';}
 
 var coachSending=false;var coachHistory=[];
 function sendCoachMessage(userText){if(coachSending||!userText.trim())return;coachHistory.push({role:'user',content:userText});appendCoachMessage('user',userText);coachSending=true;document.getElementById('coach-send').disabled=true;var sys=COACH_GENERAL_SYSTEM+coachDigestContext()+coachMemoryContext();fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:280,system:sys,messages:coachHistory.map(function(m){return{role:m.role,content:m.content};})})}).then(function(r){return r.json().then(function(data){if(!r.ok)throw new Error('HTTP '+r.status+': '+JSON.stringify(data).slice(0,300));var reply=(data.content&&data.content[0]&&data.content[0].text)||'(empty response)';coachHistory.push({role:'assistant',content:reply});appendCoachMessage('coach',reply);});}).catch(function(err){appendCoachMessage('error','Coach error: '+err.message);}).finally(function(){coachSending=false;document.getElementById('coach-send').disabled=false;document.getElementById('coach-input').focus();});}
 document.getElementById('coach-form').addEventListener('submit',function(e){e.preventDefault();var input=document.getElementById('coach-input');var value=input.value;input.value='';sendCoachMessage(value);});
-// Spec 05 — bigpic-slot: Plan today (Prompt B, structured §17 review)
+// Spec 05, bigpic-slot: Plan today (Prompt B, structured §17 review)
 (function(){
   var slot=document.getElementById('bigpic-slot');
   if(!slot)return;
@@ -177,7 +177,7 @@ document.getElementById('coach-form').addEventListener('submit',function(e){e.pr
     if(!d||!d.focus_ranked||!d.focus_ranked.length)return{headline:'Still building your picture',points:[],question:'Solve a few more puzzles and ingest a game or two.',footnote:'Not enough data yet'};
     var top=d.focus_ranked[0];var name=hk(top.attribute);var nm=name.charAt(0).toUpperCase()+name.slice(1);
     var pts=[{label:'Focus',text:nm+' ('+top.tier+', score '+Math.round(top.score)+'/100)',tone:'warn'}];
-    if(d.session)pts.push({label:'Today',text:d.session.title+' — '+d.session.count+' puzzles queued',tone:''});
+    if(d.session)pts.push({label:'Today',text:d.session.title+', '+d.session.count+' puzzles queued',tone:''});
     return{headline:'Your focus for today',points:pts,question:'What’s one idea from this area you could apply tonight?',footnote:'Based on your game and puzzle history · updates after each ingest'};
   }
   // Plan-today card now renders through the ONE shared §17 renderer. The

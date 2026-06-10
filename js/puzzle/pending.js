@@ -1,18 +1,18 @@
 // ============================================================================
-// SECTION 11b — PENDING / in-progress feedback card (§31, v0.52)
+// SECTION 11b. PENDING / in-progress feedback card (§31, v0.52)
 // ============================================================================
 // The feedback card occupies its slot from a "pending" state onward, so the
 // board does NOT shift when a verdict appears. Before the first move there is
 // no verdict: PENDING shows a calm prompt, the side to move, and an invitation
-// to ask for a hint. No verdict word, no pips, no eval — nothing earned yet.
+// to ask for a hint. No verdict word, no pips, no eval, nothing earned yet.
 // During a multi-move puzzle (a move made but not yet resolved) it shows a
 // quiet "keep going" face and lets the embedded live "You played" comparison
-// show — still no answer/eval (the eval column is gated separately).
+// show, still no answer/eval (the eval column is gated separately).
 //
 // This reuses the existing #result element + its sub-fields and adds ONE class
 // (.result.pending) so the verdict styling (pass/warn/fail) does not apply. It
 // introduces NO new localStorage key and does NOT touch the state machine in
-// grade.js — it only paints the calm "before/while you move" face of the card.
+// grade.js, it only paints the calm "before/while you move" face of the card.
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { getCurrentPuzzle } from './queue.js';
@@ -36,12 +36,12 @@ export function renderPending() {
   const userMoves = state.attemptHistory.filter((h) => h.mover === 'user');
   const inProgress = userMoves.length > 0;   // multi-move puzzle, mid-solve
 
-  // Reset verdict tone classes — PENDING is calm/neutral, never pass/warn/fail.
+  // Reset verdict tone classes. PENDING is calm/neutral, never pass/warn/fail.
   result.classList.remove('hidden', 'pass', 'warn', 'fail');
   result.classList.add('pending');
 
   // Verdict row → calm prompt. No tick/cross icon, no verdict word colour.
-  $('verdict-icon').textContent = '♞';          // knight glyph — neutral
+  $('verdict-icon').textContent = '♞';          // knight glyph, neutral
   $('verdict-word').textContent = inProgress ? 'Keep going' : 'Your move';
   $('result-pips').classList.add('hidden');
   $('result-pips').innerHTML = '';
@@ -71,7 +71,7 @@ export function renderPending() {
   $('result-repeat').classList.add('hidden');
   $('result-components').classList.add('hidden');
 
-  // No card actions while pending — the play controls (Hint/Restart/Next) below
+  // No card actions while pending, the play controls (Hint/Restart/Next) below
   // the board are the only affordances. Hide the result-card action row.
   $('card-showanswer').classList.add('hidden');
   const actions = $('result-actions'); if (actions) actions.classList.add('hidden');

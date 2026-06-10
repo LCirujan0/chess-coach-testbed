@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- Unified puzzle schema (phase 1a) — CRITICAL GUARD: pins this page to the
+<!-- Unified puzzle schema (phase 1a). CRITICAL GUARD: pins this page to the
      mistakes pipeline so the merged static endgame/recognition sets are
      filtered out of the queue. Do not remove without routing those types here. -->
 <meta name="puzzle-type-filter" content="mistake">
-<title>KnightPath — Puzzles</title>
+<title>KnightPath. Puzzles</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -25,7 +25,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/puzzle.css">
 <script src="/js/coach-memory.js"></script>
 <script src="/js/profile.js"></script>
@@ -76,7 +76,7 @@
         <button class="tried-tab" data-tried="untried">Not tried <span class="count" id="count-untried">0</span></button>
       </div>
     </div>
-    <!-- Spec 02 Theme — collapsed by default so the 17-motif vocabulary doesn't
+    <!-- Spec 02 Theme, collapsed by default so the 17-motif vocabulary doesn't
          crowd the filter panel; expands to a scrollable pill group. -->
     <div class="filter-group">
       <button class="theme-toggle" id="theme-toggle" type="button">
@@ -104,7 +104,7 @@
        defined by the shared shell css/screen.css + css/gate.css, v0.55), so the
        "think first" prompt sits on top of the board on every viewport and its
        height can never squeeze the coach in the right column. Single clean
-       layout (the horizontal 3-column "row" — the former variant A); the
+       layout (the horizontal 3-column "row", the former variant A); the
        preview toggle and the variant-B stepper have been retired. The gate's
        JS (js/puzzle/gate.js) only touches the ids gate-card/timer/q1/q2/q3/submit.
        data-gate="a" is kept solely as the CSS hook for the row layout. -->
@@ -129,7 +129,7 @@
 
       <div class="gate-field">
         <div class="gate-q">3. How do you put those insights into practice?</div>
-        <div class="gate-sub">Your plan — what are you going to do with what you saw?</div>
+        <div class="gate-sub">Your plan, what are you going to do with what you saw?</div>
         <textarea class="gate-text" id="gate-q3" placeholder="e.g. I need to neutralise their e-file pressure before attacking. Going to trade the bishops and consolidate." maxlength="500" rows="3" style="min-height: 60px;"></textarea>
       </div>
     </div>
@@ -202,7 +202,7 @@
       <button class="btn" id="intro-replay" type="button">▶ Replay the sequence</button>
       <button class="btn btn-primary" id="intro-solve" type="button" disabled>Preparing…</button>
     </div>
-    <div class="intro-foot">No spoilers — study the position and find the better move yourself.</div>
+    <div class="intro-foot">No spoilers, study the position and find the better move yourself.</div>
   </div>
 
   <div class="result hidden" id="result">
@@ -222,7 +222,7 @@
     </div>
     <button class="result-escape hidden" id="card-showanswer" type="button">Show me the answer</button>
 
-    <!-- §53 — the move-by-move comparison is now a NATIVE section of the
+    <!-- §53, the move-by-move comparison is now a NATIVE section of the
          feedback card (embedded in #result), not a standalone accordion. The
          eval-change column is gated to the earned reveal (data-mode on the
          element) so it never spoils during retries. -->
@@ -244,7 +244,7 @@
   <div class="coach-card acc-collapsed">
     <div class="acc-head" data-acc="coach"><span class="acc-caret">▸</span>Coach review<span class="acc-preview" id="coach-preview"></span></div>
     <div class="coach-header">
-      <span class="coach-avatar">C</span>
+      <span class="coach-avatar">♞</span>
       <span class="coach-title">Coach</span>
       <span class="coach-status">Online</span>
     </div>
@@ -271,7 +271,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>

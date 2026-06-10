@@ -217,7 +217,9 @@ Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening i
 9. **Coach proactivity is bounded to session boundaries.** The ONE automatic coach call is the session debrief on session.html's summary (v0.79 amendment to rule 5). Never auto-fire the coach mid-solve, on app-open, or on navigation. Aggregate-only feedback at the boundary: motif counts may be named, a specific puzzle's answer may not (missed puzzles resurface via SRS).
 10. **Identity goes through `getActiveChessComUsername()`** (`js/puzzle/config.js`). Never hardcode a username, a greeting name, or read `CHESS_COM_USERNAME` directly in a surface. The synced username (`chess-coach-username-v1`) IS the user; switching users must clear local `chess-coach-*` state first (see `js/sync.js switchUser` — prevents cross-account merges).
 11. **Coach memory has ONE writer.** Only the session debrief consolidates `chess-coach-coach-memory-v1` (via `CoachMemory.applyUpdate`). Every other surface is read-only (`promptBlock`). The caps (12 notes × 140 chars) are the efficiency contract — never raise them casually.
-12. **Every new `chess-coach-*` key must decide its sync story.** Add it to `SYNC_KEYS` (with a merge rule in `js/sync.js mergeKey`) or document why it stays local-only. Either way it is swept by the user-switch wipe. The key constant lives in `js/puzzle/config.js`.
+12. **No em or en dashes in user-facing copy or coach output. HARD RULE (owner, 2026-06-10).** Use a period, comma, or colon instead. `sanitiseCoachText` strips them from model output as the last line of defence; `qa/scripts/purge-emdash.cjs` sweeps the codebase (run it if any creep back in).
+13. **The version stamp shows the number only** (`APP_VERSION = 'vN.NN'`). The what/why of each version lives in `docs/learnings.md`, never in the stamp (owner, 2026-06-10).
+14. **Every new `chess-coach-*` key must decide its sync story.** Add it to `SYNC_KEYS` (with a merge rule in `js/sync.js mergeKey`) or document why it stays local-only. Either way it is swept by the user-switch wipe. The key constant lives in `js/puzzle/config.js`.
 
 ---
 

@@ -1,9 +1,9 @@
 // ============================================================================
-// SECTION 6 — CHESS.COM API
+// SECTION 6. CHESS.COM API
 // ----------------------------------------------------------------------------
 // Pulls the user's archive list, walks backwards through monthly archives
 // until we've collected enough games of the user's preferred time class
-// (onboarding profile, v0.80 — was rapid-only; 'classical' maps to rapid,
+// (onboarding profile, v0.80, was rapid-only; 'classical' maps to rapid,
 // the closest live chess.com pool).
 // ============================================================================
 

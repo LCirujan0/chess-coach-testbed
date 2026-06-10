@@ -78,7 +78,7 @@
 .coord {
   position: absolute; font-size: 9px; font-weight: 700;
   opacity: .55; color: rgba(40,30,15,.85);
-  z-index: 3; font-family: "Spline Sans Mono", ui-monospace, monospace;
+  z-index: 3; font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
   pointer-events: none;
 }
 .coord.file { right: 4px; bottom: 1px; }

@@ -3,9 +3,9 @@
 // Safe to import from any page.
 //
 // Main exports:
-//   tagPuzzles(puzzles)           — async, returns { mistakeTags, curriculumTags }
-//   tagAndSaveMistakes()          — reads mistakes storage, tags untagged, writes back
-//   tagAndSaveCurriculum(puzzles) — tags provided curriculum puzzles, writes to tags storage
+//   tagPuzzles(puzzles), async, returns { mistakeTags, curriculumTags }
+//   tagAndSaveMistakes(), reads mistakes storage, tags untagged, writes back
+//   tagAndSaveCurriculum(puzzles), tags provided curriculum puzzles, writes to tags storage
 //
 // Tagging failure is always non-fatal: callers should .catch() and warn only.
 
@@ -15,7 +15,7 @@ const STORAGE_KEY_TAGS = 'chess-coach-tags-v1';
 const TAG_DEPTH = 10;
 const TAG_MULTIPV = 3;
 
-// Module-level worker — created lazily, shared across all tagPuzzles calls
+// Module-level worker, created lazily, shared across all tagPuzzles calls
 // within the same page lifetime.
 let sfWorker = null;
 let sfReady = false;
@@ -53,7 +53,7 @@ async function initTaggerSF() {
   sfReady = true;
 }
 
-// Inline parseMultiPV — does NOT import from engine.js to avoid coupling with
+// Inline parseMultiPV, does NOT import from engine.js to avoid coupling with
 // the puzzle engine's module-level state (the `stockfish` variable there).
 function parseMultiPVTag(allMessages, numLines) {
   const linesByMpv = new Map();

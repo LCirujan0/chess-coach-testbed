@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="puzzle-type-filter" content="recognition">
-<title>KnightPath — Endgame Recognition</title>
+<title>KnightPath. Endgame Recognition</title>
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/shell.css">
   <link rel="stylesheet" href="/css/nav.css">
@@ -23,7 +23,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="/js/coach-memory.js"></script>
 <script src="/js/profile.js"></script>
@@ -49,7 +49,7 @@
     <div class="session-wrap hidden" id="session-wrap"></div>
 
     <div class="lg-head">
-      <div class="board-side-label" id="side-to-move-label">—</div>
+      <div class="board-side-label" id="side-to-move-label"></div>
       <div id="status-text" class="inline-status"></div>
     </div>
 
@@ -82,12 +82,12 @@
       <!-- ALWAYS-PRESENT coach (css/train.css + js/coach-widget.js) -->
       <div class="coach-card">
         <div class="coach-header">
-          <span class="coach-avatar">C</span>
+          <span class="coach-avatar">♞</span>
           <span class="coach-title">Coach</span>
           <span class="coach-status">Online</span>
         </div>
         <div class="coach-log" id="coach-log">
-          <div class="msg system">Stuck? Ask the coach for a nudge — no spoilers.</div>
+          <div class="msg system">Stuck? Ask the coach for a nudge, no spoilers.</div>
         </div>
         <form class="coach-input-row" id="coach-form">
           <input type="text" class="coach-input" id="coach-input" placeholder="Ask the coach…" autocomplete="off">
@@ -108,7 +108,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
@@ -176,7 +176,7 @@
       ctx += ' Position on the board: FEN ' + g.fen() + '. ' + turn + ' to move.';
     }
     if (!answered) {
-      // Pre-answer: judging phase. Hard no-spoiler — withhold the verdict.
+      // Pre-answer: judging phase. Hard no-spoiler, withhold the verdict.
       ctx += ' The student has NOT yet judged this position. Do NOT tell them whether it is winning, drawn, or losing, and do NOT hint at the answer. Help them reason about the factors (king activity, opposition, key squares, pawn races) so they reach their own verdict.';
       return ctx;
     }

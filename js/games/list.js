@@ -2,7 +2,7 @@ import { $, escapeHtml } from './dom.js';
 import { THINNING_WINDOW } from './config.js';
 import { wireReviewHandlers } from './narrate.js';
 // ============================================================================
-// SECTION 9 — UI RENDERING
+// SECTION 9. UI RENDERING
 // ============================================================================
 
 function renderMistakeList(mistakes, perGameSummary) {
@@ -59,7 +59,7 @@ function renderMistakeList(mistakes, perGameSummary) {
     endgame: mistakes.filter((m) => m.category === 'endgame').length,
   };
   $('list-summary').textContent =
-    `${mistakes.length} new mistakes found — ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
+    `${mistakes.length} new mistakes found, ${counts.opening} opening, ${counts.middlegame} middlegame, ${counts.endgame} endgame.`;
 }
 // Persistent "Your games" list (from stored mistakes) so review + drill are
 // always available, not only right after an ingest run.
@@ -78,7 +78,7 @@ function renderSavedGames() {
   listEl.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'mistake-item';
-  head.innerHTML = '<div class="cat">Your games — tap “Review with coach” for the coach’s take, or drill the mistakes.</div>';
+  head.innerHTML = '<div class="cat">Your games, tap “Review with coach” for the coach’s take, or drill the mistakes.</div>';
   listEl.appendChild(head);
   const arr = Array.from(groups.values()).sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
   for (const gm of arr) {
@@ -98,7 +98,7 @@ function renderSavedGames() {
   }
   $('list-panel').classList.remove('hidden');
   const sum = $('list-summary');
-  if (sum) sum.textContent = `${arr.length} game${arr.length === 1 ? '' : 's'} with saved mistakes — pick one to review or drill.`;
+  if (sum) sum.textContent = `${arr.length} game${arr.length === 1 ? '' : 's'} with saved mistakes, pick one to review or drill.`;
   wireReviewHandlers();
 }
 export { renderMistakeList, renderSavedGames };

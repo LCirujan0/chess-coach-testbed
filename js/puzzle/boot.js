@@ -1,13 +1,13 @@
 // ============================================================================
-// SECTION 0 — GLOBAL ERROR HANDLERS (M1, v0.7)
+// SECTION 0. GLOBAL ERROR HANDLERS (M1, v0.7)
 // ============================================================================
 // Registered as the very first executable code in the module so that ANY
-// downstream error — including import/parse failures further down the script,
-// failed first-paint state initialisation, or a top-level throw — is caught
+// downstream error, including import/parse failures further down the script,
+// failed first-paint state initialisation, or a top-level throw, is caught
 // and surfaced in the coach panel instead of bricking the page silently
 // (the failure mode flagged in docs/learnings.md 2026-05-28). Module scripts
 // are deferred by default, so the DOM is already parsed by the time this
-// runs — appendCoachMessage's $('coach-log') lookup is reliably available.
+// runs, appendCoachMessage's $('coach-log') lookup is reliably available.
 window.addEventListener('error', (e) => {
   const log = document.getElementById('coach-log');
   if (!log) return;                                  // pre-DOM defensive guard
@@ -26,7 +26,7 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 // ============================================================================
-// SECTION 14 — Boot
+// SECTION 14. Boot
 // ============================================================================
 // (Global error + unhandledrejection listeners moved to SECTION 0 at the top
 // of the script per M1, so they catch failures from anywhere in this module
@@ -62,7 +62,7 @@ state.attempts = loadAttempts();
 // header pill once the user wants the thinking-gate friction back.
 state.mode = (loadMode() === 'deep') ? 'deep' : 'drill';
 
-// v0.13 — Activate Today session-mode when ?session=today&block=ID is present
+// v0.13. Activate Today session-mode when ?session=today&block=ID is present
 // and matches a block in `chess-coach-session-v1`. Vision blocks have empty
 // `ids`, so they don't restrict the queue but still flag for write-back +
 // return navigation. Honours the block's mode (deep|drill) if specified.
@@ -90,7 +90,7 @@ state.mode = (loadMode() === 'deep') ? 'deep' : 'drill';
   if (state.sessionMode.mode) state.mode = state.sessionMode.mode;
 })();
 
-// v0.55 — render the persistent in-session wrapper (no-op + hidden when the
+// v0.55, render the persistent in-session wrapper (no-op + hidden when the
 // surface is opened outside a Today session). The exit chip returns to the
 // session wrapper screen.
 refreshSessionWrap({ exitHref: '/session.html' });
@@ -124,7 +124,7 @@ if (stored.length) {
   state.currentCategory = 'all';
 }
 
-// Game-review drill — ?drill=<id|gameUrl[,...]> pins specific mistakes into a
+// Game-review drill, ?drill=<id|gameUrl[,...]> pins specific mistakes into a
 // focused drill, reusing the theme-drill queue path. Additive; a no-op if no
 // puzzle id matches (e.g. those mistakes were not ingested on this device).
 (function activateDrillFromUrl() {
@@ -145,10 +145,10 @@ if (stored.length) {
   state.drillIndex = 0;
   const banner = document.getElementById('drill-banner');
   const label = document.getElementById('drill-label');
-  if (banner && label) { banner.classList.remove('hidden'); label.textContent = 'Reviewing your mistakes — ' + picks.length; }
+  if (banner && label) { banner.classList.remove('hidden'); label.textContent = 'Reviewing your mistakes, ' + picks.length; }
 })();
 // ----------------------------------------------------------------------------
-// Unified puzzle schema (phase 1a) — load the static endgame + recognition
+// Unified puzzle schema (phase 1a), load the static endgame + recognition
 // puzzle sets and merge them into state.puzzles. Additive: a page only sees
 // these if it does NOT pin a different type via <meta name="puzzle-type-filter">.
 // puzzle.html pins "mistake", so the merged entries are filtered out of its
@@ -217,14 +217,13 @@ async function loadStaticPuzzleSets() {
 await loadStaticPuzzleSets();
 rebuildQueue();
 
-// Spec 17 (Part C) + Spec 11 — ONE shared motif deep-link activator. Two param
+// Spec 17 (Part C) + Spec 11. ONE shared motif deep-link activator. Two param
 // names land here:
-//   • ?theme=<motif>          (Spec 17 hub "Tactics by theme" card) — preselect
+//   • ?theme=<motif>          (Spec 17 hub "Tactics by theme" card), preselect
 //                              the motif filter + open the Theme panel; the deck
 //                              renders filtered. Add &drill=1 to auto-start the
 //                              themed drill (with the Part B Lichess top-up).
-//   • ?motif=<tag>            (Spec 11 game-review "Drill this motif" CTA) —
-//                              preselect + auto-drill (back-compat: the review
+//   • ?motif=<tag>            (Spec 11 game-review "Drill this motif" CTA), //                              preselect + auto-drill (back-compat: the review
 //                              CTA always drilled, so ?motif implies drill).
 // Invalid/missing motif → normal Puzzles, no error (no dead end). Yields to a
 // Today session deep-link if one is active (mutually exclusive in practice).
@@ -256,19 +255,19 @@ rebuildQueue();
 // leave the coach review + result panel + comparison on screen, so the user
 // can re-practise the same puzzle while the lesson is still visible.
 $('reset-btn').addEventListener('click', () => resetPuzzleStateAndRender({ keepGate: true, keepReview: true }));
-// "Next puzzle" replaces the old Skip button — clicking it during play advances
+// "Next puzzle" replaces the old Skip button, clicking it during play advances
 // the queue without recording an attempt; clicking it post-resolution does the
 // same. One button, one behaviour.
 $('next-btn').addEventListener('click', () => nextPuzzle());
 $('nav-back').addEventListener('click', navBack);
 $('nav-forward').addEventListener('click', navForward);
 $('show-piece-btn').addEventListener('click', activatePieceHint);
-// Mistake intro ("what happened in your game") — replay the played sequence,
+// Mistake intro ("what happened in your game"), replay the played sequence,
 // then dismiss to solve the position.
 { const r = $('intro-replay'); if (r) r.addEventListener('click', () => replayContinuation()); }
 { const s = $('intro-solve'); if (s) s.addEventListener('click', () => beginSolveFromIntro()); }
 
-// §30.2 — result-card actions. One dominant action per state; the buttons
+// §30.2, result-card actions. One dominant action per state; the buttons
 // follow the card (data-action set by showResult): 'tryagain' soft-resets to the
 // puzzle start (lesson kept), 'next' advances the queue.
 function cardAction(e) {
@@ -278,10 +277,10 @@ function cardAction(e) {
 }
 $('card-primary').addEventListener('click', cardAction);
 $('card-secondary').addEventListener('click', cardAction);
-// §30.6 #3 — the quiet "Show me the answer" escape (from the 2nd miss).
+// §30.6 #3, the quiet "Show me the answer" escape (from the 2nd miss).
 $('card-showanswer').addEventListener('click', () => forceReveal());
 
-// §29.3 — mobile progressive-disclosure accordions (comparison + coach). The
+// §29.3, mobile progressive-disclosure accordions (comparison + coach). The
 // header toggles .acc-collapsed; desktop CSS ignores the class (always open).
 for (const head of document.querySelectorAll('.acc-head')) {
   head.addEventListener('click', () => {
@@ -289,7 +288,7 @@ for (const head of document.querySelectorAll('.acc-head')) {
     if (card) card.classList.toggle('acc-collapsed');
   });
 }
-// AI review button — triggers the coach explanation on demand. The auto-fire
+// AI review button, triggers the coach explanation on demand. The auto-fire
 // was removed so the player only spends tokens when they actually want feedback.
 $('ai-review-btn').addEventListener('click', async () => {
   const btn = $('ai-review-btn');
@@ -319,8 +318,7 @@ boardEl.addEventListener('contextmenu', (e) => e.preventDefault());
 // Delegated tap-to-move handler. Each renderBoard pass rebuilds the squares,
 // so attaching listeners per-square (the v0.5 pattern) leaked thousands of
 // closures and forced full DOM mutation. The delegated listener stays valid
-// across renders and is the partner to the DocumentFragment swap above —
-// together they fix the mobile-blink reported in v0.6 feedback.
+// across renders and is the partner to the DocumentFragment swap above, // together they fix the mobile-blink reported in v0.6 feedback.
 boardEl.addEventListener('click', (e) => {
   const sq = e.target.closest('.square');
   if (!sq || !sq.dataset.square) return;
@@ -328,13 +326,13 @@ boardEl.addEventListener('click', (e) => {
 });
 boardEl.addEventListener('mousedown', (e) => {
   if (e.button === 2) {
-    // Right button — annotation flow.
+    // Right button, annotation flow.
     const sq = e.target.closest('.square');
     rcStartSquare = sq ? sq.dataset.square : null;
     return;
   }
   if (e.button === 0 && state.annotations.length) {
-    // Left button — clear any drawn annotations on press (Chess.com style).
+    // Left button, clear any drawn annotations on press (Chess.com style).
     // The click handler on the square still fires for tap-to-move.
     state.annotations = [];
     renderAnnotations();
@@ -365,7 +363,7 @@ $('filter-toggle').addEventListener('click', () => {
 for (const tab of document.querySelectorAll('.cat-tab')) {
   tab.addEventListener('click', () => {
     const cat = tab.dataset.cat;
-    // No-op if user clicks the filter that's already active — don't yank them
+    // No-op if user clicks the filter that's already active, don't yank them
     // to a different puzzle just because they tapped the chip they're on.
     if (cat === state.currentCategory) return;
     if (cat !== 'all' && puzzlesByCategory(cat).length === 0) return;
@@ -396,7 +394,7 @@ for (const tab of document.querySelectorAll('.tried-tab')) {
     resetPuzzleStateAndRender();
   });
 }
-// Spec 02 — Theme collapsible + motif pills + Drill this theme + End drill.
+// Spec 02. Theme collapsible + motif pills + Drill this theme + End drill.
 $('theme-toggle').addEventListener('click', () => {
   const t = $('theme-toggle');
   const p = $('theme-panel');

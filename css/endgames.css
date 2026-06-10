@@ -42,4 +42,4 @@
 .eg-evalbar-track { position: relative; flex: 1; height: 10px; border-radius: 6px; overflow: hidden; background: linear-gradient(90deg, var(--surface3) 0%, var(--surface2) 100%); }
 .eg-evalbar-fill { position: absolute; left: 50%; top: 0; bottom: 0; width: 0; background: var(--accent); transition: width .25s ease, left .25s ease, background .25s ease; }
 .eg-evalbar-fill.neg { background: var(--bad); }
-.eg-evalbar-num { min-width: 46px; text-align: right; font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 14px; font-weight: 600; color: var(--ink); }
+.eg-evalbar-num { min-width: 46px; text-align: right; font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 14px; font-weight: 600; color: var(--ink); }

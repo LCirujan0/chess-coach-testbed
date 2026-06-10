@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 11 — Result box
+// SECTION 11. Result box
 // ============================================================================
 import { Chess } from './lib.js';
 import {
@@ -36,7 +36,7 @@ export function pickHeadline(grade, repeated, accuracy) {
     }
   }
   if (failed && anyBigCpLoss && grade.tier !== 'outside') {
-    // Top-5 but blew the cp budget — explicit phrasing rather than "Mistake".
+    // Top-5 but blew the cp budget, explicit phrasing rather than "Mistake".
     return 'Not solved. Cost too many centipawns.';
   }
   return ({
@@ -67,7 +67,7 @@ export function showResult(grade, played) {
   const accuracy = puzzleAccuracy();
 
   // A "top 5" move that hemorrhaged more than MAX_CP_LOSS_FOR_SUCCESS counts
-  // as a fail, not a pass — same rule the move-flow gate uses.
+  // as a fail, not a pass, same rule the move-flow gate uses.
   const anyBigCpLoss = userMovesArr.some((h) => (h.grade?.cpLoss || 0) > MAX_CP_LOSS_PER_MOVE);
   let tier;
   if (grade.tier === 'outside' || anyBigCpLoss) tier = 'fail';
@@ -89,7 +89,7 @@ export function showResult(grade, played) {
   const bestSan = firstUser && firstUser.engineBestAtPoint ? firstUser.engineBestAtPoint.san : null;
 
   const result = $('result');
-  clearPending();   // §31 — leave the calm pre-move face before painting a verdict
+  clearPending();   // §31, leave the calm pre-move face before painting a verdict
   result.classList.remove('hidden', 'pass', 'warn', 'fail', 'pending');
   result.classList.add(tier);
 
@@ -97,7 +97,7 @@ export function showResult(grade, played) {
   $('verdict-icon').textContent = solved ? '\u2713' : '\u2715';
   $('verdict-word').textContent = solved ? 'Solved' : 'Not solved';
 
-  // --- Attempt pips (§29.2) — only on the fail track ---
+  // --- Attempt pips (§29.2), only on the fail track ---
   const pipsEl = $('result-pips');
   if (!solved) {
     pipsEl.classList.remove('hidden');
@@ -132,7 +132,7 @@ export function showResult(grade, played) {
     nudge.classList.add('hidden');
   }
 
-  // --- One-line contrast (§29.3) — only once the answer is earned ---
+  // --- One-line contrast (§29.3), only once the answer is earned ---
   const contrast = $('result-contrast');
   if ((revealed || solved) && bestSan) {
     if (solved && userSan === bestSan) {
@@ -152,7 +152,7 @@ export function showResult(grade, played) {
   // show the engine's CONTINUATION from the first decision (the principal
   // variation) so the player sees the whole line, not just the first move.
   // Data comes from the existing MultiPV snapshot (state.engineLineFromStart /
-  // firstUser.engineBestAtPoint.pvSan) — no extra engine call. Gated to the
+  // firstUser.engineBestAtPoint.pvSan), no extra engine call. Gated to the
   // earned reveal, so it never spoils during retries.
   const answerEl = $('result-answer');
   if (!solved && revealed) {
@@ -160,7 +160,7 @@ export function showResult(grade, played) {
     if (line.length > 1) {
       answerEl.innerHTML = `<span class="answer-label">Best line</span> <span class="answer-line">${escapeResult(line.join(' '))}</span>`;
     } else if (line.length === 1) {
-      // Only the first ply is known — show it rather than nothing, and flag in
+      // Only the first ply is known, show it rather than nothing, and flag in
       // the markup that the continuation isn't stored yet (US-13 partial data).
       answerEl.innerHTML = `<span class="answer-label">Best line</span> <span class="answer-line">${escapeResult(line[0])}</span>`;
     } else if (bestSan) {
@@ -175,9 +175,9 @@ export function showResult(grade, played) {
 
   // --- Card actions: one dominant action per state, but "Try again" is ALWAYS
   // available in every post-move state (§53). Compact icon buttons:
-  //   • TRYING   — dominant Try again (refresh) · secondary Next (forward)
-  //   • SOLVED   — dominant Next (forward)      · secondary Try again (refresh)
-  //   • REVEALED — dominant Next (forward)      · secondary Try again (refresh)
+  //   • TRYING, dominant Try again (refresh) · secondary Next (forward)
+  //   • SOLVED, dominant Next (forward)      · secondary Try again (refresh)
+  //   • REVEALED, dominant Next (forward)      · secondary Try again (refresh)
   // The old behaviour hid the secondary on solved, leaving no retry affordance.
   const primary = $('card-primary');
   const secondary = $('card-secondary');
@@ -186,16 +186,16 @@ export function showResult(grade, played) {
   if (solved) {
     setBtn(primary, 'next', 'Next puzzle'); primary.dataset.action = 'next';
     setBtn(secondary, 'retry', 'Try again'); secondary.dataset.action = 'tryagain';
-    secondary.classList.remove('hidden');   // §53 — retry always surfaced on solved
+    secondary.classList.remove('hidden');   // §53, retry always surfaced on solved
     escape.classList.add('hidden');
   } else if (revealed) {
-    // STOP / ANSWER — the answer is shown; Next is dominant, Try again secondary.
+    // STOP / ANSWER, the answer is shown; Next is dominant, Try again secondary.
     setBtn(primary, 'next', 'Next puzzle'); primary.dataset.action = 'next';
     setBtn(secondary, 'retry', 'Try again'); secondary.dataset.action = 'tryagain';
-    secondary.classList.remove('hidden');   // §53 — retry always surfaced when revealed
+    secondary.classList.remove('hidden');   // §53, retry always surfaced when revealed
     escape.classList.add('hidden');
   } else {
-    // TRYING — send them back to think; the answer stays hidden.
+    // TRYING, send them back to think; the answer stays hidden.
     setBtn(primary, 'retry', 'Try again'); primary.dataset.action = 'tryagain';
     setBtn(secondary, 'next', 'Next puzzle'); secondary.dataset.action = 'next';
     secondary.classList.remove('hidden');
@@ -248,15 +248,15 @@ export function showResult(grade, played) {
   }
 }
 
-// §53 — inline action-button icons in the app's nav-icon idiom (viewBox 0 0 24
+// §53, inline action-button icons in the app's nav-icon idiom (viewBox 0 0 24
 // 24, stroke=currentColor, ~16px) so they inherit the button's text colour and
 // disabled/hover states. Returned as a label builder: icon + text in one go.
 const ICON = {
-  // circular refresh / rotate — "Try again"
+  // circular refresh / rotate. "Try again"
   retry: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>',
-  // lightbulb — "AI review"
+  // lightbulb. "AI review"
   bulb: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.3 1 2.1V16h6v-.4c0-.8.4-1.5 1-2.1A6 6 0 0 0 12 3Z"/></svg>',
-  // forward arrow — "Next puzzle"
+  // forward arrow. "Next puzzle"
   next: '<svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>',
 };
 // Paint an icon + label into a button. Uses textContent for the label (no HTML
@@ -268,7 +268,7 @@ function setBtn(btn, iconKey, label) {
   if (lbl) lbl.textContent = label;
 }
 
-// US-13 (v0.55a) — the engine's best LINE (principal variation) from the FIRST
+// US-13 (v0.55a), the engine's best LINE (principal variation) from the FIRST
 // user decision, in SAN. Uses the snapshot captured at move time
 // (state.engineLineFromStart.pvSan) and falls back to the first user move's
 // stored PV, then to the single best move. Capped at 6 plies (the depth the
@@ -291,7 +291,7 @@ function escapeResult(s) {
 }
 
 // ============================================================================
-// SECTION 12 — Reset / load
+// SECTION 12. Reset / load
 // ============================================================================
 export function resetPuzzleStateAndRender(opts) {
   const keepGate = !!(opts && opts.keepGate);
@@ -309,7 +309,7 @@ export function resetPuzzleStateAndRender(opts) {
     state.lastMove = null;
     state.userMovesMade = 0;
     state.attemptHistory = [];
-    state.engineLineFromStart = null;          // v0.13 — reset on new puzzle
+    state.engineLineFromStart = null;          // v0.13, reset on new puzzle
     state.wrongMoveSnapshot = null;
     state.phase = 'empty';
     $('side-to-move-title').textContent = state.mode === 'deep'
@@ -343,18 +343,18 @@ export function resetPuzzleStateAndRender(opts) {
   state.attemptHistory = [];
   state.moveCpLoss = [];
   state.totalCpLoss = 0;
-  state.engineLineFromStart = null;            // v0.13 — reset on new puzzle
+  state.engineLineFromStart = null;            // v0.13, reset on new puzzle
   state.wrongMoveSnapshot = null;
   state.pendingWrongMove = null;    // v0.23
   state.annotations = [];
   state.correctSquares = null;      // v0.23
   state.viewHistory = [];
   state.viewIndex = null;
-  state.revealForced = false;       // §30 — fresh attempt, no forced reveal
-  state.revealOverlay = null;       // §30.3 — clear any stop-point auto-play
+  state.revealForced = false;       // §30, fresh attempt, no forced reveal
+  state.revealOverlay = null;       // §30.3, clear any stop-point auto-play
   // Show piece: reset shownPiece on a brand-new puzzle (the 50% cap should not
   // carry forward). On soft-reset/keepReview attempts the user is repeating
-  // the same puzzle to practise, so we still reset shownPiece — they get a
+  // the same puzzle to practise, so we still reset shownPiece, they get a
   // fresh attempt with the per-turn hint available again.
   state.shownPiece = false;
   state.pieceHintSquare = null;
@@ -362,12 +362,12 @@ export function resetPuzzleStateAndRender(opts) {
   state.phase = 'idle';
   state.engineLines = [];
   // Stale post-resolution UI (comparison table, nav arrows) must be cleared
-  // even on soft reset — leaving them visible during a new attempt let stale
+  // even on soft reset, leaving them visible during a new attempt let stale
   // click handlers jump the board back to an older FEN, which manifested as
   // "pieces went back to their original position after castling".
   $('comparison').classList.add('hidden');
   $('nav-arrows').classList.add('hidden');
-  // §30.2 — the result card is a post-attempt surface; a fresh OR retried
+  // §30.2, the result card is a post-attempt surface; a fresh OR retried
   // attempt always clears it and restores the play controls (Hint/Restart/Next).
   $('result').classList.add('hidden');
   $('result-repeat').classList.add('hidden');
@@ -389,21 +389,20 @@ export function resetPuzzleStateAndRender(opts) {
     showIntro(puzzle);
   } else {
     renderBoard();
-    // §31 — the feedback card occupies its slot from a PENDING state so the board
+    // §31, the feedback card occupies its slot from a PENDING state so the board
     // never shifts when a verdict later appears.
     renderCpBar();
     renderPending();
   }
   refreshSessionWrap(); // keep the persistent session bar in sync as items advance
   if (state.engineReady) {
-    // Analyse the SOLVE position (puzzle.fen) by string, not live state.chess —
-    // the intro replay mutates state.chess, so we must not read it back here.
+    // Analyse the SOLVE position (puzzle.fen) by string, not live state.chess, // the intro replay mutates state.chess, so we must not read it back here.
     const solveFen = puzzle.fen;
     setInlineStatus(`Computing top ${STOCKFISH_MULTIPV} lines…`);
     analyzePosition(solveFen, STOCKFISH_DEPTH).then(() => {
       state.positionSummary = buildPositionSummary(solveFen);
       setInlineStatus('');
-      // Intro is showing — lines are ready; enable "Solve it" and stay in intro
+      // Intro is showing, lines are ready; enable "Solve it" and stay in intro
       // until the user dismisses it. The solve phase opens from beginSolveFromIntro.
       if (state.phase === 'intro') { markIntroLinesReady(); return; }
       // Choose phase: drill / review / keep-gate go straight to playing; deep
@@ -415,7 +414,7 @@ export function resetPuzzleStateAndRender(opts) {
         startThinkingGate();
       }
       renderBoard(); // re-render so .locked cursor clears once phase is 'playing'
-      renderPending(); // §31 — refresh PENDING once phase settles (gate→playing, idle→playing)
+      renderPending(); // §31, refresh PENDING once phase settles (gate→playing, idle→playing)
     }).catch((err) => setInlineStatus('Engine error: ' + err.message, 'error'));
   }
 }

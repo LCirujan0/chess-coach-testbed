@@ -1,5 +1,5 @@
 // ============================================================================
-// js/board-vision/boot.js — Spec 14 Board Vision UI runner.
+// js/board-vision/boot.js. Spec 14 Board Vision UI runner.
 // ----------------------------------------------------------------------------
 // Drives the hub, the three foundational drills, the 6-level hide-the-board
 // tracker, and the complete screen. Pure client-side: generators in
@@ -30,7 +30,38 @@ function normalize(v) {
     scores: v.scores || { coord: 0, knight: 0, walk: 0 },
     coordPerfectStreak: v.coordPerfectStreak || 0,
     tracker: { level: (v.tracker && v.tracker.level) || 1, levelScores: (v.tracker && v.tracker.levelScores) || {} },
+    // v0.81: walk levels (chain length grows) + 60-second blitz best marks.
+    walk: { level: (v.walk && v.walk.level) || 1, levelScores: (v.walk && v.walk.levelScores) || {} },
+    bests: { coord60: (v.bests && v.bests.coord60) || 0, knight60: (v.bests && v.bests.knight60) || 0 },
   };
+}
+
+// Walk level -> moves to visualise. 3 levels, each procedurally infinite
+// (well past the owner's 20-distinct-per-level floor; a per-run dedupe set
+// also guarantees no repeats inside a session).
+const WALK_CHAIN = { 1: 2, 2: 3, 3: 4 };
+const WALK_LEVELS = 3;
+const WALK_PASS = 0.8;
+
+// 60-second blitz reference bands (correct answers in 60s) so a best mark
+// MEANS something (owner ask: "a reference on how good your mark is").
+const BLITZ_BANDS = {
+  coord:  [[28, 'Lightning'], [18, 'Strong'], [10, 'Solid club level'], [0, 'Getting started']],
+  knight: [[20, 'Lightning'], [13, 'Strong'], [7, 'Solid club level'], [0, 'Getting started']],
+};
+function blitzBand(name, score) { for (const [min, label] of BLITZ_BANDS[name]) if (score >= min) return label; return 'Getting started'; }
+
+// Square references in prompts render as little board chips (visual, not a
+// wall of text) + the per-run no-repeat guard.
+function fmtPrompt(text) { return String(text).replace(/\b([a-h][1-8])\b/g, '<b class="bv-sq">$1</b>'); }
+let seenPrompts = new Set();
+function freshQuestion(genFn) {
+  for (let i = 0; i < 30; i++) {
+    const q = genFn();
+    const key = q.prompt + '|' + q.answer;
+    if (!seenPrompts.has(key)) { seenPrompts.add(key); return q; }
+  }
+  return genFn(); // astronomically unlikely to be needed
 }
 function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
 function todayISO() { return new Date().toISOString().slice(0, 10); }
@@ -63,7 +94,8 @@ function runRep(q, timing) {
   return new Promise((resolve) => {
     boardEl().classList.remove('bv-hidden');
     renderStaticBoard(boardEl(), q.board, { orientation: 'w' });
-    $('bv-prompt').textContent = q.prompt;
+    $('bv-prompt').innerHTML = fmtPrompt(q.prompt);
+    $('bv-prompt-card').classList.toggle('bv-big', q.drill === 'coord');
     panels({ prompt: true });
     $('bv-feedback').textContent = '';
     if (q.origin) mark(q.origin, 'bv-origin');
@@ -84,17 +116,66 @@ function runRep(q, timing) {
 }
 
 async function runDrill(name) {
-  $('bv-drill-title').textContent = TITLE[name];
+  const walkLevel = (name === 'walk') ? load().walk.level : null;
+  $('bv-drill-title').textContent = TITLE[name] + (walkLevel ? ` · Level ${walkLevel}` : '');
   show('bv-drill');
+  seenPrompts = new Set(); // no repeated question within a run (owner fix)
+  const gen = (name === 'walk') ? () => genWalk(WALK_CHAIN[walkLevel] || 2) : GEN[name];
   let score = 0;
   for (let i = 0; i < REPS[name]; i++) {
     if (quit) return score;
     $('bv-drill-rep').textContent = `${i + 1} / ${REPS[name]}`;
-    const r = await runRep(GEN[name](), TIMING[name]);
+    const r = await runRep(freshQuestion(gen), TIMING[name]);
     if (r === null || quit) return score;
     if (r) score++;
   }
+  // Walk levels: a strong run unlocks the next chain length.
+  if (name === 'walk' && walkLevel && score / REPS.walk >= WALK_PASS) {
+    const s = load();
+    s.walk.levelScores[walkLevel] = score;
+    if (walkLevel === s.walk.level && walkLevel < WALK_LEVELS) s.walk.level = walkLevel + 1;
+    save(s);
+  }
   return score;
+}
+
+// 60-second blitz (owner ask): as many as possible in 60s, best mark kept,
+// banded reference so the number means something.
+async function runBlitz(name) {
+  quit = false;
+  seenPrompts = new Set();
+  $('bv-drill-title').textContent = TITLE[name] + ' · 60s blitz';
+  show('bv-drill');
+  const deadline = Date.now() + 60000;
+  let score = 0, attempted = 0;
+  const timing = { ok: 120, bad: 550 }; // blitz pace: fast confirmations
+  while (Date.now() < deadline && !quit) {
+    const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    $('bv-drill-rep').textContent = `⏱ ${left}s · ${score}`;
+    const r = await runRep(freshQuestion(GEN[name]), timing);
+    if (r === null || quit) break;
+    attempted++;
+    if (r) score++;
+  }
+  if (quit) { show('bv-hub'); renderHub(); return; }
+  const s = load();
+  const bestKey = name + '60';
+  const prevBest = s.bests[bestKey] || 0;
+  const isBest = score > prevBest;
+  if (isBest) { s.bests[bestKey] = score; save(s); }
+  show('bv-complete');
+  $('bv-complete-h').textContent = isBest ? 'New best!' : 'Time!';
+  $('bv-scores').innerHTML =
+    `<div class="bv-score-row"><span>${TITLE[name]} · 60 seconds</span><b>${score} correct</b></div>` +
+    `<div class="bv-score-row"><span>Your best</span><b>${Math.max(score, prevBest)}</b></div>` +
+    `<div class="bv-score-row"><span>That makes you</span><b>${blitzBand(name, Math.max(score, prevBest))}</b></div>`;
+  $('bv-coach').textContent = isBest
+    ? 'A new personal best. Tomorrow it gets one harder.'
+    : (prevBest ? `Best so far: ${prevBest}. One focused minute a day moves this fast.` : 'First mark set. Beat it tomorrow.');
+  const actions = $('bv-complete-actions');
+  actions.innerHTML = '<button class="btn primary" id="bv-blitz-again" type="button">Run it again ⚡</button><button class="btn ghost" id="bv-again" type="button">Back to Board Vision</button>';
+  $('bv-blitz-again').addEventListener('click', () => runBlitz(name));
+  $('bv-again').addEventListener('click', () => { show('bv-hub'); renderHub(); });
 }
 
 // ----- tracker rep (show -> hide -> read -> answer -> replay) -----
@@ -123,16 +204,18 @@ function runTrackerRep(q) {
     abortRep = () => { onTap = null; abortRep = null; resolve(null); };
 
     const ask = () => {
-      boardEl().classList.add('bv-hidden'); // pieces hidden — visualise from here
+      boardEl().classList.add('bv-hidden'); // pieces hidden, visualise from here
       renderMoves(q.moves);
       panels({ moves: true, question: true });
       const qEl = $('bv-tracker-q');
+      // Same visual grammar as the moves card: a panel header + chip-formatted
+      // squares (owner 2026-06-10: the count question card read as bare text).
       if (q.question.mode === 'tap') {
-        qEl.innerHTML = `<div class="bv-q-prompt">${q.question.prompt}</div>`;
+        qEl.innerHTML = `<div class="bv-panel-h">Now answer</div><div class="bv-q-prompt">${fmtPrompt(q.question.prompt)}</div>`;
         for (const o of q.question.options) mark(o, 'bv-option');
         onTap = (sq) => { if (!q.question.options.includes(sq)) return; finish(sq === q.question.answer, sq); };
       } else {
-        qEl.innerHTML = `<div class="bv-q-prompt">${q.question.prompt}</div><div class="bv-choices">` +
+        qEl.innerHTML = `<div class="bv-panel-h">Now answer</div><div class="bv-q-prompt">${fmtPrompt(q.question.prompt)}</div><div class="bv-choices">` +
           q.question.options.map((o) => `<button class="btn bv-choice" type="button" data-v="${o}">${o}</button>`).join('') + '</div>';
         qEl.querySelectorAll('.bv-choice').forEach((b) => b.addEventListener('click', () => finish(b.dataset.v === q.question.answer)));
       }
@@ -205,9 +288,9 @@ function complete(scores, opts) {
 
 function coachLine(scores) {
   const pct = (k) => scores[k] == null ? 1 : scores[k] / REPS[k];
-  if (pct('knight') < 0.7) return 'Knight Vision — keep practising. The L-shape gets automatic with about two weeks of daily drills.';
-  if (pct('walk') < 0.7) return 'Piece Walk — 2-move chains take a few weeks to feel natural. Stick with it.';
-  if (pct('coord') >= 0.8 && pct('knight') >= 0.8 && pct('walk') >= 0.8) return 'Sharp today — your board sight is solid. Keep the daily streak going.';
+  if (pct('knight') < 0.7) return 'Knight Vision, keep practising. The L-shape gets automatic with about two weeks of daily drills.';
+  if (pct('walk') < 0.7) return 'Piece Walk, 2-move chains take a few weeks to feel natural. Stick with it.';
+  if (pct('coord') >= 0.8 && pct('knight') >= 0.8 && pct('walk') >= 0.8) return 'Sharp today, your board sight is solid. Keep the daily streak going.';
   return 'Good warm-up. A little daily practice and these get automatic.';
 }
 
@@ -240,6 +323,25 @@ function renderHub() {
   const s = load();
   $('bv-streak').textContent = s.streak > 0 ? `🔥 ${s.streak}` : '';
   $('bv-sharp').classList.toggle('hidden', (s.coordPerfectStreak || 0) < 3);
+  // Blitz buttons + best marks on the coord/knight cards; walk level badge.
+  for (const name of ['coord', 'knight']) {
+    const card = document.querySelector(`.bv-card[data-drill="${name}"]`);
+    if (card && !card.querySelector('.bv-blitz')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bv-blitz';
+      btn.addEventListener('click', (e) => { e.stopPropagation(); runBlitz(name); });
+      card.appendChild(btn);
+    }
+    const btn = card && card.querySelector('.bv-blitz');
+    if (btn) {
+      const best = s.bests[name + '60'] || 0;
+      btn.innerHTML = `⚡ 60s${best ? ` <small>best ${best} · ${blitzBand(name, best)}</small>` : ''}`;
+      btn.title = '60-second blitz: as many as you can. Your best mark is kept.';
+    }
+  }
+  const walkCard = document.querySelector('.bv-card[data-drill="walk"] .bv-card-m');
+  if (walkCard) walkCard.textContent = `Level ${s.walk.level}/${WALK_LEVELS}`;
   const level = s.tracker.level;
   const rungs = [];
   for (let n = 1; n <= TRACKER_LEVELS; n++) {
@@ -254,9 +356,29 @@ function renderHub() {
 
 // ----- boot -----
 wireBoardOnce();
+// Coordinates are HIDDEN on the Board Vision board (owner 2026-06-10): the
+// in-square labels literally spell out the answers to Coordinate Snap and
+// crutch the others; the whole drill is knowing the grid without them.
+boardEl().classList.add('bv-nocoords');
+// All drills run from White's perspective; say so (owner: "I need to know if
+// I'm playing black or white").
+(() => {
+  const head = document.querySelector('.bv-drill-head');
+  if (head && !head.querySelector('.bv-pers')) {
+    const p = document.createElement('span');
+    p.className = 'bv-pers';
+    p.textContent = 'White’s view';
+    head.insertBefore(p, head.lastElementChild);
+  }
+})();
 renderHub();
 $('bv-start-all').addEventListener('click', () => runWarmup());
-for (const card of document.querySelectorAll('.bv-card')) card.addEventListener('click', () => runSolo(card.dataset.drill));
+for (const card of document.querySelectorAll('.bv-card')) {
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.bv-blitz')) return; // blitz button handles itself
+    runSolo(card.dataset.drill);
+  });
+}
 $('bv-quit').addEventListener('click', () => { quit = true; onTap = null; if (abortRep) abortRep(); });
 
 if (new URLSearchParams(location.search).get('session') === '1') runWarmup({ session: true });

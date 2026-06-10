@@ -7,8 +7,9 @@
    actual typefaces — it centralises the three stacks the app already used:
 
      • Plus Jakarta Sans — display / headings
-     • Inter             — body / UI text
-     • Spline Sans Mono  — data: evals, FEN, coordinates, counts, timers
+     • Inter             — body / UI text AND data (owner rule 2026-06-10: the
+       mono data font was retired as off-brand; figures use Inter with
+       font-variant-numeric: tabular-nums so columns of numbers still align)
 
    Rule (project): shared component changes apply to ALL pages. Type is now a
    shared component alongside board.css and nav.css. Per-page duplicated
@@ -21,7 +22,10 @@
   /* Type tokens — reference these instead of re-declaring stacks per page. */
   --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-body:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono:    "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Retired as a distinct face (owner rule 2026-06-10) — kept as a token so
+     legacy .t-mono references keep working, now resolving to Inter + tabular
+     figures for aligned numbers without the off-brand mono look. */
+  --font-mono:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
 /* Base body font — Inter for all body/UI prose. Pages set their own colours
@@ -49,6 +53,7 @@ button, input, textarea, select {
 .eval-chip,
 .gate-timer {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* The post-move move-by-move comparison + the board nav-arrows label were

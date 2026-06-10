@@ -1,11 +1,11 @@
 // ============================================================================
-// SECTION 5 — Position summary
+// SECTION 5. Position summary
 // ============================================================================
 import { Chess } from './lib.js';
 import { FILES_STD, RANKS_STD, FILES_FLIP, RANKS_FLIP, STOCKFISH_MULTIPV, STOCKFISH_DEPTH } from './config.js';
 import { state } from './state.js';
 import { $, setInlineStatus } from './dom.js';
-// runtime deps (called inside function bodies only — no top-level call, so cycles are safe)
+// runtime deps (called inside function bodies only, no top-level call, so cycles are safe)
 import { startThinkingGate } from './gate.js';
 import { renderBoard } from './board.js';
 import { getCurrentPuzzle } from './queue.js';
@@ -63,7 +63,7 @@ export function summaryAsText(s) {
 }
 
 // ============================================================================
-// SECTION 6 — Engine
+// SECTION 6. Engine
 // ============================================================================
 const SF_URL = '/engine/stockfish-17.1-lite-single-03e3232.js';
 let stockfish = null;
@@ -129,14 +129,14 @@ export async function initStockfish() {
   // Don't analyse if the queue is empty.
   if (state.phase === 'empty') return;
   // First-load order is resetPuzzleStateAndRender() THEN initStockfish(), so the
-  // first puzzle's own analysis block is skipped (engine not ready yet) — this is
+  // first puzzle's own analysis block is skipped (engine not ready yet), this is
   // the fallback that analyses it once the engine boots and settles the phase.
   // In 'intro' the board may be mid-replay, so analyse the puzzle's SOLVE fen.
   const _cur = getCurrentPuzzle && getCurrentPuzzle();
   const analyseFen = (state.phase === 'intro' && _cur && _cur.fen) ? _cur.fen : state.chess.fen();
   await analyzePosition(analyseFen, STOCKFISH_DEPTH);
   if (state.phase === 'intro') {
-    // Mistake intro is showing — lines for the solve position are ready; enable
+    // Mistake intro is showing, lines for the solve position are ready; enable
     // "Solve it" (without this the first puzzle's intro stayed frozen).
     markIntroLinesReady();
   } else if (state.phase === 'idle') {
@@ -174,7 +174,7 @@ export function evalAsHuman(evalObj) {
 }
 
 // ============================================================================
-// SECTION 7 — Lightweight engine helpers (Phase 1b)
+// SECTION 7. Lightweight engine helpers (Phase 1b)
 // These exports do NOT touch state.engineLines or any puzzle-page DOM.
 // They are safe to import from endgames.html and endgame-recognition.html.
 // ============================================================================

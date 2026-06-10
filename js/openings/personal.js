@@ -1,5 +1,5 @@
 // ============================================================================
-// js/openings/personal.js — the "personal fuel" for the Openings trainer.
+// js/openings/personal.js, the "personal fuel" for the Openings trainer.
 // ----------------------------------------------------------------------------
 // Reads the user's OWN game history (already captured by the games ingest
 // pipeline) and surfaces which repertoire openings they actually play and where
@@ -8,7 +8,7 @@
 //   chess-coach-game-meta-v1       : { [gameUrl]: { eco, openingName, resultForUser,
 //                                                    result, userColorName, ... } }
 //
-// We never write here — read-only. Degrades to an empty result when there is no
+// We never write here, read-only. Degrades to an empty result when there is no
 // game data (a brand-new user). Pure aside from the localStorage read, which is
 // guarded so this can be unit-reasoned about.
 // ============================================================================
@@ -38,7 +38,7 @@ function normResult(rec) {
 }
 
 // Collapse an ECO code to its family letter+two-digit head (e.g. 'C28' -> 'C2x'),
-// used to roughly match a repertoire opening's ECO RANGE (e.g. 'C25–C29').
+// used to roughly match a repertoire opening's ECO RANGE (e.g. 'C25, C29').
 function ecoNum(eco) {
   if (typeof eco !== 'string') return null;
   const m = eco.trim().match(/^([A-E])(\d{2})/i);
@@ -46,10 +46,10 @@ function ecoNum(eco) {
   return { letter: m[1].toUpperCase(), num: parseInt(m[2], 10) };
 }
 
-// Parse a registry ECO range like 'C25–C29' / 'C25-C29' / 'C28' into a matcher.
+// Parse a registry ECO range like 'C25, C29' / 'C25-C29' / 'C28' into a matcher.
 function ecoRangeMatcher(range) {
   if (typeof range !== 'string') return () => false;
-  const parts = range.split(/[–-]/).map((s) => s.trim()).filter(Boolean);
+  const parts = range.split(/[, -]/).map((s) => s.trim()).filter(Boolean);
   const lo = ecoNum(parts[0]);
   const hi = ecoNum(parts[1] || parts[0]);
   if (!lo || !hi || lo.letter !== hi.letter) return () => false;

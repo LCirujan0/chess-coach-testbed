@@ -1,5 +1,5 @@
 /* ============================================================================
- * js/coach-memory.js — the coach's compact per-user memory (v0.79).
+ * js/coach-memory.js, the coach's compact per-user memory (v0.79).
  *
  * WHAT: a small, capped set of plain-language notes the coach has learned
  * about THIS student ("rushes recaptures under pressure", "strong on back-rank
@@ -7,13 +7,13 @@
  * coach system prompt so each surface talks like the same teacher who has
  * watched this student before.
  *
- * EFFICIENCY CONTRACT (the whole point — owner ask 2026-06-10): the memory can
+ * EFFICIENCY CONTRACT (the whole point, owner ask 2026-06-10): the memory can
  * NEVER grow unbounded into the context window. Hard caps: at most MAX_NOTES
  * notes, each at most NOTE_MAX_CHARS chars, newest-first. The single WRITER is
  * the end-of-session debrief (js/session-wrap.js renderSummary path): the
  * debrief model returns a full replacement set of notes (it sees the old set
  * and the new session), so the memory is consolidated on every write instead
- * of appended to. One writer, many readers — no drift.
+ * of appended to. One writer, many readers, no drift.
  *
  * Storage: chess-coach-coach-memory-v1 = { notes:[{t,at}], updatedAt }
  * Synced cross-device (js/puzzle/config.js SYNC_KEYS; merge = newer updatedAt).

@@ -1,12 +1,12 @@
 /* ============================================================================
- * js/mastery.js — capability MILESTONE markers (retention #7).
+ * js/mastery.js, capability MILESTONE markers (retention #7).
  *
  * Pure, dependency-free, node-testable. Marks *competence* thresholds, not raw
- * volume/vanity — "Fork mastered", "Climbed past 1100", "30-day streak" — each
+ * volume/vanity. "Fork mastered", "Climbed past 1100", "30-day streak", each
  * derived from the player's real data. The reward is the MOMENT a new one is
  * earned, so diffSeen() flags fresh markers (the caller persists the seen set).
  *
- * Consumed by today.html (a small Milestones row). On-brand: no emoji — the
+ * Consumed by today.html (a small Milestones row). On-brand: no emoji, the
  * HTML renders clean accent chips keyed by `kind`.
  * ==========================================================================*/
 (function (root) {
@@ -24,7 +24,7 @@
     var egResults = input.egResults || {};
     var out = [];
 
-    // 1) Motif mastery — >= 5 puzzles of a tactical motif solved.
+    // 1) Motif mastery, >= 5 puzzles of a tactical motif solved.
     var motifSolved = {};
     mistakes.forEach(function (m) {
       if (!m || !m.id || !m.motif || m.motif === 'none-tactical') return;
@@ -41,11 +41,11 @@
       out.push({ id: 'rating:' + band, kind: 'rating', label: 'Climbed past ' + band, detail: 'Chess.com rapid' });
     }
 
-    // 3) Mistakes fixed — highest volume milestone reached.
+    // 3) Mistakes fixed, highest volume milestone reached.
     var fixed = mistakes.filter(function (m) { return m && m.id && attempts[m.id] && attempts[m.id].solved; }).length;
     [100, 50, 25, 10].some(function (t) { if (fixed >= t) { out.push({ id: 'fixed:' + t, kind: 'volume', label: t + ' mistakes fixed', detail: 'from your own games' }); return true; } return false; });
 
-    // 4) Streak milestone — highest reached (current or best).
+    // 4) Streak milestone, highest reached (current or best).
     var longest = Math.max(streak.current || 0, streak.longest || 0);
     [30, 14, 7, 3].some(function (t) { if (longest >= t) { out.push({ id: 'streak:' + t, kind: 'streak', label: t + '-day streak', detail: (streak.current || 0) >= t ? 'going now' : 'your best' }); return true; } return false; });
 

@@ -46,7 +46,7 @@
      OUT — its content is "puzzle 1 of 21 · vs IanN_143 · 2026-05-29 · …"
      which is meta prose, so it inherits Inter from body. */
   .mono, .coord, .data {
-    font-family: "Spline Sans Mono", ui-monospace, monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
   }
 
   h1 {
@@ -248,7 +248,7 @@
   .filter-tab .count, .cat-tab .count, .tried-tab .count {
     display: inline-block; background: rgba(0,0,0,.1);
     border-radius: 8px; padding: 1px 6px; margin-left: 4px;
-    font-family: "Spline Sans Mono", monospace; font-size: 10px;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 10px;
     font-weight: 500;
   }
   .filter-tab.active .count, .tried-tab.active .count { background: var(--surface2); }
@@ -296,7 +296,7 @@
   .theme-pill.empty { opacity: .4; cursor: not-allowed; }
   .theme-pill .count {
     margin-left: 4px; font-size: 10px; opacity: .8;
-    font-family: "Spline Sans Mono", monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
   }
   .drill-cta { width: 100%; margin: 0; padding: 9px 12px; font-size: 13px; }
   .drill-cta:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; }
@@ -361,7 +361,7 @@
   .board-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
   .material-row { display: flex; align-items: center; gap: 0; width: 100%; max-width: 560px; min-height: 20px; margin: 0 auto; }
   .mb-piece { width: 18px; height: 18px; display: inline-block; }
-  .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
+  .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 12px; font-weight: 600; }
   /* ============================================================
      Controls (buttons) — spec §6
      ============================================================ */
@@ -564,7 +564,7 @@
 
   /* One-line contrast: "You Bd6 · Best Nxd5" (§29.3) */
   .result-contrast {
-    font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 13px;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 13px;
     color: var(--ink); background: var(--surface2); border-radius: 8px;
     padding: 7px 11px;
   }
@@ -585,7 +585,7 @@
     text-transform: uppercase; color: var(--accent); margin-right: 6px;
   }
   .result-answer .answer-line {
-    font-family: "Spline Sans Mono", ui-monospace, monospace; font-weight: 600;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-weight: 600;
   }
   .result-answer.hidden { display: none; }
 
@@ -661,7 +661,7 @@
   .comparison .col-yours { color: var(--ink); font-weight: 600; }
   .comparison .col-engine {
     color: var(--accent);
-    font-family: "Spline Sans Mono", monospace; font-size: 12px;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 12px;
   }
   .comparison tr { cursor: pointer; transition: background .15s ease; }
   .comparison tr:hover td { background: var(--surface2); }
@@ -673,7 +673,7 @@
     font-size: 10px; font-weight: 800;
     letter-spacing: 0.05em; color: #fff;
     margin-left: 4px; vertical-align: middle;
-    font-family: "Spline Sans Mono", monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
   }
   .rank-badge.rank-1 { background: var(--pos); }
   .rank-badge.rank-2,
@@ -687,7 +687,7 @@
     font-size: 10px; font-weight: 800;
     letter-spacing: 0.05em; color: #fff;
     margin-left: 4px; vertical-align: middle;
-    font-family: "Spline Sans Mono", monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     background: var(--warn);
   }
   .cp-loss-small.cp-mid { background: var(--bad); }
@@ -1015,7 +1015,7 @@
   .eval-chip {
     display: inline-block; min-width: 40px; text-align: center;
     padding: 2px 8px; border-radius: var(--r-pill);
-    font-family: "Spline Sans Mono", ui-monospace, monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     font-size: 11px; font-weight: 700; letter-spacing: .02em;
   }
   .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }

@@ -34,8 +34,7 @@ Never hardcode a colour/radius that has a token. Never redefine these in a page'
 ## Typography (`css/type.css`)
 
 - **Display / headings** (`h1–h4`): Plus Jakarta Sans 700–800 (`--font-display`).
-- **Body / UI:** Inter (`--font-body`).
-- **Data** (evals, FEN, coordinates, counts, timers): Spline Sans Mono (`--font-mono` / `.t-mono`).
+- **Body / UI / data:** Inter (`--font-body`). The mono data face was **retired 2026-06-10 (owner rule: off-brand)**; figures use Inter with `font-variant-numeric: tabular-nums` (`.t-mono` still works, now resolving to Inter). Never reintroduce a monospace face.
 - Page intro pattern: `.eyebrow` (10.5px uppercase accent) → `<h1>` (26px/800) → `.lede` (13px muted).
 
 ## Buttons (`css/train.css`)

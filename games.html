@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Games</title>
+<title>KnightPath. Games</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -18,7 +18,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/js/coach-stats.js"></script>
 <style>
   /* Page chrome = shared shell.css + nav.css. */
@@ -27,7 +27,7 @@
     font-family:"Plus Jakarta Sans","Inter",sans-serif;
   }
   .mono, .progress, .stat .num, .sub.mono {
-    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
   }
 
 
@@ -66,7 +66,7 @@
     width:100%; padding:11px 13px; font-size:15px;
     border:1px solid var(--line); border-radius:var(--r-btn);
     background:var(--surface); color:var(--ink);
-    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     outline:none;
     transition:border-color .15s ease, box-shadow .15s ease;
   }
@@ -75,7 +75,7 @@
     box-shadow:0 0 0 3px rgba(47,158,118,.16);
   }
 
-  /* Buttons: the canonical train.css system (v0.80 — this page's self-rolled
+  /* Buttons: the canonical train.css system (v0.80, this page's self-rolled
      .btn/.btn-secondary/.btn-danger set is gone; design-system backlog #3 closed).
      Page layout only: the form submit spans the form width. */
   #ingest-btn { width:100%; display:block; }
@@ -134,7 +134,7 @@
     align-items:baseline; gap:8px; margin-bottom:3px;
   }
   .mistake-item .src {
-    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     font-size:11px; color:var(--muted);
   }
   .mistake-item .sev {
@@ -146,7 +146,7 @@
   .sev.mistake    { background:var(--bad-soft); color:var(--bad); }
   .sev.blunder    { background:var(--bad); color:#fff; }
   .mistake-item .moves {
-    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     font-size:11px; color:var(--ink);
   }
   .mistake-item .cat {
@@ -192,7 +192,7 @@
   <!-- Current state of stored puzzles -->
   <div class="panel" id="state-panel">
     <h2>Saved puzzles</h2>
-    <div class="sub">Synced to your username — your puzzles follow you to any device.</div>
+    <div class="sub">Synced to your username, your puzzles follow you to any device.</div>
     <div class="stats">
       <div class="stat"><div class="num" id="stat-opening">0</div><div class="label">Opening</div></div>
       <div class="stat"><div class="num" id="stat-middlegame">0</div><div class="label">Middlegame</div></div>
@@ -204,14 +204,14 @@
     <div class="row">
       <a href="/puzzle.html" class="btn ghost" style="text-decoration:none; text-align:center;">Open puzzles</a>
       <button class="btn ghost" id="backfill-btn" type="button">Backfill motifs</button>
-      <button class="btn ghost" id="wipe-btn" type="button" title="Clears this device only — your training stays synced to your username and comes back when you sign in again, no re-analysis needed.">Wipe this device</button>
+      <button class="btn ghost" id="wipe-btn" type="button" title="Clears this device only, your training stays synced to your username and comes back when you sign in again, no re-analysis needed.">Wipe this device</button>
     </div>
   </div>
 
   <!-- Ingestion form -->
   <div class="panel">
     <h2>Ingest new games</h2>
-    <div class="sub">The coach learns from your real games: each one is re-analysed with Stockfish and your mistakes become personal puzzles. Sync after you play — every few days is plenty (~4–5 seconds per game).</div>
+    <div class="sub">The coach learns from your real games: each one is re-analysed with Stockfish and your mistakes become personal puzzles. Sync after you play, every few days is plenty (~4, 5 seconds per game).</div>
     <form id="ingest-form">
       <div class="form-row">
         <label for="username">Chess.com username</label>
@@ -269,7 +269,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>

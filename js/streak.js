@@ -1,5 +1,5 @@
 /* ============================================================================
- * js/streak.js — app-level session streak + freeze / forgiveness.
+ * js/streak.js, app-level session streak + freeze / forgiveness.
  *
  * Generalised from js/board-vision/boot.js's daily-completion streak into a
  * pure, dependency-free, node-testable module. ONE streak on the *meaningful*
@@ -74,7 +74,7 @@
   }
 
   // ===========================================================================
-  // CORE — resolve(state, today): account for any elapsed gap WITHOUT marking a
+  // CORE, resolve(state, today): account for any elapsed gap WITHOUT marking a
   // completion. Consumes freezes for missed non-rest days; resets to 0 if the
   // streak has truly lapsed. Idempotent and pure. Returns { state, event } where
   // event describes what happened to the streak for honest UI framing.
@@ -97,13 +97,13 @@
 
     var needCover = missed.filter(function (d) { return !restSet[d]; });
     if (needCover.length === 0) {
-      // Entire gap was planned rest — streak is fully preserved.
+      // Entire gap was planned rest, streak is fully preserved.
       ev.type = 'rest-preserved';
       return { state: s, event: ev };
     }
 
     if (s.freezesAvailable >= needCover.length) {
-      // Freezes cover every missed active day — streak saved.
+      // Freezes cover every missed active day, streak saved.
       var before = s.current;
       s.freezesAvailable -= needCover.length;
       needCover.forEach(function (d) { if (s.freezeUsedDays.indexOf(d) === -1) s.freezeUsedDays.push(d); });
@@ -113,7 +113,7 @@
       return { state: s, event: ev };
     }
 
-    // Not enough freezes — the streak has lapsed. Reset (next completion = day 1).
+    // Not enough freezes, the streak has lapsed. Reset (next completion = day 1).
     ev.type = 'broken';
     ev.brokeFrom = s.current;
     s.current = 0;
@@ -133,7 +133,7 @@
     var ev = r.event;
 
     if (s.lastCompletedDay === today) {
-      // Already completed today — no double count.
+      // Already completed today, no double count.
       ev.type = (ev.type === 'none') ? 'already-done' : ev.type;
       return { state: s, event: ev };
     }
@@ -184,7 +184,7 @@
     if (ev.type === 'freeze-saved') {
       msg = 'Your freeze saved your ' + ev.savedStreak + '-day streak.';
     } else if (ev.type === 'rest-preserved') {
-      msg = 'Rest day — your ' + s.current + '-day streak is safe.';
+      msg = 'Rest day, your ' + s.current + '-day streak is safe.';
     } else if (s.current === 0) {
       msg = 'Finish a session to start your streak.';
     } else if (doneToday) {

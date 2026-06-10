@@ -1,9 +1,9 @@
 // ============================================================================
-// js/board-vision/generators.js — Spec 14 foundational drills (pure, no DOM).
+// js/board-vision/generators.js. Spec 14 foundational drills (pure, no DOM).
 // ----------------------------------------------------------------------------
 // Three procedurally-generated board-sight drills. Each generator returns a
 // self-contained question object; the grader is plain equality. No engine, no
-// network, no DOM — fully node-testable (see the invariant harness in QA).
+// network, no DOM, fully node-testable (see the invariant harness in QA).
 //
 // Geometry convention (matches js/board-static.js parsePlacement): row 0 = the
 // 8th rank (a8), col 0 = the a-file. So rcToAlg(0,0) === 'a8', rcToAlg(7,7) === 'h1'.
@@ -75,46 +75,58 @@ export function genKnight() {
 const ROOK_DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const BISHOP_DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
-export function genWalk() {
+// chainLen = number of moves to visualise (2 default; walk levels pass 3 or 4
+// for the deeper rungs, v0.81 owner ask: "more levels").
+export function genWalk(chainLen = 2) {
   const piece = pick(['R', 'B', 'N']);
-  // Resample whole chains until both moves stay on the board.
-  for (let attempt = 0; attempt < 200; attempt++) {
+  const n = Math.max(2, Math.min(4, chainLen | 0));
+  // Resample whole chains until every step stays on the board.
+  for (let attempt = 0; attempt < 300; attempt++) {
     const sr = randInt(8), sc = randInt(8);
-    let m1, m2; // [row,col] after move 1 / move 2
-    let desc2, intermediate, landing;
-    if (piece === 'N') {
-      const t1 = knightMoves(sr, sc); if (!t1.length) continue;
-      [m1] = [pick(t1)];
-      const t2 = knightMoves(m1[0], m1[1]); if (!t2.length) continue;
-      m2 = pick(t2);
-      desc2 = knightVerbal(m2[0] - m1[0], m2[1] - m1[1]);
-    } else {
-      const dirs = piece === 'R' ? ROOK_DIRS : BISHOP_DIRS;
-      const maxD = piece === 'R' ? 5 : 4;
-      const d1 = pick(dirs), dist1 = 2 + randInt(maxD - 1);
-      m1 = [sr + d1[0] * dist1, sc + d1[1] * dist1];
-      if (!inB(m1[0], m1[1])) continue;
-      const d2 = pick(dirs.filter((d) => !(d[0] === d1[0] && d[1] === d1[1]))), dist2 = 2 + randInt(maxD - 1);
-      m2 = [m1[0] + d2[0] * dist2, m1[1] + d2[1] * dist2];
-      if (!inB(m2[0], m2[1])) continue;
-      desc2 = slideVerbal(d2, dist2);
+    const cells = [[sr, sc]];
+    const descs = [];
+    let ok = true;
+    let lastDir = null;
+    for (let step = 0; step < n; step++) {
+      const [r, c] = cells[cells.length - 1];
+      if (piece === 'N') {
+        const t = knightMoves(r, c);
+        if (!t.length) { ok = false; break; }
+        const m = pick(t);
+        cells.push(m);
+        descs.push(step === 0 ? null : knightVerbal(m[0] - r, m[1] - c));
+      } else {
+        const dirs = piece === 'R' ? ROOK_DIRS : BISHOP_DIRS;
+        const maxD = piece === 'R' ? 5 : 4;
+        const choices = lastDir ? dirs.filter((d) => !(d[0] === lastDir[0] && d[1] === lastDir[1])) : dirs;
+        const d = pick(choices), dist = 2 + randInt(maxD - 1);
+        const m = [r + d[0] * dist, c + d[1] * dist];
+        if (!inB(m[0], m[1])) { ok = false; break; }
+        cells.push(m); lastDir = d;
+        descs.push(step === 0 ? null : slideVerbal(d, dist));
+      }
     }
-    intermediate = rcToAlg(m1[0], m1[1]);
-    landing = rcToAlg(m2[0], m2[1]);
-    const start = rcToAlg(sr, sc);
-    if (landing === start || landing === intermediate) continue;
-    const distractors = walkDistractors(m2[0], m2[1], [start, intermediate, landing]);
+    if (!ok) continue;
+    const algs = cells.map(([r, c]) => rcToAlg(r, c));
+    const landing = algs[algs.length - 1];
+    // landing must be distinct from every earlier square (a clean question).
+    if (new Set(algs).size !== algs.length) continue;
+    const distractors = walkDistractors(cells[n][0], cells[n][1], algs);
     if (distractors.length < 3) continue;
     const options = shuffle([landing, ...distractors]);
     const pieceName = { R: 'rook', B: 'bishop', N: 'knight' }[piece];
-    const verb = piece === 'N' ? 'hops' : 'slides to';
-    const prompt = piece === 'N'
-      ? `The knight starts on ${start}. Hop 1: to ${intermediate}. Hop 2: ${desc2}. Where does it land?`
-      : `The ${pieceName} starts on ${start}. Move 1: slides to ${intermediate}. Move 2: ${desc2}. Where does it land?`;
-    return { drill: 'walk', piece, start, intermediate, landing, moves: [{ from: start, to: intermediate }, { from: intermediate, to: landing }], prompt, board: fenOnePiece(start, piece), origin: start, options, answer: landing };
+    const stepWord = piece === 'N' ? 'Hop' : 'Move';
+    const parts = [`The ${pieceName} starts on ${algs[0]}.`];
+    for (let s = 1; s <= n; s++) {
+      parts.push(`${stepWord} ${s}: ${s === 1 ? (piece === 'N' ? 'to ' + algs[1] : 'slides to ' + algs[1]) : descs[s - 1]}.`);
+    }
+    parts.push('Where does it land?');
+    const moves = [];
+    for (let s = 0; s < n; s++) moves.push({ from: algs[s], to: algs[s + 1] });
+    return { drill: 'walk', piece, start: algs[0], landing, moves, prompt: parts.join(' '), board: fenOnePiece(algs[0], piece), origin: algs[0], options, answer: landing };
   }
   // Fallback (extremely rare): a trivial in-bounds rook walk from d4.
-  return { drill: 'walk', piece: 'R', start: 'd4', intermediate: 'd6', landing: 'f6', moves: [{ from: 'd4', to: 'd6' }, { from: 'd6', to: 'f6' }], prompt: 'The rook starts on d4. Move 1: slides to d6. Move 2: slides 2 squares right. Where does it land?', board: fenOnePiece('d4', 'R'), origin: 'd4', options: shuffle(['f6', 'e6', 'g6', 'f5']), answer: 'f6' };
+  return { drill: 'walk', piece: 'R', start: 'd4', landing: 'f6', moves: [{ from: 'd4', to: 'd6' }, { from: 'd6', to: 'f6' }], prompt: 'The rook starts on d4. Move 1: slides to d6. Move 2: slides 2 squares right. Where does it land?', board: fenOnePiece('d4', 'R'), origin: 'd4', options: shuffle(['f6', 'e6', 'g6', 'f5']), answer: 'f6' };
 }
 
 function slideVerbal(dir, dist) {

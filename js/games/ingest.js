@@ -6,7 +6,7 @@ import { analyzePositionMultiPV, normalizeEval } from './analysis.js';
 import { categorize, severityFor, thinMistakesByWindow } from './categorize.js';
 import { setProgress } from './dom.js';
 // ============================================================================
-// SECTION 8 — INGESTION PIPELINE
+// SECTION 8. INGESTION PIPELINE
 // ----------------------------------------------------------------------------
 // For each game:
 //   - Identify whether the user was White or Black.
@@ -51,12 +51,12 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
   const freshMistakes = [];
   const perGameSummary = [];
   // Spec 06 per-game scorecards collected during this ingest; persisted after
-  // the loop. Keyed by gameUrl. Reuses the existing Stockfish pass — 0 extra
+  // the loop. Keyed by gameUrl. Reuses the existing Stockfish pass, 0 extra
   // engine cost. The shared CoachStats module turns these into attribute
   // scores at read-time on Insights / Practice.
   const newScorecards = {};
-  const gameMoves = {}; // Spec 11 — SAN move lists for the game-review replay
-  const gameMeta = {};  // Spec 24 — per-game Chess.com enrichment (rating/accuracy/rated/time control)
+  const gameMoves = {}; // Spec 11. SAN move lists for the game-review replay
+  const gameMeta = {};  // Spec 24, per-game Chess.com enrichment (rating/accuracy/rated/time control)
   let gameIndex = 0;
 
   for (const { game, headers, userIsWhite, history } of parsedGames) {
@@ -75,7 +75,7 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
     if (result === '1-0') resultForUser = userIsWhite ? 'win' : 'loss';
     else if (result === '0-1') resultForUser = userIsWhite ? 'loss' : 'win';
     else if (result === '1/2-1/2') resultForUser = 'draw';
-    // Spec 06 — per-game scorecard. The phase-ACPL + endgame conversion
+    // Spec 06, per-game scorecard. The phase-ACPL + endgame conversion
     // signals feed the attribute scores; opening + ECO support the Vienna
     // pillar later.
     const eco = headers.ECO || headers.Eco || null;
@@ -99,7 +99,7 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
 
         const lines = await analyzePositionMultiPV(fenBefore, depth);
         analysedMoves++;
-        onProgress(analysedMoves, totalUserMoves, `Game ${gameIndex}/${parsedGames.length} vs ${opponent} — analysing your ${userColorName.toLowerCase()} moves`);
+        onProgress(analysedMoves, totalUserMoves, `Game ${gameIndex}/${parsedGames.length} vs ${opponent}, analysing your ${userColorName.toLowerCase()} moves`);
 
         if (!lines.length) {
           replay.move(move);
@@ -112,7 +112,7 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
         let isMistake = false;
 
         if (idx === 0) {
-          // Best move played — not a mistake.
+          // Best move played, not a mistake.
         } else if (idx === -1) {
           // Outside top 5. Treat the gap between best and 5th as a *lower bound*.
           const fifthEval = normalizeEval(lines[lines.length - 1].eval);
@@ -126,7 +126,7 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
 
         const fullmoveAll = parseInt(fenBefore.split(' ')[5], 10) || 1;
         const phaseAll = categorize(fullmoveAll, fenBefore);
-        // Spec 06 — feed EVERY analysed user move into the scorecard (not just
+        // Spec 06, feed EVERY analysed user move into the scorecard (not just
         // flagged mistakes) so the phase-ACPL aggregates honestly. The motif
         // and severity get back-filled below if this move turns out to be a
         // mistake.
@@ -170,11 +170,11 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
 
           gameCandidates.push({
             id: `${game.url || game.uuid || 'game'}|${i}`,
-            type: 'mistake', // unified puzzle schema (phase 1a) — puzzle.html pins this type
+            type: 'mistake', // unified puzzle schema (phase 1a), puzzle.html pins this type
             fen: fenBefore,
             category,
             brief: `From your ${userColorName.toLowerCase()} game vs ${opponent} (${dateStr}, result ${result}). At move ${fullmove}, you played ${move.san} (${rankText}); engine prefers ${lines[0].san}.`,
-            source: `vs ${opponent} — ${dateStr} — move ${fullmove} (${userColorName})`,
+            source: `vs ${opponent}, ${dateStr}, move ${fullmove} (${userColorName})`,
             gameUrl: game.url || '',
             userColorName,
             opponent,
@@ -200,11 +200,11 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
     const thinned = thinMistakesByWindow(gameCandidates, THINNING_WINDOW);
     // Motif tagging consolidated (2026-06-10, the CLAUDE.md-flagged cleanup):
     // the per-mistake Sonnet call that ran HERE was redundant with the batched
-    // Haiku path — boot.js fires tagAndSaveMistakes() after ingest, which tags
+    // Haiku path, boot.js fires tagAndSaveMistakes() after ingest, which tags
     // everything still untagged in batches of 20 at a fraction of the cost.
     // One classifier, one prompt, faster ingest; tags land seconds later.
     freshMistakes.push(...thinned);
-    // Spec 06 — finalize this game's scorecard now that we know the result
+    // Spec 06, finalize this game's scorecard now that we know the result
     // and have walked all the user's moves. eval_swing derives from the
     // markPhaseEntry('endgame') reading + the result.
     let finalCard = null;
@@ -227,12 +227,12 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
       rating: (typeof userRatingForGame === 'number') ? userRatingForGame : null,
       endTime: game.end_time || null,
     });
-    // Spec 11 — capture the full SAN move list (already in memory) for the
+    // Spec 11, capture the full SAN move list (already in memory) for the
     // game-review replay. Keyed to match the mistake-record join in review.js.
     gameMoves[gameKey] = { moves: history.map((h) => h.san), userIsWhite, result, opponent, dateStr };
-    // Spec 24 — per-game enrichment, already on the game object (~0 cost). Powers
+    // Spec 24, per-game enrichment, already on the game object (~0 cost). Powers
     // the rating trajectory (rated flag filters noise), the accuracy cross-check
-    // (accuracies are present only when a Game Review ran — null otherwise), and
+    // (accuracies are present only when a Game Review ran, null otherwise), and
     // breadth signals (time control, termination). Same idempotent key scheme.
     const acc = game.accuracies || null;
     const userAccuracy = acc ? (userIsWhite ? acc.white : acc.black) : null;
@@ -256,7 +256,7 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
       termination: termination || null,
       oppTermination: oppTermination || null,
     };
-    // Incremental persistence — the bugfix for "sync stopped when I changed page".
+    // Incremental persistence, the bugfix for "sync stopped when I changed page".
     // Persist THIS game now so leaving mid-sync keeps finished games and a re-sync
     // resumes (this game is added to the ingested set → skipped next time).
     if (typeof onGamePersist === 'function') {

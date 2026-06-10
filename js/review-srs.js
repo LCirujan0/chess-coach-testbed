@@ -1,10 +1,9 @@
 /* ============================================================================
- * js/review-srs.js — spaced-repetition scheduling for the mistake deck.
+ * js/review-srs.js, spaced-repetition scheduling for the mistake deck.
  *
  * Pure, dependency-free, node-testable. DERIVES the schedule from the existing
- * attempts store (chess-coach-attempts-v1) — no new key. The point (retention
- * #8 / Woodpecker): re-expose a mistake-pattern just before it's forgotten —
- * failed ones resurface immediately, mastered ones space out — so the daily
+ * attempts store (chess-coach-attempts-v1), no new key. The point (retention
+ * #8 / Woodpecker): re-expose a mistake-pattern just before it's forgotten, * failed ones resurface immediately, mastered ones space out, so the daily
  * "Review" block actually BUILDS retention instead of random re-drilling.
  *
  * Leitner boxes: a clean solve promotes a box; a fail drops back toward 0.

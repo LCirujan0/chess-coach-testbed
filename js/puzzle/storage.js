@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 4 — Storage
+// SECTION 4. Storage
 // ============================================================================
 import {
   STORAGE_KEY_MISTAKES, STORAGE_KEY_ATTEMPTS,
@@ -19,7 +19,7 @@ export function loadPuzzlesFromStorage() {
   if (!Array.isArray(v)) return [];
   // Unified puzzle schema (phase 1a) added a `type` discriminator, and
   // puzzle.html pins its queue to type 'mistake' (queue.js typeFilter). Every
-  // record in the mistakes store is, by definition, a mistake — but ingests
+  // record in the mistakes store is, by definition, a mistake, but ingests
   // that predate the discriminator carry no `type`, so the pinned filter would
   // drop them all (the "mistakes not loading" bug). Stamp it on load so existing
   // data surfaces without a re-ingest. games.html now also stamps it at source.
@@ -62,7 +62,7 @@ export async function refreshRatingFromChessCom() {
     const data = await r.json();
     // Prefer the user's own time control (onboarding profile, v0.80), then the
     // historical default order rapid → blitz → bullet. Chess.com has no live
-    // "classical" pool — that preference maps to rapid (the closest).
+    // "classical" pool, that preference maps to rapid (the closest).
     const pref = (typeof KPProfile !== 'undefined') ? KPProfile.timeControl() : 'rapid';
     const byControl = {
       rapid: data?.chess_rapid?.last?.rating,
@@ -79,7 +79,7 @@ export async function refreshRatingFromChessCom() {
       saveCachedRating(rating);
       console.log('Coach calibrated to Chess.com rating:', rating);
     }
-    // Spec 24 — capture the richer rating profile (peak, RD/settledness, W/L/D
+    // Spec 24, capture the richer rating profile (peak, RD/settledness, W/L/D
     // record, tactics rating) alongside the back-compat user-rating-v1. Each
     // sub-object is null when the API omits that section (a feature never used).
     saveRatingProfile(data);
@@ -88,7 +88,7 @@ export async function refreshRatingFromChessCom() {
   }
 }
 
-// Spec 24 — richer rating profile from the /stats endpoint. Additive companion
+// Spec 24, richer rating profile from the /stats endpoint. Additive companion
 // to chess-coach-user-rating-v1; powers the settledness-aware Insights block and
 // the macro goal-gradient (peak/record). Defensive: every field is optional.
 export function saveRatingProfile(data) {

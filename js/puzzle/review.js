@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 13b — Post-resolution review (arrows, piece hint, comparison)
+// SECTION 13b. Post-resolution review (arrows, piece hint, comparison)
 // ============================================================================
 import { Chess } from './lib.js';
 import { MAX_CP_LOSS_PER_MOVE } from './config.js';
@@ -12,7 +12,7 @@ export function buildViewHistory() {
   const positions = [];
   if (state.attemptHistory.length === 0) return positions;
   const startFen = state.attemptHistory[0].fenBefore;
-  // Starting position — navigable (userPlayed:true), no move highlight, no arrows.
+  // Starting position, navigable (userPlayed:true), no move highlight, no arrows.
   positions.push({ fen: startFen, label: 'Starting position', mover: null, san: null,
     from: null, to: null, userPlayed: true });
   let userIdx = 0;
@@ -42,7 +42,7 @@ export function buildViewHistory() {
         userWasBest: !!(bestUci4 && userUci4 === bestUci4),
       });
     } else {
-      // Engine reply or punishment ply — not navigable (T3).
+      // Engine reply or punishment ply, not navigable (T3).
       positions.push({ fen: tmp.fen(), label, mover: h.mover, san: h.san,
         from: fromSq, to: toSq, userPlayed: false });
     }
@@ -90,12 +90,12 @@ export function annotateForViewIndex() {
   // Determine which viewHistory entry to annotate.
   let entry;
   if (state.viewIndex === null) {
-    // Live / final position — find the last user-move entry in history.
+    // Live / final position, find the last user-move entry in history.
     for (let i = state.viewHistory.length - 1; i >= 0; i--) {
       if (state.viewHistory[i]?.mover === 'user') { entry = state.viewHistory[i]; break; }
     }
   } else if (state.viewIndex === 0) {
-    return;   // starting position — no move yet, no arrows
+    return;   // starting position, no move yet, no arrows
   } else {
     entry = state.viewHistory[state.viewIndex];
   }
@@ -111,18 +111,18 @@ export function annotateForViewIndex() {
   const engineRevealed = solved || sessionFails >= 3;
 
   if (entry.userWasBest) {
-    // User played the engine's best — highlight squares with .user-correct-sq
+    // User played the engine's best, highlight squares with .user-correct-sq
     // instead of a separate arrow (the green board highlight conveys "correct").
     state.correctSquares = { from: entry.arrowUserFrom, to: entry.arrowUserTo };
   } else {
-    // Wrong / sub-optimal move — RED arrow for user's move.
+    // Wrong / sub-optimal move. RED arrow for user's move.
     if (entry.arrowUserFrom && entry.arrowUserTo) {
       state.annotations.push({ type: 'arrow',
         from: entry.arrowUserFrom, to: entry.arrowUserTo,
         color: 'rgba(180, 60, 60, 0.85)',
       });
     }
-    // GREEN arrow for engine's best — only when earned.
+    // GREEN arrow for engine's best, only when earned.
     if (engineRevealed && entry.arrowBestFrom && entry.arrowBestTo) {
       state.annotations.push({ type: 'arrow',
         from: entry.arrowBestFrom, to: entry.arrowBestTo,
@@ -157,7 +157,7 @@ export function escapeHtmlPuzzle(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-// §31 — format the per-move eval change as a pawn delta with a loss-tiered
+// §31, format the per-move eval change as a pawn delta with a loss-tiered
 // colour chip. cpLoss is the centipawns surrendered vs the engine's best (0 for
 // the best move). Pawn change = -(cpLoss/100), one decimal. null cpLoss (move
 // outside the top 5, where loss isn't a finite number) shows an em-free dash.
@@ -207,12 +207,12 @@ export function renderComparison(opts) {
     const cpHtml = (cpLoss != null && cpLoss > 0) ? `<span class="cp-loss-small">−${(cpLoss / 100).toFixed(2)}p</span>` : '';
     const yoursHtml = `${escapeHtmlPuzzle(yours.san)} <span class="rank-badge ${rankClass}">${rankText}</span>${cpHtml}`;
 
-    const engine = (yours.engineBestAtPoint && yours.engineBestAtPoint.san) || '—';
-    // §31 — Eval change column, in pawns, from the player's perspective:
+    const engine = (yours.engineBestAtPoint && yours.engineBestAtPoint.san) || ', ';
+    // §31. Eval change column, in pawns, from the player's perspective:
     //   change = -cpLoss / 100  (a clean move ≈ 0.0; a loss is negative).
     // Coloured by magnitude of loss: ~0 green, mild amber, big red. Sits under
     // the SAME no-spoiler gate as the engine column (col-eval hidden until the
-    // answer is earned) — it is never shown during retries.
+    // answer is earned), it is never shown during retries.
     const evalHtml = evalChangeCell(cpLoss);
     rows.push(`<tr data-move-idx="${i}">
       <td>${i + 1}</td>
@@ -223,7 +223,7 @@ export function renderComparison(opts) {
   }
   const tbody = $('comparison-rows');
   tbody.innerHTML = rows.join('');
-  // Wire click handlers — each row jumps the board to the position before that
+  // Wire click handlers, each row jumps the board to the position before that
   // user move and overlays the user's move (red) + engine's preferred (green).
   // Skip in live mode (no resolved state to jump back to).
   if (!live) {
@@ -288,7 +288,7 @@ function scrollBoardIntoViewOnMobile() {
 }
 
 
-// §30.3 + §30.6 #2 (v0.50) — stop-point reveal. Auto-play the correct move ONCE
+// §30.3 + §30.6 #2 (v0.50), stop-point reveal. Auto-play the correct move ONCE
 // on the board, then leave the green best-move arrow up. Static jump (no slide)
 // per the §30.6 #4 interim until the piece-animation feature lands. The "answer"
 // is the engine's #1 at the FIRST user decision (where the player first went
@@ -322,7 +322,7 @@ export function revealAnswerOnBoard() {
   }, 650);
 }
 
-// Plain-language answer for the result card (§30.3). Truthful and minimal — the
+// Plain-language answer for the result card (§30.3). Truthful and minimal, the
 // move itself, plus the motif when known. We deliberately do NOT fabricate a
 // "wins a pawn, safer king" rationale (no engine prose available here); the AI
 // review explains the why on demand. Returns '' when no best move is known.

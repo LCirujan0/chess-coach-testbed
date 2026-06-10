@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Today</title>
+<title>KnightPath. Today</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/js/coach-stats.js"></script>
 <script src="/js/streak.js"></script>
 <script src="/js/review-srs.js"></script>
@@ -46,15 +46,15 @@
   .session { background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:18px; box-shadow:0 16px 34px -26px rgba(30,40,70,.4); }
   .session .sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
   .session .sh .t { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:15px; }
-  .session .sh .m { font-size:12px; color:var(--muted); font-family:"Spline Sans Mono"; }
+  .session .sh .m { font-size:12px; color:var(--muted); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; }
   .block { display:flex; align-items:center; gap:12px; padding:11px 8px; border-radius:11px; cursor:pointer; text-decoration:none; color:inherit; border:none; background:none; width:100%; text-align:left; font:inherit; }
   .block:hover { background:var(--surface2); }
   .block .ic { width:34px; height:34px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .block .ic svg { width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:1.8; }
   .block .bd { flex:1; min-width:0; } .block .bd b { font-size:13.5px; font-family:"Plus Jakarta Sans"; font-weight:700; } .block .bd small { display:block; color:var(--muted); font-size:11.5px; }
-  .block .ct { font-family:"Spline Sans Mono"; font-size:12px; color:var(--muted); }
+  .block .ct { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:12px; color:var(--muted); }
   .block .go { color:var(--muted); font-size:15px; margin-left:4px; }
-  /* locked "coming soon" rows — never sequenced, never counted */
+  /* locked "coming soon" rows, never sequenced, never counted */
   .coming-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px; }
   .coming-wrap { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
   .block.locked { opacity:.55; cursor:default; }
@@ -104,17 +104,17 @@
   /* error banner (raw error guardrail) */
   .ebanner { background:var(--bad-soft); border:1px solid var(--bad-line); border-radius:12px; padding:13px 15px; margin-top:14px; }
   .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
-  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+  .ebanner .raw { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
 
 
-  /* freeze pill (sits next to the streak chip — supportive, never punitive) */
+  /* freeze pill (sits next to the streak chip, supportive, never punitive) */
   .chip.freeze { background:#EAF1FA; color:#3F6FB0; }
 
   /* session progress (goal-gradient ring + bar) */
   .goalbar { background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:14px 16px; margin-bottom:14px; box-shadow:0 8px 20px -18px rgba(30,40,70,.3); }
   .goalbar .gb-head { display:flex; align-items:center; gap:12px; }
   .gb-ring { width:46px; height:46px; flex-shrink:0; }
-  .gb-ring .gb-ct { font-family:"Spline Sans Mono"; font-size:11px; font-weight:600; fill:var(--ink); }
+  .gb-ring .gb-ct { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:11px; font-weight:600; fill:var(--ink); }
   .gb-main { flex:1; min-width:0; }
   .gb-title { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:13.5px; }
   .gb-lift { font-size:12px; color:var(--accent); font-weight:600; margin-top:1px; }
@@ -122,7 +122,7 @@
   .gb-track { height:8px; border-radius:5px; background:var(--surface3); overflow:hidden; margin-top:11px; }
   .gb-track i { display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .5s cubic-bezier(.16,1,.3,1); }
 
-  /* daily goal control (SDT autonomy — the user picks the tier) */
+  /* daily goal control (SDT autonomy, the user picks the tier) */
   .goalpick { display:flex; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
   .goalpick .gp-lab { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-right:2px; }
   .gp-opt { font-family:"Plus Jakarta Sans"; font-weight:700; font-size:12px; padding:6px 12px; border-radius:var(--r-pill); border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer; }
@@ -166,7 +166,7 @@
   <a href="/practice.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
   <div class="nav-subgroup">
     <a href="/puzzle.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>Puzzles</a>
-    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 3v4l7 4 7-4V3M5 21h14M12 11v10"/></svg>Endgames</a>
+    <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>

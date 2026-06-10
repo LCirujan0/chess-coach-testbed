@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 9 — Board + tap-to-move
+// SECTION 9. Board + tap-to-move
 // ============================================================================
 import { Chess } from './lib.js';
 import { FILES_STD, RANKS_STD, PIECE_IMG, PIECE_GLYPH } from './config.js';
@@ -7,7 +7,7 @@ import { state } from './state.js';
 import { $ } from './dom.js';
 import { animateMoveFLIP } from '/js/board-static.js';
 import { attemptsCount, failedCount, getCurrentPuzzle } from './queue.js';
-// runtime dep — commitAndEvaluate is in grade.js; called from onSquareTap inside a function body
+// runtime dep, commitAndEvaluate is in grade.js; called from onSquareTap inside a function body
 import { commitAndEvaluate } from './grade.js';
 
 export function sideToMoveLabel() { return state.chess.turn() === 'w' ? 'White' : 'Black'; }
@@ -18,7 +18,7 @@ export function renderTitleAndMeta() {
     $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden');
     const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden');
     // New-user funnel (2026-06-10 audit): a zero-puzzle state must offer the
-    // way out — sync games — not a dead end. Injected once, removed on refill.
+    // way out, sync games, not a dead end. Injected once, removed on refill.
     if (!document.getElementById('empty-sync-cta')) {
       const cta = document.createElement('a');
       cta.id = 'empty-sync-cta';
@@ -32,7 +32,7 @@ export function renderTitleAndMeta() {
   }
   const oldCta = document.getElementById('empty-sync-cta'); if (oldCta) oldCta.remove();
   $('side-to-move-title').textContent = sideToMoveLabel() + ' to move.';
-  // §29.4 task prompt ("Find the best move.") removed in v0.51 — it stated the
+  // §29.4 task prompt ("Find the best move.") removed in v0.51, it stated the
   // obvious and added a redundant line above the board. Keep the element hidden.
   const tp = $('task-prompt');
   if (tp) { tp.classList.add('hidden'); }
@@ -52,7 +52,7 @@ export function renderTitleAndMeta() {
 
   const meta = $('puzzle-meta');
   if (state.hasIngestedPuzzles) {
-    // v0.51 — sentence-case meta line: "Puzzle X of Y · <Category> · <Phase>".
+    // v0.51, sentence-case meta line: "Puzzle X of Y · <Category> · <Phase>".
     // Category derives from the puzzle's severity (the per-puzzle source-type
     // signal); Phase from its `category` field (opening/middlegame/endgame).
     // Opponent + date were dropped from this line. Each segment degrades
@@ -88,7 +88,7 @@ export function lastMoveForDisplay() {
 }
 
 // Diff-based board render (v0.13 blink fix). The v0.6 fix swapped innerHTML='' +
-// loop for DocumentFragment + replaceChildren — atomic but still recreates 32
+// loop for DocumentFragment + replaceChildren, atomic but still recreates 32
 // <img> tags on EVERY call. On mobile that reads as blink on tap-to-select
 // because the browser repaints all 32 piece nodes every time. The fix: build
 // the squares + pieces once per FEN change, then for pure UI state changes
@@ -98,12 +98,12 @@ export function lastMoveForDisplay() {
 export function renderBoard() {
   const boardEl = $('board');
   if (!state.chess || !state.orientation) { boardEl.replaceChildren(); state._renderSig = null; return; }
-  // Decide which Chess position to render — live unless ◀ ▶ navigated.
+  // Decide which Chess position to render, live unless ◀ ▶ navigated.
   let renderChess = state.chess;
   if (state.viewIndex !== null && state.viewHistory[state.viewIndex]) {
     try { renderChess = new Chess(state.viewHistory[state.viewIndex].fen); } catch {}
   } else if (state.revealOverlay && state.revealOverlay.fen) {
-    // §30.3 — stop-point answer auto-play paints a transient position.
+    // §30.3, stop-point answer auto-play paints a transient position.
     try { renderChess = new Chess(state.revealOverlay.fen); } catch {}
   }
   const fen = renderChess.fen();
@@ -118,7 +118,7 @@ export function renderBoard() {
     return;
   }
   state._renderSig = staticSig;
-  // Full rebuild path — fragment swap (atomic) for the static parts; soft
+  // Full rebuild path, fragment swap (atomic) for the static parts; soft
   // update right after re-applies the dynamic class layer on the new nodes.
   const board = renderChess.board();
   const frag = document.createDocumentFragment();
@@ -162,7 +162,7 @@ export function renderBoard() {
   boardEl.replaceChildren(frag);
   // Apply the dynamic-state layer (last-move, selected, legal markers, hint).
   softUpdateBoard();
-  // Spec 19 — if this rebuild reflects a just-played move, slide the piece.
+  // Spec 19, if this rebuild reflects a just-played move, slide the piece.
   // Only the live position animates (never ◀▶ navigation or a reveal overlay).
   if (state.animateMove && state.viewIndex === null && !state.revealOverlay) {
     animateMoveFLIP(boardEl, state.animateMove.from, state.animateMove.to);
@@ -170,7 +170,7 @@ export function renderBoard() {
   state.animateMove = null;
 }
 
-// Soft-update path — toggles classes + swaps legal-move markers on the
+// Soft-update path, toggles classes + swaps legal-move markers on the
 // existing 64 squares without recreating any DOM. No piece re-creation, no
 // flicker on tap-to-select / navigate / hint-toggle.
 export function softUpdateBoard() {
@@ -181,10 +181,10 @@ export function softUpdateBoard() {
     sq.classList.toggle('last-move', !!(lastMove && (lastMove.from === square || lastMove.to === square)));
     sq.classList.toggle('selected', state.selectedSquare === square);
     sq.classList.toggle('piece-hint', state.pieceHintSquare === square);
-    // v0.23 — highlight the user's from/to squares when they played the engine's best.
+    // v0.23, highlight the user's from/to squares when they played the engine's best.
     sq.classList.toggle('user-correct-sq', !!(state.correctSquares &&
       (state.correctSquares.from === square || state.correctSquares.to === square)));
-    // Legal-move markers — remove any existing, then add fresh if applicable.
+    // Legal-move markers, remove any existing, then add fresh if applicable.
     const oldMarker = sq.querySelector('.legal-dot, .legal-ring');
     if (oldMarker) oldMarker.remove();
     const moveHere = state.legalMovesFromSelected.find((m) => m.to === square);
@@ -200,11 +200,11 @@ export function softUpdateBoard() {
 }
 
 // ============================================================================
-// §20 — Material balance indicator (FEN-only; no engine, §12-safe).
+// §20. Material balance indicator (FEN-only; no engine, §12-safe).
 // Two rows flank the board: top = captured WHITE pieces (Black's gains),
 // bottom = captured BLACK pieces (White's gains). Net advantage (+N) shows on
 // the leading side's row, suppressed when level. Rows are ALWAYS flex and only
-// their innerHTML changes — never style.display — so a capture can't reflow the
+// their innerHTML changes, never style.display, so a capture can't reflow the
 // board (the v0.41 #8 blink fix). Celtic SVG imgs match the board piece set.
 // ============================================================================
 const MB_STARTING = { p: 8, n: 2, b: 2, r: 2, q: 1 };
@@ -253,7 +253,7 @@ export function renderMaterialBalance() {
 }
 
 // ============================================================================
-// SECTION 8b — Right-click annotations (arrows + circles, Chess.com-style)
+// SECTION 8b. Right-click annotations (arrows + circles, Chess.com-style)
 // ============================================================================
 const ANNO_COLOR = 'rgba(60, 130, 90, 0.85)';
 export function squareToSvgCenter(square) {

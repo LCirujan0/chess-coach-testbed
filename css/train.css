@@ -125,7 +125,7 @@
     font-size: 10px; font-weight: 800;
     letter-spacing: 0.05em; color: #fff;
     margin-left: 4px; vertical-align: middle;
-    font-family: "Spline Sans Mono", monospace;
+    font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;
     background: var(--warn);
   }
 
@@ -333,7 +333,7 @@
 
 /* Material-difference chip (js/material.js) — net on-board advantage. */
 .material-row .mb-piece { width: 18px; height: 18px; display: inline-block; }
-.material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; }
+.material-row .mb-score { margin-left: auto; padding-left: 6px; color: var(--pos); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 12px; font-weight: 600; }
 .material-row .mb-score.mb-even { color: var(--muted); }
 
 /* Shared button variants (used by exercise panels: play-out, primary actions). */

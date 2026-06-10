@@ -25,7 +25,7 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
   if (!ms.length) { outEl.textContent = 'No saved mistakes for this game.'; return; }
   btn.disabled = true; const old = btn.textContent; btn.textContent = 'Reviewing…';
   outEl.textContent = 'Coach is reviewing this game…';
-  // Ground each mistake in its position (FEN) — the game is over, so naming the
+  // Ground each mistake in its position (FEN), the game is over, so naming the
   // better move is the deliverable, not a spoiler. FEN lets the coach speak to
   // the actual position, not just the abstract error record.
   const digest = ms.map((m) => ({ move: m.fullmove, fen: m.fen, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
@@ -38,7 +38,7 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
   const SYS = [
     "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON, each with the position FEN).",
     ratingLine,
-    'The game is OVER — there is no answer to hide. Ground every claim ONLY in the supplied data (positions, moves, cp losses); do not invent moves.',
+    'The game is OVER, there is no answer to hide. Ground every claim ONLY in the supplied data (positions, moves, cp losses); do not invent moves.',
     '',
     'Return ONLY this JSON (no markdown, no fences, no prose outside the object):',
     '{ "lead": "...", "points": [{ "label": "...", "text": "...", "tone": "bad|warn|pos|muted" }], "question": "...", "grounded": "..." }',
@@ -62,7 +62,7 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
 }
 
 // Deterministic §17 fallback when the per-game review call fails or its JSON
-// doesn't parse — keeps Surface 9 structured rather than dropping to raw text.
+// doesn't parse, keeps Surface 9 structured rather than dropping to raw text.
 function reviewFallback(ms) {
   const worst = ms.slice().sort((a, b) => (b.cpLoss || 0) - (a.cpLoss || 0))[0] || {};
   return {
@@ -88,10 +88,10 @@ function wireReviewHandlers() {
   });
 }
 // ============================================================================
-// SECTION 9b — Spec 05 conductor narration (per-game "how you played")
+// SECTION 9b. Spec 05 conductor narration (per-game "how you played")
 // ============================================================================
 
-// §17 card-shaped fallback for Surface 8 — wraps the deterministic reason so the
+// §17 card-shaped fallback for Surface 8, wraps the deterministic reason so the
 // narration stays structured even when the LLM call fails or data is thin.
 function narrativeFallbackCard(d) {
   const ATTR_NAMES = {
@@ -106,7 +106,7 @@ function narrativeFallbackCard(d) {
   const top = d.focus_ranked[0];
   const name = ATTR_NAMES[top.attribute] || top.attribute;
   const points = [{ label: 'Focus', text: `${name} (${top.tier}, scoring ${Math.round(top.score)}/100).`, tone: 'warn' }];
-  if (d.session) points.push({ label: 'Today', text: `${d.session.title} — ${d.session.count} puzzles queued.`, tone: 'muted' });
+  if (d.session) points.push({ label: 'Today', text: `${d.session.title}, ${d.session.count} puzzles queued.`, tone: 'muted' });
   return { lead: 'How you have been playing', points, question: 'What is one idea from this area you could apply in your next game?', grounded: 'Based on your game and puzzle history.' };
 }
 
@@ -129,7 +129,7 @@ async function handleCoachNarrative() {
   out.style.display = 'none';
 
   if (typeof CoachStats === 'undefined') {
-    out.textContent = 'CoachStats module not loaded — refresh the page and try again.';
+    out.textContent = 'CoachStats module not loaded, refresh the page and try again.';
     out.style.display = '';
     btn.disabled = false;
     btn.textContent = 'Coach: how did you play?';
@@ -145,7 +145,7 @@ async function handleCoachNarrative() {
   const view   = CoachStats.computeCoachView({ rating, mistakes, attempts, scorecards, nowMs: Date.now() });
   const digest = CoachStats.buildDigest(view);
 
-  // No games in scorecards yet — skip the LLM call.
+  // No games in scorecards yet, skip the LLM call.
   if (!digest.games || digest.games < 1) {
     renderNarrative(out, narrativeFallbackCard(digest));
     btn.disabled = false;
@@ -153,7 +153,7 @@ async function handleCoachNarrative() {
     return;
   }
 
-  // Prompt A — "how you played": narrate the worst phase/pattern from numbers,
+  // Prompt A. "how you played": narrate the worst phase/pattern from numbers,
   // returned as the §17 card shape (lead + labelled points + reflective
   // question) so Surface 8 renders the same structured card as everywhere else.
   const r = digest.rating || 950;
@@ -198,7 +198,7 @@ async function handleCoachNarrative() {
     renderNarrative(out, parsed);
     btn.textContent = 'Done';
   } catch (err) {
-    // LLM failed — show deterministic structured fallback and re-enable the button.
+    // LLM failed, show deterministic structured fallback and re-enable the button.
     renderNarrative(out, narrativeFallbackCard(digest));
     btn.disabled = false;
     btn.textContent = 'Coach: how did you play?';

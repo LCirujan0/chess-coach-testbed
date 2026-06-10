@@ -8,7 +8,7 @@ import { handleCoachNarrative } from './narrate.js';
 import { initReview, renderReviewList } from './review.js';
 import { tagAndSaveMistakes } from '/js/tagger.js';
 // ============================================================================
-// SECTION 10 — BOOT
+// SECTION 10. BOOT
 // ============================================================================
 
 window.addEventListener('error', (e) => {
@@ -41,7 +41,7 @@ async function handleIngestSubmit(e) {
   $('ingest-btn').disabled = true;
   $('ingest-btn').textContent = 'Analysing…';
   setProgress('Fetching games… keep this page open while it syncs.', 5);
-  // Sync is client-side — it can't continue in the background, so warn before
+  // Sync is client-side, it can't continue in the background, so warn before
   // leaving. Finished games persist incrementally, so a re-sync resumes.
   const warnLeave = (ev) => { ev.preventDefault(); ev.returnValue = ''; return ''; };
   window.addEventListener('beforeunload', warnLeave);
@@ -50,7 +50,7 @@ async function handleIngestSubmit(e) {
     const { mistakes: fresh, perGameSummary, scorecards, moves, meta } = await ingest(username, numGames, depth, (done, total, label) => {
       const pct = total > 0 ? (done / total) * 100 : 0;
       const prefix = label || `Analysing positions`;
-      setProgress(`${prefix} — ${done}/${total} · keep this page open`, pct);
+      setProgress(`${prefix}, ${done}/${total} · keep this page open`, pct);
     }, persistGameIncrementally);
 
     // Persist mistakes (de-duplicated by id).
@@ -61,7 +61,7 @@ async function handleIngestSubmit(e) {
     // Non-blocking: tagging failure must never affect the ingest flow.
     tagAndSaveMistakes().catch(err => console.warn('Tagging failed (non-blocking):', err));
 
-    // Spec 06 — persist this run's per-game scorecards under the new key.
+    // Spec 06, persist this run's per-game scorecards under the new key.
     // Idempotent merge: a re-ingest of the same gameUrl overwrites the older
     // scorecard with the fresh one.
     if (scorecards && Object.keys(scorecards).length) {
@@ -74,7 +74,7 @@ async function handleIngestSubmit(e) {
       catch (e) { console.warn('saveScorecards failed:', e.message); }
     }
 
-    // Spec 11 — persist this run's SAN move lists for the game-review replay.
+    // Spec 11, persist this run's SAN move lists for the game-review replay.
     // Idempotent merge by game key; a re-ingest overwrites the entry.
     if (moves && Object.keys(moves).length) {
       const KEY_MOVES = 'chess-coach-game-moves-v1';
@@ -85,7 +85,7 @@ async function handleIngestSubmit(e) {
       catch (e) { console.warn('saveMoves failed:', e.message); }
     }
 
-    // Spec 24 — persist this run's per-game Chess.com enrichment (rating,
+    // Spec 24, persist this run's per-game Chess.com enrichment (rating,
     // accuracy, rated flag, time control, termination). Same idempotent merge.
     if (meta && Object.keys(meta).length) {
       const KEY_META = 'chess-coach-game-meta-v1';
@@ -127,9 +127,9 @@ async function handleIngestSubmit(e) {
     state.thisRunMistakes = fresh;
     renderMistakeList(fresh, perGameSummary);
     renderSavedStats();
-    renderReviewList(); // Spec 11 — freshly-ingested games become replayable
+    renderReviewList(); // Spec 11, freshly-ingested games become replayable
     setProgress(`Done. ${fresh.length} new mistakes saved across ${perGameSummary.length} game(s). Open Puzzles to review.`, 100, 'ok');
-    // Spec 05 — reveal the on-demand Coach narrative button for this run.
+    // Spec 05, reveal the on-demand Coach narrative button for this run.
     const crp = $('coach-review-panel');
     if (crp) {
       crp.style.display = '';
@@ -150,16 +150,16 @@ async function handleIngestSubmit(e) {
 // local wipe just re-pulls on the next load, so the reset affordance moved to
 // the nav user chip's "Change" action (js/sync.js switchUser), which clears
 // local state as part of switching identity.
-// Spec 02 — backfill motifs for any already-ingested mistakes that don't have
+// Spec 02, backfill motifs for any already-ingested mistakes that don't have
 // a `motif` tag (the existing deck pre-dates the classifier). Idempotent.
 async function handleBackfillMotifs() {
   // Consolidated (2026-06-10): backfill now rides the SAME batched Haiku path
-  // as post-ingest tagging (js/tagger.js → /api/tag) — one classifier, one
+  // as post-ingest tagging (js/tagger.js → /api/tag), one classifier, one
   // prompt, ~10x cheaper than the retired per-mistake Sonnet calls.
   const all = loadMistakes();
   const untagged = all.filter((m) => !m.motif);
   if (!untagged.length) {
-    alert('All ingested mistakes already have a motif tag — nothing to backfill.');
+    alert('All ingested mistakes already have a motif tag, nothing to backfill.');
     return;
   }
   if (!confirm(`Backfill ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} with motif tags?\n\nRuns batched Claude Haiku classification (fractions of a cent).`)) return;
@@ -179,7 +179,7 @@ async function handleBackfillMotifs() {
 $('ingest-form').addEventListener('submit', handleIngestSubmit);
 $('coach-narrative-btn').addEventListener('click', handleCoachNarrative);
 $('backfill-btn').addEventListener('click', handleBackfillMotifs);
-// Wipe this device (v0.80, owner ask): local-only wipe — the Supabase copy
+// Wipe this device (v0.80, owner ask): local-only wipe, the Supabase copy
 // survives, so signing back in restores everything without re-ingesting.
 const wipeBtn = $('wipe-btn');
 if (wipeBtn) wipeBtn.addEventListener('click', () => { if (window.KPSync) window.KPSync.wipeDevice(); });
@@ -193,4 +193,4 @@ initStockfish().catch((err) => {
 });
 renderSavedStats();
 renderSavedGames();
-initReview(); // Spec 11 — render the review list + wire replay controls
+initReview(); // Spec 11, render the review list + wire replay controls

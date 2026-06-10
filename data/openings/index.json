@@ -4,10 +4,10 @@
     {
       "id": "vienna",
       "name": "Vienna Game",
-      "eco": "C25–C29",
+      "eco": "C25, C29",
       "side": "w",
       "file": "vienna.json",
-      "blurb": "A flexible 1.e4 e5 2.Nc3 system for White — quick development, the option of an early f4 gambit, and pressure on f7."
+      "blurb": "A flexible 1.e4 e5 2.Nc3 system for White, quick development, the option of an early f4 gambit, and pressure on f7."
     }
   ]
 }

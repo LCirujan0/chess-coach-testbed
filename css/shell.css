@@ -46,13 +46,23 @@ h1, .page-title, .nav-brand-name, .nav-drawer-title { font-family: "Plus Jakarta
 .nav-drawer-link.active { background: var(--accent); color: #fff; box-shadow: 0 6px 14px -8px var(--accent); }
 .nav-drawer-link .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .nav-drawer-link svg.nav-icon { stroke: currentColor; fill: none; }
+/* Icon micro-interactions (owner 2026-06-10: make icons feel alive): a small
+   springy lift on hover/active. Respects prefers-reduced-motion. */
+.nav-drawer-link .nav-icon, .tab-bar a .tab-icon { transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
+.nav-drawer-link:hover .nav-icon { transform: scale(1.14) rotate(-3deg); }
+.nav-drawer-link.active .nav-icon { transform: scale(1.08); }
+.tab-bar a.active .tab-icon { transform: translateY(-1.5px) scale(1.1); }
+.tab-bar a:active .tab-icon { transform: scale(.92); }
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer-link .nav-icon, .tab-bar a .tab-icon { transition: none; transform: none !important; }
+}
 .nav-drawer-link svg.nav-icon .filldot { fill: currentColor; stroke: none; }
 .nav-drawer-link.coming { color: var(--muted); }
 .nav-drawer-link.secondary { font-size: 13px; padding: 7px 12px; color: var(--muted); }
 .nav-drawer-link.secondary:hover { background: var(--surface2); }
 .nav-drawer-link.secondary.active { background: none; color: var(--accent); box-shadow: none; font-weight: 700; }
 .nav-separator { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
-.version-stamp { margin-top: auto; padding: 10px 12px 4px; font-size: 10px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; letter-spacing: .02em; border-top: 1px solid var(--line); }
+.version-stamp { margin-top: auto; padding: 10px 12px 4px; font-size: 10px; color: var(--muted); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; letter-spacing: .02em; border-top: 1px solid var(--line); }
 .nav-backdrop { position: fixed; inset: 0; background: rgba(15,20,30,.45); z-index: 99; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
 .nav-backdrop.open { opacity: 1; pointer-events: auto; }
 

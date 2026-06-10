@@ -1,8 +1,8 @@
 // ============================================================================
-// js/sync.js — cross-device persistence (v0.78).
+// js/sync.js, cross-device persistence (v0.78).
 // ----------------------------------------------------------------------------
 // Mirrors the SYNC_KEYS subset of localStorage to Supabase (PostgREST, plain
-// fetch — no SDK, no build step), keyed by the user's Chess.com username.
+// fetch, no SDK, no build step), keyed by the user's Chess.com username.
 //
 // Lifecycle:
 //   1. On load: if a username is stored, PULL the user's rows, MERGE them into
@@ -14,18 +14,18 @@
 //      key schedules a debounced push of the CHANGED keys only. This catches
 //      every meaningful event (puzzle resolved → attempts, session done →
 //      complete-flag + streak, endgame result, SRS review) without touching
-//      the call sites — inline page scripts and modules alike.
+//      the call sites, inline page scripts and modules alike.
 //   3. On pagehide/hidden: flush pending pushes (fetch keepalive, skipped for
-//      oversized payloads — the next load's pull/merge/push covers those).
+//      oversized payloads, the next load's pull/merge/push covers those).
 //
 // Conflict rules (device A vs device B):
-//   streak    — higher `current` wins; longest/freezes = max; day lists union.
-//   attempts  — union of puzzle ids; per id the later `lastAt` wins.
-//   mistakes  — union by id (records are effectively immutable once ingested).
-//   session   — today's plan beats a stale one; both-today → more progress wins.
+//   streak, higher `current` wins; longest/freezes = max; day lists union.
+//   attempts, union of puzzle ids; per id the later `lastAt` wins.
+//   mistakes, union by id (records are effectively immutable once ingested).
+//   session, today's plan beats a stale one; both-today → more progress wins.
 //   maps with per-entry timestamps (openings SRS, eg-results, recognition seen,
-//   tags) — union; per entry the later timestamp wins. Counters (recognition
-//   byType) — max per counter. Everything else — remote wins on pull.
+//   tags), union; per entry the later timestamp wins. Counters (recognition
+//   byType), max per counter. Everything else, remote wins on pull.
 //
 // Identity: no auth, by design (see learnings v0.6 password-gate removal).
 // First load shows a non-blocking banner asking for the Chess.com username;
@@ -44,8 +44,8 @@ const HEADERS = {
   apikey: SUPABASE_PUBLISHABLE_KEY,
   Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
 };
-const RELOAD_GUARD_KEY = 'kp-sync-reloaded-at';   // sessionStorage — never reload twice in 15s
-const DISMISS_KEY = 'kp-sync-prompt-dismissed';   // sessionStorage — "Not now" lasts the tab session
+const RELOAD_GUARD_KEY = 'kp-sync-reloaded-at';   // sessionStorage, never reload twice in 15s
+const DISMISS_KEY = 'kp-sync-prompt-dismissed';   // sessionStorage. "Not now" lasts the tab session
 const KEEPALIVE_BODY_LIMIT = 60000;               // fetch keepalive bodies are capped at 64KB
 
 const status = { state: 'idle', lastError: null, lastPushAt: null, lastPullAt: null };
@@ -55,7 +55,7 @@ let pushing = false;
 
 // ---------- small utils ----------
 function getRaw(key) { try { return localStorage.getItem(key); } catch { return null; } }
-function setRaw(key, raw) { try { localStorage.setItem(key, raw); } catch { /* quota — non-fatal */ } }
+function setRaw(key, raw) { try { localStorage.setItem(key, raw); } catch { /* quota, non-fatal */ } }
 function parseRaw(raw) { if (raw == null) return null; try { return JSON.parse(raw); } catch { return null; } }
 function ser(v) { return v == null ? null : JSON.stringify(v); }
 function todayKey() {
@@ -169,7 +169,7 @@ function mergeKey(key, local, remote) {
       return (isObj(local) && isObj(remote)) ? (msOf(remote.updatedAt) >= msOf(local.updatedAt) ? remote : local) : (remote ?? local);
     case 'chess-coach-game-scorecards-v1':
     case 'chess-coach-game-meta-v1':
-      // Per-game records are immutable once written — plain union by game key.
+      // Per-game records are immutable once written, plain union by game key.
       return (isObj(local) && isObj(remote)) ? { ...remote, ...local } : (remote ?? local);
     case 'chess-coach-openings-v1': return mergeByEntryTime(local, remote, (c) => msOf(c && c.lastSeen));
     case 'chess-coach-eg-results-v1': return mergeByEntryTime(local, remote, (e) => msOf(e && e.lastAt));
@@ -209,7 +209,7 @@ async function push(username, { keepalive = false } = {}) {
   const rows = [];
   for (const { key, raw } of dirty) {
     const value = parseRaw(raw);
-    if (value == null && raw !== 'null') continue; // unparseable — skip, never crash
+    if (value == null && raw !== 'null') continue; // unparseable, skip, never crash
     rows.push({ username, key, value });
   }
   if (!rows.length) return true;
@@ -232,7 +232,7 @@ function schedulePush() {
   pushTimer = setTimeout(flush, SYNC_DEBOUNCE_MS);
 }
 // Bulk writers (the onboarding ingest) suspend the event-push so 20 games
-// don't trigger 20 ever-growing uploads — one flush when they finish.
+// don't trigger 20 ever-growing uploads, one flush when they finish.
 let pushSuspended = false;
 function suspendPush(on) {
   pushSuspended = !!on;
@@ -250,7 +250,7 @@ async function flush(opts) {
   finally { pushing = false; }
 }
 
-// Track whether the user has started doing something on this page — an
+// Track whether the user has started doing something on this page, an
 // auto-reload is invisible right after load but hostile mid-interaction
 // (v0.80 cross-device UX audit: a reload could swallow a click/typing).
 let userInteracted = false;
@@ -265,10 +265,10 @@ function maybeReload(localChanged) {
     if (userInteracted) { showUpdatedToast(); return; }
     sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
     window.location.reload();                  // inline scripts re-read the merged stores
-  } catch { /* sessionStorage unavailable — skip the reload, state is still merged */ }
+  } catch { /* sessionStorage unavailable, skip the reload, state is still merged */ }
 }
 
-// Mid-interaction merge: never yank the page away — offer the refresh instead.
+// Mid-interaction merge: never yank the page away, offer the refresh instead.
 function showUpdatedToast() {
   if (document.getElementById('kp-sync-toast') || !document.body) return;
   const el = document.createElement('div');
@@ -320,10 +320,10 @@ async function syncOnLoad() {
 // Conventions note (logged in docs/learnings.md v0.78): CLAUDE.md routes
 // persistence through js/puzzle/storage.js, but in practice the inline page
 // scripts, streak.js, playout.js, openings/srs.js etc. all write localStorage
-// directly — so wrapping storage.js alone would miss the streak and session
+// directly, so wrapping storage.js alone would miss the streak and session
 // events the feature exists for. Wrapping setItem once catches them all
 // without touching any call site. Writes to non-synced keys are untouched.
-// NOTE: the hook must go on Storage.prototype — Storage instances intercept
+// NOTE: the hook must go on Storage.prototype. Storage instances intercept
 // property sets (assigning localStorage.setItem stores an ITEM named "setItem"
 // instead of shadowing the method), so an instance-level patch silently no-ops.
 function installWriteHook() {
@@ -355,7 +355,7 @@ function showQuotaWarning() {
   el.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:400;' +
     'background:var(--bad,#D2553F);color:#fff;font:600 12.5px Inter,system-ui,sans-serif;' +
     'padding:10px 16px;border-radius:12px;box-shadow:0 10px 26px -10px rgba(0,0,0,.4);max-width:90vw;';
-  el.textContent = 'This device’s storage is full — your latest progress may not have saved locally. Synced data is safe in the cloud.';
+  el.textContent = 'This device’s storage is full, your latest progress may not have saved locally. Synced data is safe in the cloud.';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 12000);
 }
@@ -379,16 +379,16 @@ function enforceOnboardingGate() {
 // ---------- nav user chip (who am I + change user) ----------
 // Switching users on a shared device MUST clear local chess-coach-* state
 // first: otherwise the next pull would merge user A's attempts into user B's
-// cloud rows. The old data is safe — it lives under A's username in Supabase
+// cloud rows. The old data is safe, it lives under A's username in Supabase
 // and comes back the moment A's name is entered again. (This also replaces
-// games.html's old "clear all data" button — owner call, 2026-06-10.)
+// games.html's old "clear all data" button, owner call, 2026-06-10.)
 function switchUser(mode) {
   const current = getUsername();
   const msg = (mode === 'wipe')
-    ? 'Wipe this device? Your training data is cleared locally only — everything stays safely synced to ' +
+    ? 'Wipe this device? Your training data is cleared locally only, everything stays safely synced to ' +
       (current ? `“${current}”` : 'your username') + ' and comes back the moment you sign in again. No games need re-analysing.'
     : (current ? `Signed in as ${current}. ` : '') +
-      'Switch user? This clears this device’s local training data — it stays safely synced to the current username and returns when that name is entered again.';
+      'Switch user? This clears this device’s local training data, it stays safely synced to the current username and returns when that name is entered again.';
   if (!window.confirm(msg)) return;
   try {
     const toRemove = [];
@@ -408,18 +408,38 @@ function renderUserChip() {
   if (!drawer || document.getElementById('kp-user-chip')) return;
   const username = getUsername();
   if (!username) return; // anonymous never reaches a shell page (onboarding gate)
+  // Redesign (owner feedback 2026-06-10): gradient avatar with the user's
+  // initial, name + a quiet "Synced" status line, and a subtle swap icon
+  // instead of a bare text link. Same visual family as the coach avatar.
+  const initial = username.charAt(0).toUpperCase();
   const el = document.createElement('div');
   el.id = 'kp-user-chip';
-  el.innerHTML = `<span class="kp-u-name" title="Progress syncs to this Chess.com username">♞ ${username}</span><button type="button" class="kp-u-change">Change</button>`;
+  el.title = 'Progress syncs to this Chess.com username';
+  el.innerHTML = `
+    <span class="kp-u-ava" aria-hidden="true">${initial}</span>
+    <span class="kp-u-id"><span class="kp-u-name">${username}</span><span class="kp-u-sub"><i></i>Synced</span></span>
+    <button type="button" class="kp-u-change" aria-label="Switch user" title="Switch user (clears this device; your data stays in the cloud)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+    </button>`;
   const style = document.createElement('style');
   style.textContent = `
-    #kp-user-chip{display:flex;align-items:center;gap:8px;margin:10px 14px 0;padding:8px 10px;
-      border:1px solid var(--line,rgba(0,0,0,.1));border-radius:var(--r-btn,12px);background:var(--surface,#fff);}
-    #kp-user-chip .kp-u-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-      font-size:12px;font-weight:700;color:var(--ink,#1B1D22);}
-    #kp-user-chip .kp-u-change{border:none;background:none;padding:2px 4px;cursor:pointer;
-      font:inherit;font-size:11px;font-weight:700;color:var(--accent,#2F9E76);}
-    #kp-user-chip .kp-u-signin{flex:1;text-align:left;font-size:12px;}
+    #kp-user-chip{display:flex;align-items:center;gap:9px;margin:10px 12px 0;padding:8px 9px;
+      border:1px solid var(--line,rgba(0,0,0,.1));border-radius:var(--r-panel,14px);background:var(--surface2,#F2F4F7);}
+    #kp-user-chip .kp-u-ava{flex-shrink:0;width:28px;height:28px;border-radius:9px;
+      background:linear-gradient(140deg,var(--accent,#2F9E76),var(--accent-2,#5FB58F));color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Plus Jakarta Sans','Inter',sans-serif;font-weight:800;font-size:13px;
+      box-shadow:0 3px 8px -3px var(--accent,#2F9E76);}
+    #kp-user-chip .kp-u-id{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;}
+    #kp-user-chip .kp-u-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink,#1B1D22);}
+    #kp-user-chip .kp-u-sub{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--muted,#666A73);}
+    #kp-user-chip .kp-u-sub i{width:5px;height:5px;border-radius:50%;background:var(--pos,#1F9D57);}
+    #kp-user-chip .kp-u-change{flex-shrink:0;width:26px;height:26px;border:none;border-radius:8px;
+      background:none;color:var(--muted,#666A73);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:color .15s ease,background-color .15s ease;}
+    #kp-user-chip .kp-u-change svg{width:14px;height:14px;}
+    #kp-user-chip .kp-u-change:hover{color:var(--accent,#2F9E76);background:var(--surface,#fff);}
   `;
   document.head.appendChild(style);
   const stamp = drawer.querySelector('.version-stamp');
@@ -442,12 +462,12 @@ if (!enforceOnboardingGate()) {
   syncOnLoad();
 }
 
-// Debug/console handle — not a second store, just a window into the sync layer.
+// Debug/console handle, not a second store, just a window into the sync layer.
 // wipeDevice = the "wipe all my data" affordance (games/review pages + user
 // chip): clears LOCAL chess-coach-* state only; the Supabase copy survives, so
 // re-entering the username restores everything without re-ingesting.
 window.KPSync = { status, flush, syncOnLoad, getUsername, wipeDevice: () => switchUser('wipe'), suspendPush };
 
 // Exported for the qa/scripts/sync-merge-check harness (browser import via
-// Playwright — node can't import this module because of the top-level DOM use).
+// Playwright, node can't import this module because of the top-level DOM use).
 export { mergeKey };

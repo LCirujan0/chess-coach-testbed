@@ -1,5 +1,5 @@
 // ============================================================================
-// playout.js — entry-point module for endgames.html (Phase 1b)
+// playout.js, entry-point module for endgames.html (Phase 1b)
 // ============================================================================
 // Handles the endgame play-out trainer. Loads endgame lessons from
 // state.puzzles (merged in by boot.js Phase 1a), initialises Stockfish via
@@ -25,14 +25,14 @@ import { initStockfishWorker, analyzePositionFast, normalizeEval, orientationFor
 import { refreshSessionWrap } from '/js/session-wrap.js';
 import { onItemResolved } from './resolved.js';
 
-// ── Session mode (Spec 21 — endgame play-out folded into the session host) ──
+// ── Session mode (Spec 21, endgame play-out folded into the session host) ──
 // When launched from a Today session via ?session=today&block=endgames, the
 // play-out trainer renders the persistent session-wrap bar, scopes its lessons
 // to this block's ids (in plan order), and routes every play-out result
 // through the shared onItemResolved callback so attempt + result counting
 // matches the mistake + recognition types. Mirrors classify.js's recognition
 // fold. Engine + worker are unchanged (the shared depth-9 worker via
-// initStockfishWorker — NO new Worker).
+// initStockfishWorker. NO new Worker).
 const SESS = (() => {
   try {
     const q = new URLSearchParams(window.location.search);
@@ -90,7 +90,7 @@ function setStatus(text) {
 
 function $ (id) { return document.getElementById(id); }
 
-// ── Coarse pawns eval bar (Spec 21 §2.1 endgame interim — §31). Shows the
+// ── Coarse pawns eval bar (Spec 21 §2.1 endgame interim, §31). Shows the
 // trainee-perspective eval as one-decimal pawns ("+3.4"). No-spoiler: the bar
 // shows only the running eval magnitude, never the engine's move or line.
 // `cp` is the trainee-perspective centipawn eval (mate clamped by normalizeEval
@@ -248,7 +248,7 @@ async function handlePlayOutMove() {
 
   // Analyse after trainee move (from opponent perspective → flip for trainee)
   let line = await analyzePositionFast(state.chess.fen(), PLAYOUT_DEPTH);
-  if (!line) { setStatus('Engine error — please retry.'); po.phase = 'playing'; return; }
+  if (!line) { setStatus('Engine error, please retry.'); po.phase = 'playing'; return; }
 
   // traineeEval: opponent's eval negated = trainee's eval
   const evalCp = -normalizeEval(line.eval);
@@ -258,11 +258,11 @@ async function handlePlayOutMove() {
   // Game over after trainee move?
   if (state.chess.isGameOver()) {
     if (state.chess.isCheckmate()) {
-      showVerdict(lesson, 'pass', 'Checkmate — clean finish.');
+      showVerdict(lesson, 'pass', 'Checkmate, clean finish.');
     } else {
       const isDrawLesson = lesson.result === 'draw';
       showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
-        isDrawLesson ? 'Draw secured.' : 'Stalemate or draw — win slipped.');
+        isDrawLesson ? 'Draw secured.' : 'Stalemate or draw, win slipped.');
     }
     return;
   }
@@ -297,11 +297,11 @@ async function handlePlayOutMove() {
   if (state.chess.isGameOver()) {
     if (state.chess.isCheckmate()) {
       showVerdict(lesson, 'fail',
-        lesson.result === 'draw' ? 'Checkmated — draw lost.' : 'Checkmated — win turned into a loss.');
+        lesson.result === 'draw' ? 'Checkmated, draw lost.' : 'Checkmated, win turned into a loss.');
     } else {
       const isDrawLesson = lesson.result === 'draw';
       showVerdict(lesson, isDrawLesson ? 'pass' : 'fail',
-        isDrawLesson ? 'Draw secured.' : 'Stalemate — win escaped.');
+        isDrawLesson ? 'Draw secured.' : 'Stalemate, win escaped.');
     }
     return;
   }
@@ -322,10 +322,10 @@ async function handlePlayOutMove() {
 
 function verdictDetail(lesson, verdict) {
   if (verdict === 'pass') {
-    return lesson.result === 'win' ? 'Won it — clean conversion.' : 'Drew it — held under pressure.';
+    return lesson.result === 'win' ? 'Won it, clean conversion.' : 'Drew it, held under pressure.';
   }
   if (po.failMoveNum) return 'Lost the win at move ' + po.failMoveNum + '.';
-  return lesson.result === 'win' ? 'Win slipped — eval dropped too low.' : 'Draw lost — position became too bad.';
+  return lesson.result === 'win' ? 'Win slipped, eval dropped too low.' : 'Draw lost, position became too bad.';
 }
 
 // ── Verdict display ────────────────────────────────────────────────────────
@@ -335,11 +335,11 @@ function showVerdict(lesson, verdict, detail) {
   const clean = passed && !po.usedTechnique;
   saveResult(lesson.id, passed, clean);
 
-  // Spec 21 — in a Today session, route the result through the single
+  // Spec 21, in a Today session, route the result through the single
   // onItemResolved callback so the persistent bar + session counts pick up this
   // attempt (done) and its outcome (correct = pass). saveResult() above has
   // already stamped lastAt/lastResult in chess-coach-eg-results-v1, which the
-  // resolved-this-session recompute reads — so this only triggers the bar
+  // resolved-this-session recompute reads, so this only triggers the bar
   // refresh + block done/correct recompute (no extra domain write).
   if (SESS) {
     onItemResolved({
@@ -350,6 +350,21 @@ function showVerdict(lesson, verdict, detail) {
       clean: clean,
       chosen: null,
     });
+    // Owner bug fix (2026-06-10, "the endgames block never finishes"): the
+    // block previously completed ONLY via Next on the last lesson index, so
+    // finishing the lessons in any other order stranded the player in an
+    // endless lesson loop. Now: the moment every block id is resolved this
+    // session, return to the session screen (short beat so the verdict reads).
+    try {
+      const ids = sessionBlockIds();
+      if (ids.length) {
+        const plan = JSON.parse(localStorage.getItem('chess-coach-session-v1') || 'null');
+        const sinceMs = (plan && plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
+        const eg = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {};
+        const allDone = ids.every((id) => eg[id] && typeof eg[id].lastAt === 'number' && eg[id].lastAt >= sinceMs);
+        if (allDone) setTimeout(() => { window.location.href = '/session.html'; }, 1400);
+      }
+    } catch { /* never block the verdict */ }
   }
 
   const vc = $('verdict-card');
@@ -365,8 +380,8 @@ function showVerdict(lesson, verdict, detail) {
   const vd = $('verdict-detail');
   if (vd) {
     vd.textContent = detail
-      + (clean ? ' Clean — counts toward mastery.'
-        : passed && po.usedTechnique ? ' Passed (technique shown — not clean).' : '');
+      + (clean ? ' Clean, counts toward mastery.'
+        : passed && po.usedTechnique ? ' Passed (technique shown, not clean).' : '');
   }
   const retryBtn = $('retry-btn');
   if (retryBtn) retryBtn.disabled = false;
@@ -588,7 +603,7 @@ async function boot() {
   }
 
   if (SESS) {
-    // Session mode — scope to this block's ids in plan order (the persistent
+    // Session mode, scope to this block's ids in plan order (the persistent
     // bar counts these), and render the bar. The exit chip returns to the
     // session screen so the wrapper stays consistent with the other types.
     const blockIds = sessionBlockIds();

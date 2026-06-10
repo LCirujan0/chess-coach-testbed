@@ -1,6 +1,6 @@
 import { SEVERITY_THRESHOLDS } from './config.js';
 // ============================================================================
-// SECTION 7 — CATEGORIZATION
+// SECTION 7. CATEGORIZATION
 // ----------------------------------------------------------------------------
 // opening:    fullmove <= 15
 // endgame:    no queens on the board OR fullmove >= 35

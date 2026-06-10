@@ -1,5 +1,5 @@
 /* ============================================================================
- * js/profile.js — the user's training profile (v0.80, onboarding).
+ * js/profile.js, the user's training profile (v0.80, onboarding).
  *
  * WHAT: the user's own answers about their chess ambitions, captured once
  * during onboarding and used to tailor the whole app:
@@ -10,9 +10,9 @@
  *   - targetElo() replaces the hardcoded 1500 in rings/bars/coach prompts.
  *   - timeControl() drives which Chess.com rating is preferred.
  *   - seriousness seeds chess-coach-daily-goal-v1 at onboarding (so Today
- *     never has to ask again — the picker remains for changing it).
+ *     never has to ask again, the picker remains for changing it).
  *
- * Storage: chess-coach-profile-v1 — SYNCED (config.js SYNC_KEYS; merge =
+ * Storage: chess-coach-profile-v1. SYNCED (config.js SYNC_KEYS; merge =
  * newer updatedAt), so the profile lives in Supabase per the owner ask.
  * Window-global pattern (like CoachStats): modules read via typeof guard.
  * ==========================================================================*/
@@ -47,9 +47,9 @@
     return s;
   }
 
-  // The user's target rating — every "to 1500" surface should call this.
+  // The user's target rating, every "to 1500" surface should call this.
   function targetElo() { var p = read(); return p.eloGoal || DEFAULT_TARGET; }
-  // Preferred time control ('rapid' default — the app's historical primary).
+  // Preferred time control ('rapid' default, the app's historical primary).
   function timeControl() { return read().timeControl || 'rapid'; }
 
   // One line for coach system prompts: the goal in the student's own words.

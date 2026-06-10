@@ -1,7 +1,7 @@
 import { STORAGE_KEY_MISTAKES, STORAGE_KEY_INGESTED_GAMES } from './config.js';
 import { $ } from './dom.js';
 // ============================================================================
-// SECTION 4 — STORAGE
+// SECTION 4. STORAGE
 // ============================================================================
 
 function loadMistakes() {
@@ -46,8 +46,7 @@ function renderSavedStats() {
 }
 
 // Persist ONE game's results as it finishes (called per-game from ingest) so a
-// mid-sync navigation keeps finished games and a re-sync resumes. Best-effort —
-// every step is guarded so a storage hiccup never breaks the run. Moved here
+// mid-sync navigation keeps finished games and a re-sync resumes. Best-effort, // every step is guarded so a storage hiccup never breaks the run. Moved here
 // from boot.js (v0.80) so onboarding.html can reuse the pipeline without the
 // games-page DOM wiring.
 function persistGameIncrementally(g) {
@@ -76,7 +75,7 @@ function persistGameIncrementally(g) {
   }
   if (g.gameUrl) { try { const set = loadIngestedGameUrls(); set.add(g.gameUrl); saveIngestedGameUrls(set); } catch (e) {} }
   // Storage cap (2026-06-10 audit): keep the most recent 100 games' move
-  // lists. Ordered by the game's actual endTime from the meta store — NOT
+  // lists. Ordered by the game's actual endTime from the meta store. NOT
   // insertion order, which is newest-first during an ingest run and would
   // evict the wrong end (v0.80 review fix).
   try {

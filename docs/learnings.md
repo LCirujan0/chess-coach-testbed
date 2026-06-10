@@ -4,6 +4,36 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.81 — Owner QA feedback batch: brand polish, session-flow fixes, Board Vision overhaul (STAGED) (2026-06-10)
+
+Everything from the owner's first hands-on pass over v0.78-v0.80, plus two new hard rules.
+
+**Two new project rules (CLAUDE.md 12 + 13):**
+- **No em or en dashes anywhere in user-facing copy or coach output.** `qa/scripts/purge-emdash.cjs` swept 1,584 of them out of 76 files (HTML, JS strings, the hand-authored data files); the heuristic turns a spaced dash into a period before a capital, a comma otherwise. `sanitiseCoachText` remains the last line of defence on model output.
+- **The version stamp is the number only** (`APP_VERSION = 'v0.81'`); the story lives here, never in the stamp.
+
+**Brand font retired.** The mono data face was the owner's "off-brand font" sighting (session rail, stat numbers). All 51 declarations across 17 files now resolve to Inter; `--font-mono` is kept as a token but maps to Inter + `font-variant-numeric: tabular-nums` so number columns still align. Dropped from the Google Fonts request on all pages. design-system.md updated: never reintroduce a monospace face.
+
+**Session tracker + flow (the owner's strongest feedback):**
+- **The current pip is no longer green.** A solid accent pip read as "already done"; current is now a hollow pip with an accent ring (gentle pulse, reduced-motion safe) in both the session rail and the in-block bar. Done stays accent, outcomes stay green/amber/red.
+- **The "Drill" mode pill is gone** from the tracker (it meant nothing to the user).
+- **Focus mode:** while a Today block is active, the solving surface hides its open-queue chrome (filters, theme panel, drill banner) via `body.kp-focus`, so there is nothing to wander off into mid-block.
+- **Completed items never re-serve.** The session queue orders unresolved-this-session first (re-entering a block lands you on real work), and the open Drill queue now serves unsolved puzzles before solved ones.
+- **The endgames block could never finish** unless you happened to press Next while sitting on the last lesson index; finishing the lessons in any other order looped forever (the owner's "stuck on endgames" bug). The block now auto-returns to the session screen the moment every block id is resolved this session.
+
+**Board Vision overhaul (owner's full critique):**
+- In-square coordinates are hidden on the BV board: the labels literally spelled out Coordinate Snap's answers.
+- A "White's view" chip answers "am I playing black or white" (all drills are white-perspective).
+- Prompts are visual: square references render as accent chips; Coordinate Snap's target square is the big centered element; the tracker's count question got the same panel header + formatting as the moves card.
+- **60-second blitz** for Coordinate Snap + Knight Vision: as many as possible in 60s, per-mode best marks persisted (`bests` in the BV key), and a banded reference (Getting started / Solid club level / Strong / Lightning) so a mark means something.
+- **No repeated questions within a run** (a per-run seen-set; the owner hit a repeat inside 5 reps) and **Piece Walk levels** (chain length 2 -> 3 -> 4, 80% to advance, procedurally unlimited distinct questions per level).
+
+**Other owner items:** onboarding continue button centered; onboarding insights now open with a **phase strip** (opening/middlegame/endgame, each with an estimated ELO via the calibrated ACPL anchors, strongest highlighted) and close with **"openings you play most"** (top 3 with counts + score); the nav user chip redesigned (gradient initial avatar, name + Synced status line, swap icon); recognition's W/D/L buttons joined the canonical button family with tone dots and the side-to-move label became a prominent "You judge for White (to move)" pill with a colour swatch (it was an 11px whisper, and the em-dash purge had also corrupted its placeholder); **all 20 endgame technique explanations rewritten** as 3-5 sentence methods (the move order + the classic trap; `qa/scripts/enrich-endgame-techniques.cjs`); coach avatars show a knight glyph instead of a bare "C"; the endgames nav icon (the goblet) is now a chess king; nav/tab icons get a springy hover/active micro-interaction; Game Review gained a visual position track with mistake markers along it; **piece animation** is distance-aware with a mid-flight lift (Web Animations API, FLIP fallback, reduced-motion safe) to kill the robotic feel.
+
+**Scoped, not built:** calculation drills, spec'd at `../../engineering/specs/25-calculation-drills.md` (two v1 formats reusing the Board Vision scaffolding; ~2 days; three open questions for the owner).
+
+---
+
 ## v0.80 — Onboarding + chess.com insights + per-type help + profile tailoring (STAGED) (2026-06-10)
 
 The second owner batch of the day. Verified end-to-end in the preview with a REAL account (hikaru: 20 games ingested at depth 12, 68 mistakes captured, every step driven live).

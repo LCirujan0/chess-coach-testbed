@@ -25,7 +25,7 @@
 .op-card-bd { flex: 1; min-width: 0; }
 .op-card-bd b { font-weight: 700; display: block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: 14px; }
 .op-card-bd small { color: var(--muted); font-size: 12px; line-height: 1.45; display: block; margin: 2px 0 4px; }
-.op-card-meta { font-family: "Spline Sans Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+.op-card-meta { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size: 11px; color: var(--muted); }
 .op-card-go { flex: none; color: var(--muted); font-size: 18px; }
 
 .op-due { font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #fff; background: var(--accent); padding: 1px 7px; border-radius: var(--r-pill); margin-left: 4px; vertical-align: middle; }
@@ -54,7 +54,7 @@
 /* ---- drill runner: head + right-rail panels (board/controls = shared) ---- */
 .op-drill-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .op-line-name { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 17px; min-width: 0; }
-.op-progress { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; flex: none; }
+.op-progress { font-size: 13px; color: var(--muted); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; flex: none; }
 
 .op-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px 16px; box-shadow: 0 8px 22px -16px rgba(30,40,70,.3); }
 .op-prompt { font-size: 15px; line-height: 1.5; }

@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 13 — Coach (Ask + Hint + Auto-explanation)
+// SECTION 13. Coach (Ask + Hint + Auto-explanation)
 // ============================================================================
 import { TRAINING_COMPONENTS, DEFAULT_RATING, RATING_TARGET } from './config.js';
 import { state } from './state.js';
@@ -8,19 +8,19 @@ import { summaryAsText, evalAsHuman } from './engine.js';
 import { getCurrentPuzzle } from './queue.js';
 
 const STYLE_RULES = [
-  'WRITING STYLE — read carefully:',
+  'WRITING STYLE, read carefully:',
   '- Conversational. Talk like a friendly coach sitting next to the player, not a textbook.',
   '- Brief. Default to 1 to 3 short sentences. Never pad.',
   '- Use piece names (rook, knight, etc.). Square coordinates only when needed for precision.',
   '- Replace symbols: "with check" not "+", "checkmate" not "#".',
   '- Never use UCI like e2e4.',
-  '- NO em dashes (—) or en dashes (–). Use commas, full stops, or parentheses instead.',
+  '- NO em dashes (, ) or en dashes (, ). Use commas, full stops, or parentheses instead.',
   '- NO markdown formatting. NO ** for bold, NO * for emphasis, NO bullet lists, NO headers. Plain prose only.',
   '- NO filler openers like "Great job!" or "Let me explain". Just say the thing.',
   '- Address the player as "you", in second person.',
 ].join('\n');
 
-// Calibration block — included in every coach system prompt so the coach
+// Calibration block, included in every coach system prompt so the coach
 // speaks to the actual level of the student.
 export function calibrationBlock() {
   const r = state.userRating || DEFAULT_RATING;
@@ -29,7 +29,7 @@ export function calibrationBlock() {
   const target = (typeof KPProfile !== 'undefined') ? KPProfile.targetElo() : RATING_TARGET;
   const profileLine = (typeof KPProfile !== 'undefined') ? KPProfile.promptLine() : '';
   return [
-    'PLAYER LEVEL — CALIBRATE TO THIS:',
+    'PLAYER LEVEL. CALIBRATE TO THIS:',
     `- The student is rated approximately ${r} ELO on Chess.com (rapid). Target: ${target}.${profileLine}`,
     `- Pitch feedback at the ${r}-rated band: concrete patterns, basic tactical motifs (pins, forks, skewers, removing defenders, back-rank), simple king-safety ideas, fundamental endgame technique.`,
     '- AVOID jargon and concepts that don\'t pay off below 1500: minority attack, Carlsbad structure, prophylactic restraint, Maroczy bind, prophylaxis as a labelled concept, deep strategic plans more than 3 moves long.',
@@ -40,13 +40,13 @@ export function calibrationBlock() {
 
 const COACHING_RULES = [
   'ABSOLUTE RULES while the puzzle is unresolved (no exceptions):',
-  '1. NEVER name a move in ANY notation — no SAN ("Bd3", "Nf6+"), no UCI ("e2e4"), no plain-English equivalent ("play the knight to f6", "develop the bishop forward").',
-  '2. NEVER name a destination square anywhere in your reply ("targets d3", "goes to e8", "the right square is f7" — all forbidden).',
+  '1. NEVER name a move in ANY notation, no SAN ("Bd3", "Nf6+"), no UCI ("e2e4"), no plain-English equivalent ("play the knight to f6", "develop the bishop forward").',
+  '2. NEVER name a destination square anywhere in your reply ("targets d3", "goes to e8", "the right square is f7", all forbidden).',
   '3. NEVER name the piece that should move ("your dark-squared bishop should go forward" is forbidden).',
-  '4. NEVER state an evaluation in centipawns or pawns ("+1.5", "winning", "losing by a piece") — the player has not earned that information yet.',
-  '5. NEVER name the tactical motif of the position ("there is a fork here", "it is a pin", "back-rank weakness") — even if the player asks. Asking is normal; revealing the motif IS the answer for tactics puzzles.',
+  '4. NEVER state an evaluation in centipawns or pawns ("+1.5", "winning", "losing by a piece"), the player has not earned that information yet.',
+  '5. NEVER name the tactical motif of the position ("there is a fork here", "it is a pin", "back-rank weakness"), even if the player asks. Asking is normal; revealing the motif IS the answer for tactics puzzles.',
   '6. NEVER list candidates or rank moves.',
-  '7. If asked "what should I play?", "what is the best move?", "is there a fork/pin/skewer here?", "which piece do I move?", or any variant — refuse the answer and turn the question back. Ask THEM what they see, not the other way round.',
+  '7. If asked "what should I play?", "what is the best move?", "is there a fork/pin/skewer here?", "which piece do I move?", or any variant, refuse the answer and turn the question back. Ask THEM what they see, not the other way round.',
   '',
   'WHAT YOU CAN DO (Socratic prompts that help thinking without spoiling):',
   '- "Which of your pieces is doing the least?"',
@@ -74,12 +74,12 @@ export function gateAnswersAsText() {
 }
 export function linesAsText(lines) {
   if (!lines || !lines.length) return '(no lines available)';
-  return lines.map((line, i) => `${i + 1}. ${line.san} (eval: ${evalAsHuman(line.eval)})  —  line: ${line.pvSan.slice(0, 8).join(' ')}`).join('\n');
+  return lines.map((line, i) => `${i + 1}. ${line.san} (eval: ${evalAsHuman(line.eval)}), line: ${line.pvSan.slice(0, 8).join(' ')}`).join('\n');
 }
 export function attemptHistoryAsText() {
   if (!state.attemptHistory.length) return '(no moves yet)';
   return state.attemptHistory.map((h, i) => {
-    if (h.mover === 'user') return `${i + 1}. ${h.san} (you)${h.grade ? ' — grade ' + h.grade.tier : ''}`;
+    if (h.mover === 'user') return `${i + 1}. ${h.san} (you)${h.grade ? ', grade ' + h.grade.tier : ''}`;
     if (h.mover === 'engine') return `${i + 1}. ${h.san} (engine reply)`;
     return `${i + 1}. ${h.san} (engine continuation)`;
   }).join('\n');
@@ -90,19 +90,19 @@ export function buildLiveSystemPrompt(/* puzzle */) {
   // What goes in here is the entire information the LLM has about the puzzle.
   //
   // SAFE to include: POSITION SUMMARY (material, piece locations, side to move,
-  // check status, castling rights — all computed from the current FEN), the
+  // check status, castling rights, all computed from the current FEN), the
   // STYLE_RULES, the COACHING_RULES, and the player's rating band (calibration).
   //
   // FORBIDDEN to include (any of these spoil the puzzle):
-  //   - puzzle.brief        — its template includes "engine prefers {san}". DO NOT inject.
-  //   - puzzle.bestMoveSan  — direct answer.
-  //   - puzzle.bestMoveUci  — direct answer in uci.
-  //   - puzzle.engineLines  — top-5 lines with evals and SAN.
-  //   - puzzle.cpLoss       — eval delta vs best.
-  //   - puzzle.motif        — Spec-02 tactical tag. For tactics puzzles the
+  //   - puzzle.brief, its template includes "engine prefers {san}". DO NOT inject.
+  //   - puzzle.bestMoveSan, direct answer.
+  //   - puzzle.bestMoveUci, direct answer in uci.
+  //   - puzzle.engineLines, top-5 lines with evals and SAN.
+  //   - puzzle.cpLoss, eval delta vs best.
+  //   - puzzle.motif. Spec-02 tactical tag. For tactics puzzles the
   //                           motif IS the answer ("there is a pin here").
-  //   - puzzle.severity     — engine-derived ranking.
-  //   - puzzle.userMoveSan  — what the player played in the original game; the
+  //   - puzzle.severity, engine-derived ranking.
+  //   - puzzle.userMoveSan, what the player played in the original game; the
   //                           puzzle was built to drill avoiding it, so naming
   //                           it primes them away from the very mistake we want
   //                           them to spot.
@@ -112,7 +112,7 @@ export function buildLiveSystemPrompt(/* puzzle */) {
   // forbidden fields. Argument kept parenthesised + commented as a tripwire:
   // if a future edit re-reads `puzzle.<field>` here, it's adding a leak.
   // The coach's per-user memory (js/coach-memory.js window global): student-
-  // level observations only ("rushes recaptures"), never position facts — so
+  // level observations only ("rushes recaptures"), never position facts, so
   // it cannot leak an answer and is safe on the live-solve surface.
   let memoryNote = '';
   try { if (typeof CoachMemory !== 'undefined') memoryNote = CoachMemory.promptBlock(CoachMemory.read()); } catch { /* optional */ }
@@ -126,7 +126,7 @@ export function buildLiveSystemPrompt(/* puzzle */) {
   ].join('\n') + memoryNote;
 }
 export function buildExplanationPrompt({ grade, played, terminal }) {
-  // v0.13 (Spec 05 §"Per-puzzle multi-move review — corrected"): the review
+  // v0.13 (Spec 05 §"Per-puzzle multi-move review, corrected"): the review
   // compares the user's WHOLE line vs the engine's WHOLE line, not just the
   // last decision. Engine PV from the start lives in state.engineLineFromStart;
   // per-user-move evalBeforeCp / userEvalAfterCp live on attemptHistory.
@@ -135,7 +135,7 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
   const isFirstUserMove = userMoves.length === 1;
 
   // Compose the per-user-move trace (each line carries the rank, cp-loss, and
-  // before/after eval the model can ground the verdict on — never quoted).
+  // before/after eval the model can ground the verdict on, never quoted).
   const userTrace = userMoves.map((h, i) => {
     const g = h.grade;
     const rankStr = g && g.rank ? `engine's #${g.rank}` : 'OUTSIDE engine top 5';
@@ -159,7 +159,7 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
   const engineLineFromStartSan = (state.engineLineFromStart?.pvSan || []).slice(0, 6);
   const engineBestSanFirst = engineLineFromStartSan[0] || state.engineLines[0]?.san || '(unknown)';
 
-  // FORBIDDEN-MOVE LIST — Spec 05 §12: the prompt now carries the engine's
+  // FORBIDDEN-MOVE LIST. Spec 05 §12: the prompt now carries the engine's
   // WHOLE PV from start + the per-step engine PVs. The model must not quote
   // any of these at any ply. Build the deduped, comma-joined list so the
   // model sees exactly which strings are off-limits.
@@ -183,11 +183,11 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
 
   const gameContextLine = (isFirstUserMove && puzzle.userMoveSan)
     ? (repeated
-        ? `In the original game the player ALSO played ${puzzle.userMoveSan} as their first move here — this is the exact mistake the puzzle was built to drill. Call that out explicitly.`
+        ? `In the original game the player ALSO played ${puzzle.userMoveSan} as their first move here, this is the exact mistake the puzzle was built to drill. Call that out explicitly.`
         : `For context, in the original game the player played ${puzzle.userMoveSan} as their first move at this starting position (that was the original mistake). In this attempt they played ${playerMoveSan} instead.`)
     : '';
 
-  // Line-level outcome summary line — fed into OUTPUT FORMAT below.
+  // Line-level outcome summary line, fed into OUTPUT FORMAT below.
   const outcomeLine = (() => {
     const parts = [`Outcome: ${outcomeWord}.`];
     if (userMoves.length > 1) parts.push(`The user played a ${userMoves.length}-move continuation.`);
@@ -198,9 +198,9 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
   })();
 
   return [
-    'A puzzle attempt has just resolved. Review the WHOLE attempt — the user\'s line vs the engine\'s line — not just the last move.',
+    'A puzzle attempt has just resolved. Review the WHOLE attempt, the user\'s line vs the engine\'s line, not just the last move.',
     '',
-    '=== WHAT HAPPENED (authoritative; for grounding only — do NOT quote moves) ===',
+    '=== WHAT HAPPENED (authoritative; for grounding only, do NOT quote moves) ===',
     `Total user moves played: ${userMoves.length}.`,
     outcomeLine,
     '',
@@ -210,9 +210,9 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
     'Engine\'s WHOLE line from the puzzle start (top PV at the first decision):',
     `  ${engineLineFromStartSan.join(' ') || '(unavailable)'}` + (typeof engineEndEvalCp === 'number' ? `  → end eval ${engineEndEvalCp}cp` : ''),
     '',
-    '=== NAMING RULES — extended for whole-line review (Spec 05 §12) ===',
+    '=== NAMING RULES, extended for whole-line review (Spec 05 §12) ===',
     revealMode
-      ? `REVEAL MODE: the player has failed this puzzle ${failedAttempts} times. The naming rules are SUSPENDED ONLY in the headline (`+ '"`lead`"' + `) so you MAY name the FIRST move of the engine's line (${engineBestSanFirst}) there exactly once. The other engine PV moves (${engineLineFromStartSan.slice(1).join(', ') || 'rest of the line'}) stay conceptual — no SAN/squares/pieces — even in reveal mode. Bullets and the question stay fully conceptual.`
+      ? `REVEAL MODE: the player has failed this puzzle ${failedAttempts} times. The naming rules are SUSPENDED ONLY in the headline (`+ '"`lead`"' + `) so you MAY name the FIRST move of the engine's line (${engineBestSanFirst}) there exactly once. The other engine PV moves (${engineLineFromStartSan.slice(1).join(', ') || 'rest of the line'}) stay conceptual, no SAN/squares/pieces, even in reveal mode. Bullets and the question stay fully conceptual.`
       : [
           `- You MAY say "your move", "your first move", "your continuation". You MAY name the user's own moves explicitly: ${userMoves.map((h) => h.san).join(', ') || '(none)'}.`,
           `- You MUST NOT name ANY move in the engine's line at ANY ply, in ANY form:`,
@@ -235,7 +235,7 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
     '',
     calibrationBlock(),
     '',
-    'TRAINING COMPONENTS — invoke one explicitly:',
+    'TRAINING COMPONENTS, invoke one explicitly:',
     TRAINING_COMPONENTS.map((c) => `· ${c}`).join('\n'),
     '',
     '=== POSITION SUMMARY (starting position of the puzzle) ===',
@@ -243,7 +243,7 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
     '',
     '=== PLAYER CCTO ANSWERS (their pre-move analysis: Checks, Captures, Threats, Optimisations) ===',
     gateAnswersAsText(),
-    'When relevant, surface a specific gap between the player\'s CCTO and engine truth — but conceptually, never by quoting the engine\'s line.',
+    'When relevant, surface a specific gap between the player\'s CCTO and engine truth, but conceptually, never by quoting the engine\'s line.',
     '',
     gameContextLine,
     '',
@@ -251,23 +251,23 @@ export function buildExplanationPrompt({ grade, played, terminal }) {
       ? `REVEAL MODE: the player has failed this puzzle ${failedAttempts} times. The lead may name ${engineBestSanFirst} exactly once; the rest of the response stays conceptual.`
       : '',
     '',
-    '=== OUTPUT FORMAT — STRICT JSON (mandatory) ===',
+    '=== OUTPUT FORMAT. STRICT JSON (mandatory) ===',
     'Reply with ONE JSON object and nothing else. No markdown fences, no prose preamble, no trailing commentary. The renderer parses your JSON directly; any text outside the object falls back to a plain bubble.',
     '',
-    'Schema (per redesign-spec §17 "per-puzzle"). Labels are line-level — the bullets describe WHOLE-LINE themes across all ' + userMoves.length + ' user move' + (userMoves.length === 1 ? '' : 's') + ', not per-move chatter:',
+    'Schema (per redesign-spec §17 "per-puzzle"). Labels are line-level, the bullets describe WHOLE-LINE themes across all ' + userMoves.length + ' user move' + (userMoves.length === 1 ? '' : 's') + ', not per-move chatter:',
     '{',
-    '  "lead":     string  — headline verdict, ≤ 90 chars, plain English' + (revealMode ? `. REVEAL: lead MUST follow the form "After ${failedAttempts} tries: ${engineBestSanFirst} — <one-clause concept of what the WHOLE engine line achieves>".` : '. NEVER name any engine move/square/piece/eval at any ply.'),
+    '  "lead":     string, headline verdict, ≤ 90 chars, plain English' + (revealMode ? `. REVEAL: lead MUST follow the form "After ${failedAttempts} tries: ${engineBestSanFirst}, <one-clause concept of what the WHOLE engine line achieves>".` : '. NEVER name any engine move/square/piece/eval at any ply.'),
     '  "points":   array of THREE objects in this exact order:',
     '              [',
-    '                {"label": "What you played", "text": "<one short clause; the THEME of the user\'s whole line — the pattern across all ' + userMoves.length + ' user moves, what their plan accomplished or where it drifted; no SAN, no square names>"},',
+    '                {"label": "What you played", "text": "<one short clause; the THEME of the user\'s whole line, the pattern across all ' + userMoves.length + ' user moves, what their plan accomplished or where it drifted; no SAN, no square names>"},',
     '                {"label": "Better idea",     "text": "<one short clause; what the engine\'s WHOLE line achieves CONCEPTUALLY (e.g. \\"trades into a winning endgame\\", \\"removes the defender then doubles rooks\\", \\"breaks the pin and re-routes\\"); NEVER name any engine piece/square/SAN at any ply' + (revealMode ? ' EXCEPT the lead already named the first move' : '') + '>"},',
-    '                {"label": "Pattern",         "text": "<one short clause; the recurring lesson — what to ask yourself next time you see this kind of position>"}',
+    '                {"label": "Pattern",         "text": "<one short clause; the recurring lesson, what to ask yourself next time you see this kind of position>"}',
     '              ]',
-    '  "question": string  — ONE reflective question, ≤ 80 chars, ends with ?',
+    '  "question": string. ONE reflective question, ≤ 80 chars, ends with ?',
     '}',
     '',
-    'Word budget across lead + 3 point.text + question: 60–80 words total. Clauses are short — not sentence chains.',
-    'The move-by-move comparison table is rendered on screen next to your review — do NOT re-list engine moves or evaluations in your prose.',
+    'Word budget across lead + 3 point.text + question: 60, 80 words total. Clauses are short, not sentence chains.',
+    'The move-by-move comparison table is rendered on screen next to your review, do NOT re-list engine moves or evaluations in your prose.',
     '',
     'Before writing: re-read the WHAT HAPPENED + NAMING RULES sections. The forbidden-move list above must not appear anywhere in your output (except the FIRST engine SAN in the reveal-mode lead). Refer to user moves by ordinal ("your first move") and never invent moves the player did not play.',
   ].filter(Boolean).join('\n');
@@ -297,8 +297,8 @@ export async function fireCoachExplanation({ grade, played, terminal }) {
     const text = await callCoach({
       // The structured OUTPUT FORMAT block lives in the user prompt; the system
       // role is the voice + the no-spoiler stance. Same voice across single,
-      // multi-move, and reveal — only the prompt body branches.
-      system: 'You are a chess coach. Output the structured review format the user prompt specifies — headline + bullets + one reflective question, 60-80 words total. Never name the engine\'s preferred move, piece, or destination square in your prose (the comparison table next to your review already shows the moves visually). Reveal mode is the only exception, and only in the headline.',
+      // multi-move, and reveal, only the prompt body branches.
+      system: 'You are a chess coach. Output the structured review format the user prompt specifies, headline + bullets + one reflective question, 60-80 words total. Never name the engine\'s preferred move, piece, or destination square in your prose (the comparison table next to your review already shows the moves visually). Reveal mode is the only exception, and only in the headline.',
       messages: [{ role: 'user', content: buildExplanationPrompt({ grade, played, terminal }) }],
       // Tight cap matches the 60-80 word output; reveal mode has slightly more
       // headroom because the headline carries the named move.
@@ -325,8 +325,8 @@ export async function fireCoachExplanation({ grade, played, terminal }) {
 }
 
 // Ask + Hint buttons
-// (Ask-a-question button removed — the chat input is always visible now.)
-// The category-level Hint button was removed — the coach chat input is the
+// (Ask-a-question button removed, the chat input is always visible now.)
+// The category-level Hint button was removed, the coach chat input is the
 // always-on equivalent if the user wants nudges. "Show piece" remains as the
 // concrete visual hint.
 

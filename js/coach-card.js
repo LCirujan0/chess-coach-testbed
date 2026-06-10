@@ -1,5 +1,5 @@
 // ============================================================================
-// coach-card.js — the ONE shared structured coach card (§17 review).
+// coach-card.js, the ONE shared structured coach card (§17 review).
 // ----------------------------------------------------------------------------
 // Single source of truth for the gold-standard coach render across the whole
 // app. Previously this card was reimplemented three times (js/puzzle/dom.js
@@ -31,7 +31,7 @@
 // page) and have been mirrored into css/train.css so the pages that link
 // train.css (endgames, endgame-recognition, review.html) style the card too.
 // For any page that links NEITHER stylesheet (e.g. games.html), call
-// ensureCoachCardStyles() once — it injects the same rules into <head>. This
+// ensureCoachCardStyles() once, it injects the same rules into <head>. This
 // keeps the card self-sufficient on every surface with zero new style names.
 // ============================================================================
 
@@ -43,7 +43,7 @@ export function sanitiseCoachText(text) {
   return String(text)
     .replace(/\*\*(.+?)\*\*/g, '$1')                       // **bold** → bold
     .replace(/(^|\s)\*(?!\s)([^*\n]+?)\*(?!\w)/g, '$1$2')   // *italic* → italic
-    .replace(/[—–]/g, ',')                                 // em/en dash → comma
+    .replace(/[, , ]/g, ',')                                 // em/en dash → comma
     .replace(/\s{2,}/g, ' ')                               // collapse double spaces
     .replace(/\s+,/g, ',')                                 // ", " not " ,"
     .trim();
@@ -51,8 +51,7 @@ export function sanitiseCoachText(text) {
 
 // Parse the LLM's response into the §17 card shape. The prompt requests strict
 // JSON; we tolerate code-fence wrapping and prose preambles in case the model
-// adds them. Returns null when the response isn't recognisably structured —
-// callers fall back to a plain bubble in that case rather than erroring.
+// adds them. Returns null when the response isn't recognisably structured, // callers fall back to a plain bubble in that case rather than erroring.
 export function parseCoachJson(text) {
   if (!text || typeof text !== 'string') return null;
   let body = text.trim();
@@ -88,13 +87,13 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'msg review';
 
-  // [lead] — headline verdict.
+  // [lead], headline verdict.
   const lead = document.createElement('div');
   lead.className = 'rv-lead';
   lead.textContent = sanitiseCoachText(parsed.lead || '');
   wrap.appendChild(lead);
 
-  // [points] — up to 4 labelled lines with optional sentiment tones.
+  // [points], up to 4 labelled lines with optional sentiment tones.
   if (Array.isArray(parsed.points) && parsed.points.length) {
     const pts = document.createElement('div');
     pts.className = 'rv-points';
@@ -113,14 +112,14 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
     wrap.appendChild(pts);
   }
 
-  // [turn] — optional turning-point / pattern chip.
+  // [turn], optional turning-point / pattern chip.
   if (parsed.turn && (parsed.turn.label || parsed.turn.text)) {
     const chip = document.createElement('div');
     chip.className = 'rv-turn';
     if (parsed.turn.label) {
       const lbl = document.createElement('span');
       lbl.className = 'rv-turn-label';
-      lbl.textContent = sanitiseCoachText(parsed.turn.label) + ' —';
+      lbl.textContent = sanitiseCoachText(parsed.turn.label) + ' , ';
       chip.appendChild(lbl);
       chip.appendChild(document.createTextNode(' ' + sanitiseCoachText(parsed.turn.text || '')));
     } else {
@@ -129,7 +128,7 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
     wrap.appendChild(chip);
   }
 
-  // [question] — one reflective question.
+  // [question], one reflective question.
   if (parsed.question) {
     const q = document.createElement('div');
     q.className = 'rv-question';
@@ -137,7 +136,7 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
     wrap.appendChild(q);
   }
 
-  // [cta] — optional row of action buttons / links (Drill / Replay etc.).
+  // [cta], optional row of action buttons / links (Drill / Replay etc.).
   if (Array.isArray(parsed.cta) && parsed.cta.length) {
     const ctaRow = document.createElement('div');
     ctaRow.className = 'rv-cta';
@@ -157,7 +156,7 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
     wrap.appendChild(ctaRow);
   }
 
-  // [grounded] — optional muted footnote (the source line).
+  // [grounded], optional muted footnote (the source line).
   if (parsed.grounded) {
     const g = document.createElement('div');
     g.className = 'rv-grounded';
@@ -174,7 +173,7 @@ export function renderCoachCard(parentEl, parsed, opts = {}) {
 // Inject the canonical `.msg.review .rv-*` rules into <head> exactly once, for
 // pages that link neither puzzle.css nor train.css (e.g. games.html). The
 // selectors and values are copied verbatim from css/puzzle.css so the rendered
-// card is pixel-identical to the puzzle-page review — no new style names.
+// card is pixel-identical to the puzzle-page review, no new style names.
 let _stylesInjected = false;
 export function ensureCoachCardStyles() {
   if (_stylesInjected || typeof document === 'undefined') return;

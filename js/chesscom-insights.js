@@ -1,13 +1,13 @@
 /* ============================================================================
- * js/chesscom-insights.js — derived insights from the per-game Chess.com
+ * js/chesscom-insights.js, derived insights from the per-game Chess.com
  * capture (chess-coach-game-meta-v1, Spec 24) (v0.80).
  *
- * The headline derivation is the per-game PERFORMANCE RATING estimate — "what
+ * The headline derivation is the per-game PERFORMANCE RATING estimate. "what
  * level did you actually play at in this game", independent of your slow-moving
  * Elo: perf = opponent rating + 400 on a win, − 400 on a loss, ±0 on a draw
  * (the standard single-game performance formula). Averaged over a window it
  * answers the owner's ask: "the estimated rating for individual games and how
- * it evolves — and what that means": perf above your current rating = your Elo
+ * it evolves, and what that means": perf above your current rating = your Elo
  * has not caught up yet; below = you are running hot.
  *
  * Pure + window-global (like CoachStats); no fetch, no DOM. Readers:
@@ -18,7 +18,7 @@
 
   var DRAWS = { agreed: 1, repetition: 1, stalemate: 1, insufficient: 1, '50move': 1, timevsinsufficient: 1, draw: 1 };
 
-  // 'win' | 'draw' | 'loss' | null from a meta record (defensive — fields are
+  // 'win' | 'draw' | 'loss' | null from a meta record (defensive, fields are
   // whatever chess.com sent at capture time).
   function normResult(m) {
     if (!m) return null;
@@ -37,7 +37,7 @@
     return Math.round(opp + (res === 'win' ? 400 : res === 'loss' ? -400 : 0));
   }
 
-  // The estimate is only informative when the pairing was close — beyond ±400
+  // The estimate is only informative when the pairing was close, beyond ±400
   // it saturates (beating a far weaker player reads as a "low" performance).
   // Display surfaces and the aggregate series use this guard.
   function fairPairing(m) {
@@ -121,16 +121,16 @@
     return s;
   }
 
-  // Plain-language read of perf vs current rating — "what it means".
-  // (Number(null) is 0, so the null check must come first — caught by the
+  // Plain-language read of perf vs current rating. "what it means".
+  // (Number(null) is 0, so the null check must come first, caught by the
   // pure-modules harness: a missing rating must yield NO meaning, not "you
   // are 1200 points above your rating of zero".)
   function perfMeaning(recentPerf, currentRating) {
     if (recentPerf == null || currentRating == null || !Number.isFinite(Number(currentRating))) return '';
     var d = recentPerf - currentRating;
-    if (d >= 60) return 'You have been playing about ' + d + ' points above your rating — your Elo has not caught up with your level yet. Keep this up and it will.';
-    if (d <= -60) return 'Your recent games ran about ' + Math.abs(d) + ' points below your rating — usually a sign of rushed games or tilt, not lost skill.';
-    return 'Your recent performance matches your rating — improvement now comes from removing your recurring mistakes.';
+    if (d >= 60) return 'You have been playing about ' + d + ' points above your rating, your Elo has not caught up with your level yet. Keep this up and it will.';
+    if (d <= -60) return 'Your recent games ran about ' + Math.abs(d) + ' points below your rating, usually a sign of rushed games or tilt, not lost skill.';
+    return 'Your recent performance matches your rating, improvement now comes from removing your recurring mistakes.';
   }
 
   var API = { normResult: normResult, perfOf: perfOf, perfSeries: perfSeries, summarize: summarize, perfMeaning: perfMeaning };

@@ -2,7 +2,7 @@
 
 Human source checklist. The Playwright suite in `qa/` is its executable subset — wherever a row says "Automated", there is a test that guards it. Wherever it says "Manual" or "Parked", it doesn't.
 
-Current reconciliation: **v0.80**. Update this document whenever the app adds a new page, changes a behaviour, or when a parked test activates.
+Current reconciliation: **v0.81**. Update this document whenever the app adds a new page, changes a behaviour, or when a parked test activates.
 
 ---
 

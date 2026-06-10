@@ -1,11 +1,11 @@
 // ============================================================================
-// js/openings/srs.js — PURE spaced-repetition scheduling for opening lines.
+// js/openings/srs.js. PURE spaced-repetition scheduling for opening lines.
 // ----------------------------------------------------------------------------
 // Leitner-style boxes (1..N). A line in box B is due again INTERVALS[B] days
 // after it was last reviewed. A correct recall promotes the line one box
 // (longer interval); a lapse demotes it back to box 1 (see it again soon).
 //
-// No DOM, no fetch, no localStorage IO here — fully node-testable. boot.js owns
+// No DOM, no fetch, no localStorage IO here, fully node-testable. boot.js owns
 // reading/writing the persisted blob under 'chess-coach-openings-v1'. Times are
 // epoch milliseconds so callers can inject `now` for deterministic tests.
 //
@@ -110,7 +110,7 @@ export function countDue(lineIds, cardsById, now = Date.now()) {
 }
 
 // A coarse mastery summary for an opening's lines: how many are in each tier.
-//   new (never seen), learning (box 1–2 seen), strong (box >=3).
+//   new (never seen), learning (box 1, 2 seen), strong (box >=3).
 export function masterySummary(lineIds, cardsById, now = Date.now()) {
   const out = { total: 0, fresh: 0, learning: 0, strong: 0, due: 0 };
   if (!Array.isArray(lineIds)) return out;

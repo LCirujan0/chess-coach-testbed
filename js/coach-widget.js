@@ -1,9 +1,9 @@
 // ============================================================================
-// coach-widget.js — the reusable, always-present Coach.
+// coach-widget.js, the reusable, always-present Coach.
 // ----------------------------------------------------------------------------
 // Mounts a self-contained general-coach chat into any training screen's
 // .coach-card elements. Talks to /api/coach (same contract as coach.html).
-// Isolated: if the API errors, only a coach bubble shows the error — it never
+// Isolated: if the API errors, only a coach bubble shows the error, it never
 // affects the exercise running alongside it.
 //
 //   import { mountCoachWidget } from '/js/coach-widget.js';
@@ -17,21 +17,21 @@
 //
 // Quick chat replies render as plain bubbles. If the model returns the §17 JSON
 // card shape (parseable by parseCoachJson), the reply renders through the ONE
-// shared coach card (js/coach-card.js) instead — so a grounded structured read
+// shared coach card (js/coach-card.js) instead, so a grounded structured read
 // looks identical to the puzzle/coach surfaces.
 // ============================================================================
 
 import { renderCoachCard, parseCoachJson, sanitiseCoachText, ensureCoachCardStyles } from '/js/coach-card.js';
 
 // Shared voice + style rules. Strengthened to match the puzzle/coach surfaces:
-// no markdown, no bullet lists, no em-dashes. The widget never spoils — the
+// no markdown, no bullet lists, no em-dashes. The widget never spoils, the
 // host supplies position summaries / played moves only (no engine evals or
 // best-move ids) via context + getLiveContext (no-spoiler rule, learnings v0.7).
 const BASE_SYSTEM = [
   'You are a warm, concise chess coach inside the KnightPath training app.',
   'Guide the student with questions and hints; nudge toward the idea rather than blurting the answer.',
   '',
-  'WRITING STYLE — read carefully:',
+  'WRITING STYLE, read carefully:',
   '- Conversational. Talk like a friendly coach sitting next to the player, not a textbook.',
   '- Brief. Default to 2 to 4 short sentences. Never pad.',
   '- Use piece names (rook, knight, etc.). Square coordinates only when needed for precision.',
@@ -55,13 +55,13 @@ function bubble(logEl, role, text) {
 
 export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '', model = 'claude-sonnet-4-6', getLiveContext = null } = {}) {
   if (!logEl || !formEl || !inputEl || !sendEl) return null;
-  // The shared card may render here if the model returns the §17 shape — make
+  // The shared card may render here if the model returns the §17 shape, make
   // sure its styles are available on pages that link neither puzzle.css nor the
   // train.css .rv-* block (idempotent; no-op once injected).
   ensureCoachCardStyles();
   let ratingNote = '';
   try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingNote = ' The student is rated about ' + rc.rating + ' on Chess.com rapid (target ' + ((typeof KPProfile !== 'undefined') ? KPProfile.targetElo() : 1500) + '); pitch hints to that level.' + ((typeof KPProfile !== 'undefined') ? KPProfile.promptLine() : ''); } catch {}
-  // The coach's per-user memory (js/coach-memory.js, window global) — what the
+  // The coach's per-user memory (js/coach-memory.js, window global), what the
   // teacher already knows about this student. Empty string when none.
   let memoryNote = '';
   try { if (typeof CoachMemory !== 'undefined') memoryNote = CoachMemory.promptBlock(CoachMemory.read()); } catch {}
@@ -83,7 +83,7 @@ export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '',
     // Append a fresh snapshot of the live position/moves (if the host provides
     // one) so the coach can discuss what the student actually played. Read at
     // send time, never cached. No-spoiler rule (learnings.md v0.7): the host
-    // supplies played moves + FEN only — never engine evals or best-move IDs.
+    // supplies played moves + FEN only, never engine evals or best-move IDs.
     let liveSystem = system;
     if (typeof getLiveContext === 'function') {
       try { const extra = getLiveContext(); if (extra) liveSystem += extra; } catch {}

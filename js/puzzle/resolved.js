@@ -1,5 +1,5 @@
 // ============================================================================
-// SECTION 15 — onItemResolved (the single session write-back path)
+// SECTION 15, onItemResolved (the single session write-back path)
 // ----------------------------------------------------------------------------
 // Spec 21 §2.3. ONE normalised callback that every type calls when an item is
 // resolved, so attempt + result counting is identical across types. It:
@@ -29,7 +29,7 @@
 //     lastAt) happens in playout.js saveResult(); the mastery store already
 //     stamps `lastAt` (epoch ms) + `lastResult` ('pass'|'fail') per lesson, so
 //     resolved-this-session (lastAt >= sinceMs) and correct (lastResult==='pass')
-//     are read directly from that store — NO extra marker, no new key.
+//     are read directly from that store. NO extra marker, no new key.
 // This module owns ONLY the cross-type session bookkeeping + the bar, never the
 // domain stores' own logic.
 // ============================================================================
@@ -41,7 +41,7 @@ const KEY_ATTEMPTS    = 'chess-coach-attempts-v1';
 const KEY_RECOGNITION = 'chess-coach-recognition-v1';
 // The endgame play-out mastery store. This is the EXISTING key playout.js
 // writes via saveResult() ({ attempts, cleanInARow, mastered, lastResult,
-// lastAt }) — see js/puzzle/playout.js. It is the only endgame results store
+// lastAt }), see js/puzzle/playout.js. It is the only endgame results store
 // in the tree; we read it here, we do NOT introduce a new one.
 const KEY_ENDGAMES    = 'chess-coach-eg-results-v1';
 
@@ -64,7 +64,7 @@ function blockTypeOf(block) {
 // "Resolved this session" predicates per type. Mistakes use the attempts
 // ledger's lastAt (written on EVERY attempt, pass or fail). Recognition uses a
 // `seen:{ [id]: lastAtMs }` sub-object kept INSIDE chess-coach-recognition-v1
-// (Spec 21 §1.5 — no new key). Endgame uses the mastery store's per-lesson
+// (Spec 21 §1.5, no new key). Endgame uses the mastery store's per-lesson
 // `lastAt` epoch + `lastResult` (Spec 21 §1.5 endgame branch).
 function resolvedSince(type, id, sinceMs, stores) {
   if (type === 'recognition') {
@@ -129,7 +129,7 @@ function loadStores() {
 }
 
 // The single resolution callback. type-tags the result; routes to the type's
-// resolved-marker write (recognition only — mistakes have the attempts ledger,
+// resolved-marker write (recognition only, mistakes have the attempts ledger,
 // endgame has the mastery store's lastAt/lastResult); recomputes the active
 // block's done/correct; persists; refreshes the bar. Safe no-op outside a
 // Today session.

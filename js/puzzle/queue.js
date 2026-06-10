@@ -1,13 +1,13 @@
 // ============================================================================
-// SECTION 7 — Queue
+// SECTION 7. Queue
 // (includes shuffleInPlace + mixPuzzlesAcrossGames, physically at §4 tail in
-// the monolith but logically queue utilities — moved here per Spec 09)
+// the monolith but logically queue utilities, moved here per Spec 09)
 // ============================================================================
 import { MOTIFS, MOTIF_LABELS, isExcludedPuzzle, THEME_DRILL_TARGET, DIFFICULTY_TIERS } from './config.js';
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { saveLastCategory, loadLastCategory } from './storage.js';
-// runtime deps (called inside function bodies only — live bindings handle the cycles)
+// runtime deps (called inside function bodies only, live bindings handle the cycles)
 import { resetPuzzleStateAndRender } from './result.js';
 import { sessionModeWriteBack } from './grade.js';
 import { topUpMotif } from './lichess.js';
@@ -28,13 +28,20 @@ export function buildQueue() {
     const found = state.puzzles.find((p) => p.id === state.reviewPuzzleId);
     return found ? [found] : [];
   }
-  // v0.13 — Today/in-session round-trip. When sessionMode has a non-empty
+  // v0.13. Today/in-session round-trip. When sessionMode has a non-empty
   // queueIds list, restrict the queue to those ids in plan-order. Vision
   // blocks have queueIds: [] and fall through to the normal queue (calculation
   // drill not built yet → user gets a warm-up from the normal mistake queue).
   if (state.sessionMode && state.sessionMode.queueIds && state.sessionMode.queueIds.length) {
     const byId = new Map(state.puzzles.map((p) => [p.id, p]));
-    const ordered = state.sessionMode.queueIds.map((id) => byId.get(id)).filter(Boolean);
+    // Owner fix (2026-06-10): re-entering a block must NEVER re-serve an item
+    // already resolved this session. Unresolved items first (plan order),
+    // resolved ones pushed to the back so the cursor lands on real work.
+    const since = state.sessionMode.sinceMs || 0;
+    const isResolved = (id) => { const a = state.attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= since); };
+    const ids = state.sessionMode.queueIds;
+    const ordered = [...ids.filter((id) => !isResolved(id)), ...ids.filter(isResolved)]
+      .map((id) => byId.get(id)).filter(Boolean);
     return ordered;
   }
   let pool = state.puzzles.slice();
@@ -48,12 +55,19 @@ export function buildQueue() {
   else if (state.triedFilter === 'untried') pool = pool.filter((p) => attemptsCount(p.id) === 0);
   if (state.motifFilter === 'untagged') pool = pool.filter((p) => !p.motif);
   else if (state.motifFilter && state.motifFilter !== 'all') pool = pool.filter((p) => p.motif === state.motifFilter);
-  // Unified puzzle schema (phase 1a) — filter by puzzle type. Recognition
+  // Unified puzzle schema (phase 1a), filter by puzzle type. Recognition
   // entries carry their puzzle-type in `puzzleType` (their `type` is the
   // material signature), so check both fields.
   if (state.typeFilter && state.typeFilter !== 'all') { pool = pool.filter((p) => (p.type || p.puzzleType) === state.typeFilter); }
   if (state.mode === 'drill') {
-    return shuffleInPlace(pool);
+    // Drill keeps solved puzzles AVAILABLE (repetition is the point of the
+    // mode) but serves the unsolved ones first (owner fix 2026-06-10: a fresh
+    // queue must not open on something you just completed).
+    const fresh = pool.filter((p) => !isSolved(p.id));
+    const done = pool.filter((p) => isSolved(p.id));
+    shuffleInPlace(fresh);
+    shuffleInPlace(done);
+    return fresh.concat(done);
   }
   // Deep mode: unsolved only, 50/50 unseen vs previously-failed.
   const unsolved = pool.filter((p) => !isSolved(p.id));
@@ -76,8 +90,8 @@ export function rebuildQueue() {
 }
 
 // Routing rule:
-//   Deep mode  — unsolved puzzles only. The mode for learning new patterns.
-//   Drill mode — ALL puzzles, including solved ones, for repetition and lower-
+//   Deep mode, unsolved puzzles only. The mode for learning new patterns.
+//   Drill mode. ALL puzzles, including solved ones, for repetition and lower-
 //                energy sessions. Solved puzzles keep their star rating but
 //                are available to re-attempt.
 export function filteredPuzzles() {
@@ -210,7 +224,7 @@ export function updateFilterBadge() {
   $('filter-badge').textContent = parts.length ? parts.join(' · ') : 'All puzzles';
 }
 
-// Spec 02 — Theme filter row. Renders the 17-motif vocab as a scrollable pill
+// Spec 02. Theme filter row. Renders the 17-motif vocab as a scrollable pill
 // group inside the collapsible "Theme" control, drives the Drill this theme
 // CTA, and shows the active selection in the collapsed summary.
 export function renderThemePills() {
@@ -252,14 +266,14 @@ export function renderThemePills() {
   if (drillBtn) {
     const m = state.motifFilter;
     // none-tactical has no library supply (topUpMotif rejects it), so a drill
-    // would never fill to target — disable the CTA for it like all/untagged.
+    // would never fill to target, disable the CTA for it like all/untagged.
     const ok = m && m !== 'all' && m !== 'untagged' && m !== 'none-tactical' && counts[m] > 0;
     drillBtn.disabled = !ok;
     drillBtn.textContent = ok ? `Drill this theme (${Math.min(10, counts[m])})` : 'Drill this theme';
   }
 }
 
-// Drill this theme — assemble up to 10 puzzles with the active motif and put
+// Drill this theme, assemble up to 10 puzzles with the active motif and put
 // them into a focused queue. Banner shows progress. End-drill returns to the
 // normal queue.
 export async function startThemeDrill() {
@@ -270,7 +284,7 @@ export async function startThemeDrill() {
   // (own-game mistakes have no fixed solution length to classify by).
   const tier = DIFFICULTY_TIERS.find((t) => t.id === (state.drillDifficulty || 'any')) || DIFFICULTY_TIERS[0];
   const tierOnly = tier.id !== 'any';
-  // 1) Own-game pool: current behaviour — same-motif mistakes, shuffled. Tag
+  // 1) Own-game pool: current behaviour, same-motif mistakes, shuffled. Tag
   //    each with source 'mine' so the grader/Completed route correctly.
   let pool = tierOnly ? [] : state.puzzles.filter((p) => !isExcludedPuzzle(p) && p.motif === m);
   shuffleInPlace(pool);
@@ -304,12 +318,12 @@ export async function startThemeDrill() {
       state.drillSourceSplit = { mine: own.length, lichess: topUp.length };
       updateDrillBanner();
       // If there was no own-game puzzle to render at the start, the board is
-      // still on the normal queue — load the first (Lichess) drill puzzle now.
+      // still on the normal queue, load the first (Lichess) drill puzzle now.
       if (wasEmpty) resetPuzzleStateAndRender();
     }
   }
   // If the own-game pool was empty AND the top-up also came up empty, there is
-  // nothing to drill — clear the drill so the banner hides cleanly.
+  // nothing to drill, clear the drill so the banner hides cleanly.
   if (!state.drillQueue.length) {
     state.drillMotif = null;
     state.drillSourceSplit = null;
@@ -333,8 +347,8 @@ export function updateDrillBanner() {
     const label = MOTIF_LABELS[state.drillMotif] || state.drillMotif;
     const diff = (state.drillDifficulty && state.drillDifficulty !== 'any')
       ? ' · ' + (DIFFICULTY_TIERS.find((t) => t.id === state.drillDifficulty) || {}).label : '';
-    let text = `Drilling: ${label}${diff} — ${state.drillIndex + 1} of ${state.drillQueue.length}`;
-    // Spec 17 — honest supply note when the drill was topped up from the
+    let text = `Drilling: ${label}${diff}, ${state.drillIndex + 1} of ${state.drillQueue.length}`;
+    // Spec 17, honest supply note when the drill was topped up from the
     // library. Only shown when both sources contributed (don't add noise to a
     // pure own-game or pure-library drill where the total already tells it).
     const split = state.drillSourceSplit;
@@ -367,7 +381,7 @@ export function loadPuzzleAt(category, index) {
 }
 export function nextPuzzle() {
   state.reviewPuzzleId = null;
-  // v0.13 — Session mode: if this block's count is reached (or queue exhausted),
+  // v0.13. Session mode: if this block's count is reached (or queue exhausted),
   // navigate back to /session.html so the user sees the transition beat → next
   // block (or the summary). Block.count comes from the plan; we trust the
   // write-back's `done`. Falls back to "queueIndex past the end" so a partial
@@ -376,7 +390,7 @@ export function nextPuzzle() {
     const ids = state.sessionMode.queueIds;
     const target = state.sessionMode.count || (ids ? ids.length : 0);
     // The block completes when every item has been RESOLVED (attempted) this
-    // session — pass OR fail — not only when all are solved (v0.58-c1 fix:
+    // session, pass OR fail, not only when all are solved (v0.58-c1 fix:
     // failed items used to never advance the block, stranding the player).
     // Count only resolutions at/after sessionMode.sinceMs so a drill over
     // already-seen items doesn't bounce out on the first Next.
@@ -399,7 +413,7 @@ export function nextPuzzle() {
       resetPuzzleStateAndRender();
       return;
     }
-    // Drill complete — return to the normal queue.
+    // Drill complete, return to the normal queue.
     endThemeDrill();
     return;
   }

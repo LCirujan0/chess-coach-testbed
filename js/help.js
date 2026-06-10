@@ -1,16 +1,16 @@
 /* ============================================================================
- * js/help.js — per-training-type help (v0.80, owner ask).
+ * js/help.js, per-training-type help (v0.80, owner ask).
  *
  * Every training page gets a (?) button in the branded header and a short,
  * visual "how this works" card: what this exercise is, what you are expected
  * to do, how to complete it, and what the data on screen means. It auto-opens
  * the FIRST time a user lands on each type (tracked per type in
- * chess-coach-help-seen-v1 — local-only; re-showing once per device is fine,
+ * chess-coach-help-seen-v1, local-only; re-showing once per device is fine,
  * arguably good), and is always one tap away afterwards.
  *
  * Window-global classic script (like streak.js). Pages opt in by including
  * this file; the type is detected from location.pathname. Styling uses tokens
- * only — same visual language as the shared .panel/coach cards.
+ * only, same visual language as the shared .panel/coach cards.
  * ==========================================================================*/
 (function (root) {
   'use strict';
@@ -43,10 +43,10 @@
     endgames: {
       chip: 'Endgames',
       title: 'Play the endgame out',
-      intro: 'A winning (or drawn) position, you against Stockfish. The goal is not one move — it is converting the whole position.',
+      intro: 'A winning (or drawn) position, you against Stockfish. The goal is not one move, it is converting the whole position.',
       steps: [
         { icon: 'book', t: 'Read the goal', p: 'Each lesson names its goal (convert the win, hold the draw) and the technique it teaches.' },
-        { icon: 'board', t: 'Play it out', p: 'Move for your side; the engine answers instantly. Keep your advantage — drifting below the threshold fails the attempt.' },
+        { icon: 'board', t: 'Play it out', p: 'Move for your side; the engine answers instantly. Keep your advantage, drifting below the threshold fails the attempt.' },
         { icon: 'check', t: 'Convert it', p: 'Deliver mate, promote, or hold the draw to the end. Clean conversions mark the lesson as mastered.' },
       ],
       data: 'The rail shows the lesson goal and the coach. Your results feed the Endgames mastery count on Insights, and weak endgame play makes endgame blocks appear in your daily session.',
@@ -54,10 +54,10 @@
     recognition: {
       chip: 'Recognition',
       title: 'Winning, drawn or losing?',
-      intro: 'Strong players glance at an endgame and KNOW. This drill builds that instinct — 1,001 positions, one judgement each.',
+      intro: 'Strong players glance at an endgame and KNOW. This drill builds that instinct, 1,001 positions, one judgement each.',
       steps: [
         { icon: 'eye', t: 'Look, don’t calculate', p: 'Take a few seconds. Count material, look at the kings and pawns.' },
-        { icon: 'scale', t: 'Judge it', p: 'Tap Winning, Drawn or Losing — always from the side to move’s point of view.' },
+        { icon: 'scale', t: 'Judge it', p: 'Tap Winning, Drawn or Losing, always from the side to move’s point of view.' },
         { icon: 'chat', t: 'Learn the why', p: 'After you answer, the explanation names the rule (opposition, wrong bishop, the square…). The coach can take questions.' },
       ],
       data: 'Your accuracy by position type feeds Insights; types you misjudge resurface more often in your daily session.',
@@ -65,10 +65,10 @@
     'board-vision': {
       chip: 'Board Vision',
       title: 'A daily eyesight warm-up',
-      intro: 'Three quick drills plus a hide-the-board tracker — about 4 minutes that sharpen how clearly you see the board in your head.',
+      intro: 'Three quick drills plus a hide-the-board tracker, about 4 minutes that sharpen how clearly you see the board in your head.',
       steps: [
         { icon: 'target', t: 'Coordinates & knights', p: 'Tap the named square, or every square a knight can reach. Speed and accuracy both count.' },
-        { icon: 'eye', t: 'The tracker', p: 'Watch a few moves, then the board hides. Answer from memory — where did the piece land, was it a check?' },
+        { icon: 'eye', t: 'The tracker', p: 'Watch a few moves, then the board hides. Answer from memory, where did the piece land, was it a check?' },
         { icon: 'check', t: 'Level up', p: 'Score 80%+ and the tracker gets one move longer. Six levels.' },
       ],
       data: 'Your scores and tracker level are on Insights under Mastery. This is the foundation for calculating ahead without moving pieces.',
@@ -76,13 +76,13 @@
     openings: {
       chip: 'Openings',
       title: 'Learn lines you’ll actually play',
-      intro: 'A repertoire trainer with the WHY of every move explained — not memorisation, understanding. Vienna first; verified by Stockfish.',
+      intro: 'A repertoire trainer with the WHY of every move explained, not memorisation, understanding. Vienna first; verified by Stockfish.',
       steps: [
-        { icon: 'book', t: 'Pick a line', p: 'Lines due for review come first — the schedule spaces them so they stick.' },
+        { icon: 'book', t: 'Pick a line', p: 'Lines due for review come first, the schedule spaces them so they stick.' },
         { icon: 'board', t: 'Recall each move', p: 'Tap the from-square, then the to-square. The "why this move" panel explains the idea behind every step.' },
         { icon: 'clock', t: 'Come back tomorrow', p: 'A clean recall pushes the line further out; a slip brings it back sooner. A few minutes a day builds the repertoire.' },
       ],
-      data: 'The hub shows each line’s memory box (1–5). "Your openings" highlights repertoire lines you already reach in real games.',
+      data: 'The hub shows each line’s memory box (1, 5). "Your openings" highlights repertoire lines you already reach in real games.',
     },
   };
 
@@ -173,7 +173,7 @@
     var type = PAGE_TYPE[root.location.pathname];
     if (!type || !CONTENT[type]) return;
     ensureStyles();
-    // (?) in the branded header — always available.
+    // (?) in the branded header, always available.
     var bar = document.querySelector('.header-bar');
     if (bar && !bar.querySelector('.kp-help-btn')) {
       var btn = document.createElement('button');
