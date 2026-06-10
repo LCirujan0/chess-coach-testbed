@@ -3,7 +3,7 @@
 // (includes shuffleInPlace + mixPuzzlesAcrossGames, physically at §4 tail in
 // the monolith but logically queue utilities — moved here per Spec 09)
 // ============================================================================
-import { MOTIFS, MOTIF_LABELS, isExcludedPuzzle, THEME_DRILL_TARGET } from './config.js';
+import { MOTIFS, MOTIF_LABELS, isExcludedPuzzle, THEME_DRILL_TARGET, DIFFICULTY_TIERS } from './config.js';
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { saveLastCategory, loadLastCategory } from './storage.js';
@@ -231,6 +231,16 @@ export function renderThemePills() {
     pills.push(`<button class="theme-pill ${state.motifFilter === 'untagged' ? 'active' : ''}" data-motif="untagged">Untagged <span class="count">${counts.untagged}</span></button>`);
   }
   pillsHost.innerHTML = pills.join('');
+  // Difficulty pills (owner spec 2026-06-10): tier by solver-move count. The
+  // tier governs the LIBRARY supply of "Drill this theme"; own-game mistakes
+  // have no fixed line length, so a non-'any' tier makes the drill library-only.
+  const diffHost = $('difficulty-pills');
+  if (diffHost) {
+    if (!state.drillDifficulty) state.drillDifficulty = 'any';
+    diffHost.innerHTML = DIFFICULTY_TIERS.map((t) =>
+      `<button class="theme-pill ${state.drillDifficulty === t.id ? 'active' : ''}" data-difficulty="${t.id}"` +
+      (t.hint ? ` title="${t.hint}"` : '') + `>${t.label}</button>`).join('');
+  }
   // Update collapsed-state label.
   const current = $('theme-current');
   if (current) {
@@ -255,9 +265,14 @@ export function renderThemePills() {
 export async function startThemeDrill() {
   const m = state.motifFilter;
   if (!m || m === 'all' || m === 'untagged') return;
+  // Difficulty tier: 'any' keeps the own-game-first behaviour; a specific tier
+  // draws library-only so every drilled puzzle genuinely matches the tier
+  // (own-game mistakes have no fixed solution length to classify by).
+  const tier = DIFFICULTY_TIERS.find((t) => t.id === (state.drillDifficulty || 'any')) || DIFFICULTY_TIERS[0];
+  const tierOnly = tier.id !== 'any';
   // 1) Own-game pool: current behaviour — same-motif mistakes, shuffled. Tag
   //    each with source 'mine' so the grader/Completed route correctly.
-  let pool = state.puzzles.filter((p) => !isExcludedPuzzle(p) && p.motif === m);
+  let pool = tierOnly ? [] : state.puzzles.filter((p) => !isExcludedPuzzle(p) && p.motif === m);
   shuffleInPlace(pool);
   const own = pool.slice(0, THEME_DRILL_TARGET);
   for (const p of own) { if (p.source == null) p.source = 'mine'; }
@@ -279,7 +294,7 @@ export async function startThemeDrill() {
     const excludeIds = state.drillQueue.map((p) => p.id);
     let topUp = [];
     try {
-      topUp = await topUpMotif(m, { ratingCenter: state.userRating, count: need, excludeIds });
+      topUp = await topUpMotif(m, { ratingCenter: state.userRating, count: need, excludeIds, difficulty: tierOnly ? tier : null });
     } catch (err) { console.warn('themed-drill top-up failed:', err && err.message); }
     // Guard against a stale resolve: only apply if the user is still drilling
     // the same motif (they may have ended/switched while the pack loaded).
@@ -316,7 +331,9 @@ export function updateDrillBanner() {
   if (state.drillMotif && state.drillQueue.length) {
     banner.classList.remove('hidden');
     const label = MOTIF_LABELS[state.drillMotif] || state.drillMotif;
-    let text = `Drilling: ${label} — ${state.drillIndex + 1} of ${state.drillQueue.length}`;
+    const diff = (state.drillDifficulty && state.drillDifficulty !== 'any')
+      ? ' · ' + (DIFFICULTY_TIERS.find((t) => t.id === state.drillDifficulty) || {}).label : '';
+    let text = `Drilling: ${label}${diff} — ${state.drillIndex + 1} of ${state.drillQueue.length}`;
     // Spec 17 — honest supply note when the drill was topped up from the
     // library. Only shown when both sources contributed (don't add noise to a
     // pure own-game or pure-library drill where the total already tells it).

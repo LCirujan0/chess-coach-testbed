@@ -43,7 +43,7 @@
   .phase .score { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:36px; line-height:1; margin:6px 0 2px; }
   .phase .bar { height:6px; border-radius:4px; background:var(--surface3); overflow:hidden; margin-top:8px; } .phase .bar i { display:block; height:100%; border-radius:4px; }
   .phase .sub { font-size:11.5px; color:var(--muted); margin-top:8px; }
-  .phase.leak { border-color:var(--endg); background:linear-gradient(180deg,#FBF3E6,#fff); box-shadow:0 14px 30px -22px rgba(201,138,46,.6); }
+  .phase.leak { border-color:var(--endg); background:linear-gradient(180deg,var(--warn-soft),#fff); box-shadow:0 14px 30px -22px rgba(201,138,46,.6); }
   .phase .flag { position:absolute; top:11px; right:11px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--endg); border-radius:6px; padding:2px 7px; }
   .phase .impact { font-family:"Spline Sans Mono"; font-size:12px; color:var(--endg); font-weight:600; margin-top:6px; }
 
@@ -72,12 +72,12 @@
   .phaselegend { display:flex; gap:14px; margin-top:12px; font-size:11px; color:var(--muted); } .phaselegend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
   .heatnote { font-size:12px; color:var(--muted); margin-top:10px; } .heatnote b { color:var(--ink); font-family:"Plus Jakarta Sans"; }
 
-  .review1 { background:var(--accent-soft); border:1px solid #CDE9DC; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-top:16px; text-decoration:none; color:inherit; }
+  .review1 { background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-top:16px; text-decoration:none; color:inherit; }
   .review1 .ava { width:24px; height:24px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); flex-shrink:0; } .review1 .tx { flex:1; font-size:13px; } .review1 .tx b { font-family:"Plus Jakarta Sans"; } .review1 .go { font-size:12px; color:var(--accent); font-weight:700; }
 
   .empty-state { padding:24px; text-align:center; color:var(--muted); font-size:13px; line-height:1.5; }
   .empty-state .btn { display:inline-block; margin-top:12px; padding:10px 18px; background:var(--accent); color:#fff; border-radius:var(--r-btn); text-decoration:none; font-weight:700; font-family:"Plus Jakarta Sans"; }
-  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:10px; padding:11px 13px; margin-top:8px; } .ebanner .t { font-weight:700; font-size:12.5px; color:var(--bad); } .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:#9a4334; margin-top:5px; }
+  .ebanner { background:var(--bad-soft); border:1px solid var(--bad-line); border-radius:10px; padding:11px 13px; margin-top:8px; } .ebanner .t { font-weight:700; font-size:12.5px; color:var(--bad); } .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:var(--bad-ink); margin-top:5px; }
 
 
   /* rating profile block (C-surface — peak / record / tactics / settledness) */
@@ -93,13 +93,16 @@
   .rc-stat .v.muted { color:var(--muted); }
   .rc-stat .x { font-size:11px; color:var(--muted); margin-top:5px; }
   .rc-settle { font-size:12.5px; margin-top:14px; padding:10px 12px; border-radius:10px; line-height:1.45; }
-  .rc-settle.settled { background:var(--accent-soft); border:1px solid #CDE9DC; color:var(--ink); }
-  .rc-settle.settling { background:#FBF3E6; border:1px solid #EAD9B6; color:var(--ink); }
+  .rc-settle.settled { background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--ink); }
+  .rc-settle.settling { background:var(--warn-soft); border:1px solid #EAD9B6; color:var(--ink); }
   .rc-settle b { font-family:"Plus Jakarta Sans",sans-serif; }
   .rc-causal { font-size:12.5px; color:var(--muted); margin-top:10px; } .rc-causal b { color:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; }
 
   @media (min-width: 880px) { h1 { font-size:32px; } }
 </style>
+<script src="/js/profile.js"></script>
+<script src="/js/chesscom-insights.js"></script>
+<script type="module" src="/js/sync.js"></script>
 </head>
 <body>
 <div class="container">
@@ -127,14 +130,14 @@
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
-  <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
     <div class="nav-more-label">More</div>
     <a href="/games.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync games</a>
-    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
-    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
+    <a href="/roadmap.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
+    <a href="/completed.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
   </div>
   <div class="version-stamp" id="version-stamp"></div>
 </aside>
@@ -143,7 +146,7 @@
 <nav class="tab-bar" aria-label="Primary">
   <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
   <a href="/practice.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
-  <a href="/review.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
@@ -183,7 +186,7 @@
     return;
   }
   var currentRating = (ratingCache && typeof ratingCache.rating === 'number') ? ratingCache.rating : null;
-  var TARGET = 1500;
+  var TARGET = (typeof KPProfile!=='undefined'?KPProfile.targetElo():1500);
 
   // App-level session streak (single-sourced via js/streak.js — same module
   // today.html writes). Read-only here: resolve the elapsed gap for an honest
@@ -445,6 +448,135 @@
       + '<span style="margin-left:auto;font-size:12px;color:var(--muted);">' + correct + ' / ' + ids.length + ' positions</span></div></div>';
   }
 
+  // Chess.com performance panel (v0.80, owner ask): the per-game performance
+  // estimate ("what level did you actually play at") and what it means, plus
+  // the aggregate reads the meta capture supports — record, colour split,
+  // accuracy when chess.com reviewed the game, how you lose, opening scores.
+  function chesscomHtml() {
+    if (typeof ChesscomInsights === 'undefined') return '';
+    var metaMap = loadJson('chess-coach-game-meta-v1', {}) || {};
+    var series = ChesscomInsights.perfSeries(metaMap);
+    var sum = ChesscomInsights.summarize(metaMap);
+    if (!sum.games) return '';
+    var parts = [];
+    // -- chart: per-game performance dots/line vs your current rating --
+    if (series.length >= 3) {
+      var pts = series.slice(-20);
+      var w = 560, h = 110, pad = 8;
+      var vals = pts.map(function (p) { return p.perf; });
+      if (currentRating != null) vals.push(currentRating);
+      var lo = Math.min.apply(null, vals) - 30, hi = Math.max.apply(null, vals) + 30;
+      var x = function (i) { return pad + i * ((w - 2 * pad) / Math.max(1, pts.length - 1)); };
+      var y = function (v) { return h - pad - ((v - lo) / Math.max(1, hi - lo)) * (h - 2 * pad); };
+      var line = pts.map(function (p, i) { return x(i).toFixed(1) + ',' + y(p.perf).toFixed(1); }).join(' ');
+      var dots = pts.map(function (p, i) {
+        var col = p.res === 'win' ? 'var(--pos)' : p.res === 'loss' ? 'var(--bad)' : 'var(--muted)';
+        return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.perf).toFixed(1) + '" r="3" fill="' + col + '"><title>' + p.perf + ' (' + (p.res || '') + ')</title></circle>';
+      }).join('');
+      var ratingLine = (currentRating != null)
+        ? '<line x1="' + pad + '" y1="' + y(currentRating).toFixed(1) + '" x2="' + (w - pad) + '" y2="' + y(currentRating).toFixed(1) + '" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/><text x="' + (w - pad) + '" y="' + (y(currentRating) - 4).toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--muted)">your rating ' + currentRating + '</text>'
+        : '';
+      parts.push('<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;margin-top:6px;" role="img" aria-label="Per-game performance estimate">' +
+        ratingLine +
+        '<polyline points="' + line + '" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity=".55"/>' + dots + '</svg>');
+      var meaning = ChesscomInsights.perfMeaning(sum.recentPerf, currentRating);
+      if (meaning) parts.push('<div class="heatnote"><b>Recent performance: ~' + sum.recentPerf + '.</b> ' + esc(meaning) + '</div>');
+    }
+    // -- facts --
+    var facts = [];
+    facts.push('Record: <b>' + sum.wins + 'W ' + sum.draws + 'D ' + sum.losses + 'L</b>' + (sum.avgOpp ? ' vs ~' + sum.avgOpp + '-rated opponents' : ''));
+    if (sum.byColor.white.n >= 3 && sum.byColor.black.n >= 3) {
+      facts.push('As White you win <b>' + Math.round(100 * sum.byColor.white.w / sum.byColor.white.n) + '%</b>, as Black <b>' + Math.round(100 * sum.byColor.black.w / sum.byColor.black.n) + '%</b>');
+    }
+    if (sum.accAvg != null) facts.push('Avg accuracy <b>' + sum.accAvg + '%</b>' + (sum.accOppAvg != null ? ' (opponents ' + sum.accOppAvg + '%)' : '') + ' · from ' + sum.accCount + ' chess.com-reviewed game' + (sum.accCount === 1 ? '' : 's'));
+    var terms = Object.keys(sum.lossTerminations).map(function (t) { return [t, sum.lossTerminations[t]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    if (terms.length && sum.losses >= 3) {
+      var label = { checkmated: 'checkmate', timeout: 'the clock', resigned: 'resignation', abandoned: 'abandoning' }[terms[0][0]] || terms[0][0];
+      facts.push('Most of your losses end by <b>' + esc(label) + '</b> (' + terms[0][1] + ' of ' + sum.losses + ')');
+    }
+    var played = sum.openings.filter(function (o) { return o.n >= 3; });
+    if (played.length >= 2) {
+      var best = played.slice().sort(function (a, b) { return b.scorePct - a.scorePct; })[0];
+      var worstO = played.slice().sort(function (a, b) { return a.scorePct - b.scorePct; })[0];
+      if (best !== worstO) facts.push('Best opening: <b>' + esc(best.name) + '</b> (' + best.scorePct + '% over ' + best.n + ') · worst: <b>' + esc(worstO.name) + '</b> (' + worstO.scorePct + '%)');
+    }
+    var factHtml = facts.map(function (f) { return '<div style="font-size:12.5px;padding:7px 0;border-top:1px solid var(--surface2);">' + f + '</div>'; }).join('');
+    return '<div class="panel"><div class="heat-h"><span class="t">Game-by-game performance</span><span class="u">from your chess.com games · win green, loss red</span></div>' +
+      parts.join('') + '<div style="margin-top:10px;">' + factHtml + '</div></div>';
+  }
+
+  // Mastery over time (2026-06-10, owner ask): per-type progress so improvement
+  // is VISIBLE. Weekly trend where per-attempt timestamps exist (tactics via the
+  // attempts ledger's attemptLog, recognition via seen{at,correct}); honest
+  // snapshot chips for stores that only keep current state (endgames mastered,
+  // openings SRS boxes, board-vision level).
+  function masteryHtml() {
+    var WEEKS = 8, now = Date.now(), WK = 7 * 86400000;
+    function weekIdx(t) { var d = Math.floor((now - t) / WK); return (d >= 0 && d < WEEKS) ? (WEEKS - 1 - d) : null; }
+    function trendRow(label, buckets, color) {
+      var any = buckets.some(function (b) { return b.n > 0; });
+      if (!any) return '';
+      var bars = buckets.map(function (b, i) {
+        var pct = b.n ? Math.round(100 * b.ok / b.n) : null;
+        var h = pct == null ? 8 : Math.max(10, pct);
+        var bg = pct == null ? 'var(--surface3)' : color;
+        var tip = pct == null ? 'no attempts' : pct + '% of ' + b.n;
+        return '<div title="' + tip + '" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:46px;"><div style="height:' + h + '%;background:' + bg + ';border-radius:3px 3px 0 0;"></div></div>';
+      }).join('');
+      var last = null;
+      for (var i = buckets.length - 1; i >= 0; i--) if (buckets[i].n) { last = Math.round(100 * buckets[i].ok / buckets[i].n); break; }
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);">' +
+        '<div style="width:96px;font-size:12px;font-weight:700;">' + label + '</div>' +
+        '<div style="flex:1;display:flex;gap:3px;align-items:flex-end;">' + bars + '</div>' +
+        '<div style="width:44px;text-align:right;font-size:13px;font-weight:800;font-family:\'Plus Jakarta Sans\',sans-serif;">' + (last == null ? '—' : last + '%') + '</div></div>';
+    }
+    // Tactics: every attemptLog entry across mistake + lichess puzzles.
+    var tac = []; for (var w = 0; w < WEEKS; w++) tac.push({ n: 0, ok: 0 });
+    Object.keys(attempts).forEach(function (id) {
+      var log = attempts[id] && attempts[id].attemptLog;
+      if (!Array.isArray(log)) return;
+      log.forEach(function (e) {
+        var t = e && Date.parse(e.at); if (!t) return;
+        var wi = weekIdx(t); if (wi == null) return;
+        tac[wi].n++; if (e.outcome === 'solved') tac[wi].ok++;
+      });
+    });
+    // Recognition: seen{id:{at,correct}}.
+    var rec = []; for (var w2 = 0; w2 < WEEKS; w2++) rec.push({ n: 0, ok: 0 });
+    var seenMap = (recognition && recognition.seen) || {};
+    Object.keys(seenMap).forEach(function (id) {
+      var r = seenMap[id]; var t = (r && typeof r === 'object') ? r.at : r;
+      if (typeof t !== 'number') return;
+      var wi = weekIdx(t); if (wi == null) return;
+      rec[wi].n++; if (r && r.correct === true) rec[wi].ok++;
+    });
+    var rows = trendRow('Tactics', tac, 'var(--accent)') + trendRow('Recognition', rec, 'var(--endg)');
+    // Snapshot chips.
+    var chips = [];
+    try {
+      var eg = loadJson('chess-coach-eg-results-v1', {}) || {};
+      var mastered = Object.keys(eg).filter(function (k) { return eg[k] && eg[k].mastered; }).length;
+      if (Object.keys(eg).length) chips.push('Endgames: <b>' + mastered + '/20 mastered</b>');
+    } catch (e) {}
+    try {
+      var op = loadJson('chess-coach-openings-v1', {}) || {};
+      var lines = Object.keys(op).filter(function (k) { return op[k] && typeof op[k].box === 'number'; });
+      if (lines.length) {
+        var solid = lines.filter(function (k) { return op[k].box >= 4; }).length;
+        chips.push('Openings: <b>' + solid + '/' + lines.length + ' lines solid</b>');
+      }
+    } catch (e) {}
+    try {
+      var bv = loadJson('chess-coach-board-vision-v1', null);
+      if (bv && bv.tracker && bv.tracker.level) chips.push('Board vision: <b>level ' + bv.tracker.level + '/6</b>');
+    } catch (e) {}
+    var chipRow = chips.length
+      ? '<div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;">' + chips.map(function (c) { return '<span style="font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface2);">' + c + '</span>'; }).join('') + '</div>'
+      : '';
+    if (!rows && !chipRow) return '';
+    return '<div class="panel"><div class="heat-h"><span class="t">Mastery over time</span><span class="u">weekly accuracy per training type · last 8 weeks</span></div>' + rows + chipRow + '</div>';
+  }
+
   // RENDER
   if (!phases) {
     root.innerHTML = ratingStripHtml() + ratingBlockHtml() + '<div class="panel"><div class="empty-state">Stats module failed to load. Reload the page; if it persists, check the browser console.</div></div>';
@@ -462,7 +594,8 @@
         '<div style="font-size:15px;font-weight:700;color:var(--ink);font-family:\'Plus Jakarta Sans\',sans-serif;margin-bottom:6px;">Sync your games to unlock Insights</div>' +
         'Connect Chess.com and the coach analyses your games — your rating trajectory, phase strengths, and exactly where you go wrong.' +
         '<br><a class="btn" href="/games.html">Sync games</a>' +
-      '</div></div>';
+      '</div></div>' +
+      masteryHtml(); // puzzle/recognition progress exists independently of game ingests
     if (hasRating) renderTrajectory();
     return;
   }
@@ -471,9 +604,11 @@
   root.innerHTML =
     ratingStripHtml() +
     ratingBlockHtml() +
+    chesscomHtml() +
     ahaHtml(leak) +
     phaseCardsHtml(leak) +
     detailHtml() +
+    masteryHtml() +
     recognitionHtml() +
     '<div class="panel"><div class="heat-h"><span class="t">Where you go wrong</span><span class="u">mistake rate per 5-move band · phase-coloured</span></div>' + heatmapHtml() + '</div>' +
     '<a href="/coach.html" class="review1"><span class="ava"></span><div class="tx"><b>Your leak, in detail.</b> The full strengths &amp; weaknesses read is in Coach.</div><span class="go">Open →</span></a>';

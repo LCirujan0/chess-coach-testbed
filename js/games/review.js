@@ -22,6 +22,8 @@ import { renderCoachCard, parseCoachJson, ensureCoachCardStyles } from '/js/coac
 const KEY_MOVES = 'chess-coach-game-moves-v1';
 const KEY_MISTAKES = 'chess-coach-mistakes-v1';
 const KEY_RATING = 'chess-coach-user-rating-v1';
+const KEY_SCORECARDS = 'chess-coach-game-scorecards-v1';
+const KEY_META = 'chess-coach-game-meta-v1';
 
 function loadJson(key, fb) {
   try { const v = JSON.parse(localStorage.getItem(key) || ''); return v == null ? fb : v; }
@@ -53,31 +55,75 @@ const reviewState = {
 const explainCache = new Map(); // mistake id -> rendered review object
 
 // ---------------------------------------------------------------------------
-// Review list (only games with a captured move list are replayable — option b)
+// Review list. Bug fix (2026-06-10, owner report "review pulls no games"):
+// this listed ONLY chess-coach-game-moves-v1 — but games ingested before
+// move-capture existed (or on another origin) live only in the scorecard /
+// meta / mistakes stores, so the list looked empty while "Saved games" showed
+// data. Now the list is the UNION of all per-game stores; games without a
+// captured move list appear with an honest "re-sync to enable replay" CTA
+// instead of being silently invisible.
 // ---------------------------------------------------------------------------
 export function renderReviewList() {
   const host = $('review-list');
   if (!host) return;
   const moves = loadJson(KEY_MOVES, {}) || {};
-  const keys = Object.keys(moves);
-  if (!keys.length) {
-    host.innerHTML = '<div class="sub" style="padding:4px 0;">No replayable games yet. Ingest games above, then review them here.</div>';
+  const scorecards = loadJson(KEY_SCORECARDS, {}) || {};
+  const meta = loadJson(KEY_META, {}) || {};
+  const allMistakes = loadJson(KEY_MISTAKES, []) || [];
+  const keys = new Set([...Object.keys(moves), ...Object.keys(scorecards), ...Object.keys(meta)]);
+  // Mistake records carry their gameUrl — surface games known ONLY from mistakes too.
+  for (const m of allMistakes) { const k = m.gameUrl || (m.id || '').split('|')[0]; if (k) keys.add(k); }
+  if (!keys.size) {
+    host.innerHTML = '<div class="sub" style="padding:4px 0;">No games yet. Sync your Chess.com games first, then review them here.</div>';
     return;
   }
-  const allMistakes = loadJson(KEY_MISTAKES, []) || [];
   const countFor = (k) => allMistakes.filter((m) => (m.gameUrl || (m.id || '').split('|')[0]) === k).length;
-  const rows = keys
-    .map((k) => ({ k, ...moves[k], n: countFor(k) }))
+  const dateOf = (k, mv) => mv?.dateStr
+    || (meta[k] && typeof meta[k].endTime === 'number' ? new Date(meta[k].endTime * 1000).toISOString().slice(0, 10) : '');
+  const rows = [...keys]
+    .map((k) => {
+      const mv = moves[k] || null;
+      const mt = meta[k] || null;
+      return {
+        k,
+        replayable: !!(mv && Array.isArray(mv.moves) && mv.moves.length),
+        opponent: mv?.opponent || mt?.opponent || null,
+        userIsWhite: mv ? mv.userIsWhite !== false : (mt ? String(mt.userColorName).toLowerCase() === 'white' : null),
+        result: mv?.result || mt?.result || null,
+        dateStr: dateOf(k, mv),
+        n: countFor(k),
+        meta: mt,
+      };
+    })
     .sort((a, b) => String(b.dateStr || '').localeCompare(String(a.dateStr || '')));
   host.innerHTML = rows.map((g) => {
-    const colour = g.userIsWhite ? 'White' : 'Black';
-    const res = resultLabel(g.result, g.userIsWhite);
+    const colour = g.userIsWhite == null ? '' : (g.userIsWhite ? ' · White' : ' · Black');
+    const res = g.result ? ' · ' + resultLabel(g.result, g.userIsWhite !== false) : '';
+    const action = g.replayable
+      ? `<button class="btn btn-secondary" data-review-open="${escapeHtml(g.k)}" type="button" style="flex:none;">Review →</button>`
+      : `<a class="btn btn-secondary" href="/games.html" style="flex:none;text-decoration:none;" title="This game predates replay capture — one re-sync makes it replayable.">Re-sync to replay</a>`;
+    // Chess.com enrichment (v0.80): opening, per-game performance estimate, and
+    // accuracy (present only when a chess.com Game Review ran on the game).
+    const bits = [];
+    const cci = (typeof ChesscomInsights !== 'undefined') ? ChesscomInsights : null;
+    if (g.meta) {
+      if (g.meta.openingName || g.meta.eco) bits.push(escapeHtml(g.meta.openingName || g.meta.eco));
+      // Per-game performance only when the pairing was close enough for the
+      // estimate to mean anything (within ±400 the formula is informative;
+      // beyond that it saturates and just confuses).
+      const perf = cci ? cci.perfOf(g.meta) : null;
+      const fair = typeof g.meta.rating === 'number' && typeof g.meta.oppRating === 'number' && Math.abs(g.meta.oppRating - g.meta.rating) <= 400;
+      if (perf != null && fair) bits.push(`played like <b>${perf}</b>`);
+      if (typeof g.meta.userAccuracy === 'number') bits.push(`${Math.round(g.meta.userAccuracy)}% accuracy${typeof g.meta.oppAccuracy === 'number' ? ` (opp ${Math.round(g.meta.oppAccuracy)}%)` : ''}`);
+    }
+    const enrich = bits.length ? `<div class="sub" style="margin:2px 0 0;font-size:11.5px;">${bits.join(' · ')}</div>` : '';
     return `<div class="review-row" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);">
       <div style="flex:1;min-width:0;">
         <div style="font-weight:600;">vs ${escapeHtml(g.opponent || 'opponent')}</div>
-        <div class="sub" style="margin:0;">${escapeHtml(g.dateStr || '')} · ${colour} · ${res} · ${g.n} saved mistake${g.n === 1 ? '' : 's'}</div>
+        <div class="sub" style="margin:0;">${escapeHtml(g.dateStr || '')}${colour}${res} · ${g.n} saved mistake${g.n === 1 ? '' : 's'}</div>
+        ${enrich}
       </div>
-      <button class="btn btn-secondary" data-review-open="${escapeHtml(g.k)}" type="button" style="flex:none;">Review →</button>
+      ${action}
     </div>`;
   }).join('');
 }
@@ -101,10 +147,75 @@ function openReview(gameKey) {
   reviewState.userIsWhite = entry.userIsWhite !== false;
   reviewState.plyIndex = 0;
   reviewState.mistakesByPly = mistakesByPlyFor(gameKey);
+  reviewState.meta = (loadJson(KEY_META, {}) || {})[gameKey] || null;
   reviewState.lastMove = null;
   $('review-panel').classList.add('hidden');
   $('review-mode').classList.remove('hidden');
+  renderMoments();
   renderPly();
+}
+
+// ---------------------------------------------------------------------------
+// Key-moments walkthrough (2026-06-10, owner ask): the game's saved mistakes
+// as a jumpable strip + a "Next key moment" control, so review WALKS the user
+// through what mattered instead of leaving them to step 80 plies blind.
+// Jumping to a moment auto-asks the coach about it (the jump IS the explicit
+// user action — rule 5 holds; responses are cached per mistake id).
+// ---------------------------------------------------------------------------
+function momentPlies() {
+  return Object.keys(reviewState.mistakesByPly).map(Number).sort((a, b) => a - b);
+}
+function gameMetaLine() {
+  const m = reviewState.meta;
+  if (!m) return '';
+  const cci = (typeof ChesscomInsights !== 'undefined') ? ChesscomInsights : null;
+  const bits = [];
+  if (m.openingName || m.eco) bits.push(escapeHtml(m.openingName || m.eco));
+  // Same close-pairing guard as the list (lopsided pairings make the single-
+  // game estimate meaningless).
+  const perf = cci ? cci.perfOf(m) : null;
+  const fair = typeof m.rating === 'number' && typeof m.oppRating === 'number' && Math.abs(m.oppRating - m.rating) <= 400;
+  if (perf != null && fair) {
+    const d = perf - m.rating;
+    bits.push(`you played like <b>${perf}</b> (${d >= 0 ? '+' : ''}${d} vs your ${m.rating})`);
+  }
+  if (typeof m.userAccuracy === 'number') bits.push(`${Math.round(m.userAccuracy)}% accuracy`);
+  if (!bits.length) return '';
+  return `<div class="sub" style="margin:0 0 8px;font-size:12px;">${bits.join(' · ')}</div>`;
+}
+
+function renderMoments() {
+  const host = $('review-moments');
+  if (!host) return;
+  const plies = momentPlies();
+  if (!plies.length) { host.innerHTML = gameMetaLine() + '<div class="sub" style="margin:0 0 10px;">No saved mistakes in this game — a clean one. Step through at your own pace.</div>'; return; }
+  const worst = plies.reduce((w, p) => {
+    const m = reviewState.mistakesByPly[p];
+    return (!w || (m.cpLoss || 0) > (w.cpLoss || 0)) ? m : w;
+  }, null);
+  const head = `${plies.length} key moment${plies.length === 1 ? '' : 's'}` +
+    (worst ? ` · worst at move ${worst.fullmove} (${((worst.cpLoss || 0) / 100).toFixed(1)} pawns)` : '');
+  host.innerHTML = gameMetaLine() + `<div class="rm-head">${escapeHtml(head)}</div><div class="rm-row">` +
+    plies.map((p) => {
+      const m = reviewState.mistakesByPly[p];
+      const on = reviewState.plyIndex === p + 1 ? ' on' : '';
+      return `<button type="button" class="rm-chip${on}" data-moment="${p}" title="${escapeHtml(m.severity || '')}">` +
+        `<span class="rm-dot ${escapeHtml(m.severity || 'mistake')}"></span>Move ${m.fullmove}</button>`;
+    }).join('') + '</div>';
+}
+function jumpToMoment(ply) {
+  const m = reviewState.mistakesByPly[ply];
+  if (!m) return;
+  reviewState.plyIndex = ply + 1; // show the position AFTER the mistake move
+  renderPly();
+  renderMoments();
+  explainMistake(m); // cached per id — repeat jumps are free
+}
+function nextKeyMoment() {
+  const plies = momentPlies();
+  if (!plies.length) return;
+  const next = plies.find((p) => p + 1 > reviewState.plyIndex);
+  jumpToMoment(next != null ? next : plies[0]); // wrap to the first
 }
 
 function closeReview() {
@@ -176,7 +287,7 @@ function buildUserMessage(m) {
 
 const REVIEW_SYSTEM = (rating) => [
   `You are a chess coach reviewing one move from a game the student has ALREADY played.`,
-  `The student is rated approximately ${rating} on Chess.com rapid, targeting 1500. Calibrate`,
+  `The student is rated approximately ${rating} on Chess.com rapid, targeting ${(typeof KPProfile!=='undefined'?KPProfile.targetElo():1500)}. Calibrate`,
   `to that band: concrete patterns and one-move-ahead ideas, not advanced structural vocabulary.`,
   ``,
   `You are given the position, the move the student played, the engine's preferred move and`,
@@ -190,7 +301,14 @@ const REVIEW_SYSTEM = (rating) => [
   `- points: 2-3 labelled points (You played / Better / Why), tones tinted by severity.`,
   `- question: one reflective question to internalise the pattern.`,
   `- grounded: the source line, e.g. "Engine: ${'$'}{bestMove} was N pawns better."`,
-].join('\n');
+].join('\n') + coachMemoryBlock();
+
+// The coach's per-user memory (js/coach-memory.js window global) — the same
+// teacher remembering this student across surfaces. Empty when none.
+function coachMemoryBlock() {
+  try { if (typeof CoachMemory !== 'undefined') return CoachMemory.promptBlock(CoachMemory.read()); } catch { /* optional */ }
+  return '';
+}
 
 async function explainMistake(m) {
   const coach = $('review-coach');
@@ -268,6 +386,15 @@ export function initReview() {
     if (btn) openReview(btn.getAttribute('data-review-open'));
   });
   const back = $('review-back'); if (back) back.addEventListener('click', closeReview);
-  const next = $('review-next'); if (next) next.addEventListener('click', () => { if (reviewState.plyIndex < reviewState.moves.length) { reviewState.plyIndex++; renderPly(); } });
-  const prev = $('review-prev'); if (prev) prev.addEventListener('click', () => { if (reviewState.plyIndex > 0) { reviewState.plyIndex--; renderPly(); } });
+  const next = $('review-next'); if (next) next.addEventListener('click', () => { if (reviewState.plyIndex < reviewState.moves.length) { reviewState.plyIndex++; renderPly(); renderMoments(); } });
+  const prev = $('review-prev'); if (prev) prev.addEventListener('click', () => { if (reviewState.plyIndex > 0) { reviewState.plyIndex--; renderPly(); renderMoments(); } });
+  const moment = $('review-next-moment'); if (moment) moment.addEventListener('click', nextKeyMoment);
+  const moments = $('review-moments'); if (moments) moments.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-moment]');
+    if (chip) jumpToMoment(parseInt(chip.getAttribute('data-moment'), 10));
+  });
+  // Wipe this device (v0.80): local-only — the Supabase copy survives, so
+  // signing back in restores everything without re-ingesting.
+  const wipe = $('wipe-device-btn');
+  if (wipe) wipe.addEventListener('click', () => { if (window.KPSync) window.KPSync.wipeDevice(); });
 }

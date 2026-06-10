@@ -2,7 +2,7 @@
 // A zero-console-error sweep would have caught every firefight regression automatically:
 // the today.html / coach.html smart-quote SyntaxErrors AND the dom.js null addEventListener
 // throw that killed puzzle + endgames. This is your dominant failure mode, made automatic.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { ALL_PAGES, isIgnored } from './pages.js';
 
 for (const path of ALL_PAGES) {

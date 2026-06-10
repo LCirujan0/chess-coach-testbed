@@ -132,12 +132,22 @@ export async function topUpMotif(motif, opts) {
   const solved = loadSolvedLichessIds();
   const exclude = new Set(o.excludeIds || []);
 
-  // Candidate pool: same motif, not excluded, not already solved.
+  // Difficulty tier (owner spec 2026-06-10): bound the number of SOLVER moves
+  // in the line. entry.moves = "setup s1 o1 s2 o2 ..." so solver moves =
+  // ceil((total - 1) / 2). No tier passed → no length restriction.
+  const minSolver = (o.difficulty && typeof o.difficulty.min === 'number') ? o.difficulty.min : 1;
+  const maxSolver = (o.difficulty && typeof o.difficulty.max === 'number') ? o.difficulty.max : 99;
+
+  // Candidate pool: same motif, in-tier, not excluded, not already solved.
   const candidates = [];
   for (const e of pack) {
     if (!e || e.motif !== motif) continue;
     const nid = `lichess:${e.id}`;
     if (solved.has(nid) || exclude.has(nid)) continue;
+    if (typeof e.moves === 'string') {
+      const solverMoves = Math.ceil((e.moves.trim().split(/\s+/).length - 1) / 2);
+      if (solverMoves < minSolver || solverMoves > maxSolver) continue;
+    }
     candidates.push(e);
   }
   if (!candidates.length) return [];

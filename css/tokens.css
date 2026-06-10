@@ -16,7 +16,10 @@
   --accent-2:    #5FB58F;
   --accent-soft: #E7F4EE;
   --ink:         #1B1D22;
-  --muted:       #6E727B;
+  /* 2026-06-10 a11y nudge: #6E727B computed 4.4:1 on --surface2 (just under
+     WCAG AA 4.5). #666A73 keeps the hue, passes on both white (5.4) and
+     surface2 (4.9). Visually a hair darker, intentional. */
+  --muted:       #666A73;
   --surface:     #FFFFFF;
   --surface2:    #F2F4F7;
   --surface3:    #E9ECF1;

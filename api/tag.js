@@ -23,9 +23,27 @@ Rules:
 - Respond ONLY with a valid JSON array, no preamble, no markdown fences
 - Format: [{"id":"...","motif":"...","themes":["..."]}]`;
 
+// Best-effort per-IP rate limit (same pattern + rationale as api/coach.js).
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_REQ = 10; // tagging is batched; legitimate use is a handful per ingest
+const hits = new Map();
+function rateLimited(ip) {
+  const now = Date.now();
+  const arr = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  arr.push(now);
+  hits.set(ip, arr);
+  if (hits.size > 1000) hits.clear();
+  return arr.length > RATE_MAX_REQ;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'method_not_allowed', detail: 'Only POST is accepted.' });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  if (rateLimited(ip)) {
+    return res.status(429).json({ error: 'rate_limited', detail: 'Too many requests — slow down.' });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

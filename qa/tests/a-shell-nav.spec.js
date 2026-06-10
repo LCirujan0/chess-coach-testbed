@@ -1,6 +1,6 @@
 // qa-checklist §A — shared shell on every page, both breakpoints. Reconciled to v0.44:
 // mobile is tab-bar-only (hamburger removed in v0.42); practice.html is a shell page.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { SHELL_PAGES } from './pages.js';
 
 test.describe('Desktop shell (project: desktop-chromium)', () => {

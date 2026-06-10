@@ -5,7 +5,7 @@ export const SHELL_PAGES = [
   { path: '/today.html',                title: 'Today' },
   { path: '/puzzle.html',               title: 'Puzzle' },
   { path: '/practice.html',             title: 'Practice' },
-  { path: '/review.html',               title: 'Review' },
+  { path: '/review.html',               title: 'Game Review' },
   { path: '/games.html',                title: 'Sync games' },
   { path: '/completed.html',            title: 'Completed' },
   { path: '/insights.html',             title: 'Insights' },
@@ -22,6 +22,7 @@ export const ALL_PAGES = [
   ...SHELL_PAGES.map(p => p.path),
   '/index.html',
   '/session.html',
+  '/onboarding.html',   // v0.80 first-run flow (focused chrome, no nav)
 ];
 
 // Console noise we tolerate (extend deliberately, with a reason). Keep this short:

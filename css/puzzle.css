@@ -467,8 +467,8 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><line x1='4' y1='4' x2='12' y2='12'/><line x1='12' y1='4' x2='4' y2='12'/></svg>");
   }
   .result.pass { background: #F1F8F4; border-color: #D4E9DC; }
-  .result.warn { background: #FBF5EA; border-color: #EBDDC2; }
-  .result.fail { background: #FBF0ED; border-color: #EDD2CB; }
+  .result.warn { background: var(--warn-soft); border-color: #EBDDC2; }
+  .result.fail { background: var(--bad-soft); border-color: var(--bad-line); }
   .result-body { font-size: 13px; color: var(--ink); line-height: 1.5; }
   /* Motif chip on the post-resolution result panel (v0.7). Hidden until the
      reveal is earned — same gate as the engine column on the comparison
@@ -779,8 +779,8 @@
   }
   .msg.error {
     align-self: flex-start;
-    background: #FBF0ED; color: var(--bad);
-    border: 1px solid #EDD2CB;
+    background: var(--bad-soft); color: var(--bad);
+    border: 1px solid var(--bad-line);
     font-size: 12px;
   }
   /* ────────────────────────────────────────────────────────────────────
@@ -1019,8 +1019,8 @@
     font-size: 11px; font-weight: 700; letter-spacing: .02em;
   }
   .eval-chip.eval-good { background: #E7F4EE; color: var(--pos); }
-  .eval-chip.eval-mid  { background: #FBF5EA; color: var(--warn); }
-  .eval-chip.eval-bad  { background: #FBF0ED; color: var(--bad); }
+  .eval-chip.eval-mid  { background: var(--warn-soft); color: var(--warn); }
+  .eval-chip.eval-bad  { background: var(--bad-soft); color: var(--bad); }
   .eval-chip.eval-na   { background: var(--surface2); color: var(--muted); font-weight: 600; }
 
   /* ---- No-spoiler gate for the eval column: hidden during live play AND

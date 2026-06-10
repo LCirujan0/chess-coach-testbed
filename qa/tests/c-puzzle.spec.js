@@ -1,7 +1,7 @@
 // qa-checklist §C — puzzle core loop.
 // Live-now items run; reverted (R2 material balance) and not-yet-rebuilt (R3 puzzle UX)
 // items are parked as test.fixme with the owning release noted. Un-fixme them as each ships.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 test('puzzle.html loads clean and renders a board', async ({ page }) => {
   const errors = [];

@@ -24,9 +24,13 @@ const STYLE_RULES = [
 // speaks to the actual level of the student.
 export function calibrationBlock() {
   const r = state.userRating || DEFAULT_RATING;
+  // Profile-aware target (v0.80): the student's own onboarding goal, plus the
+  // one-line profile context (time control, seriousness) when present.
+  const target = (typeof KPProfile !== 'undefined') ? KPProfile.targetElo() : RATING_TARGET;
+  const profileLine = (typeof KPProfile !== 'undefined') ? KPProfile.promptLine() : '';
   return [
     'PLAYER LEVEL — CALIBRATE TO THIS:',
-    `- The student is rated approximately ${r} ELO on Chess.com (rapid). Target: ${RATING_TARGET}.`,
+    `- The student is rated approximately ${r} ELO on Chess.com (rapid). Target: ${target}.${profileLine}`,
     `- Pitch feedback at the ${r}-rated band: concrete patterns, basic tactical motifs (pins, forks, skewers, removing defenders, back-rank), simple king-safety ideas, fundamental endgame technique.`,
     '- AVOID jargon and concepts that don\'t pay off below 1500: minority attack, Carlsbad structure, prophylactic restraint, Maroczy bind, prophylaxis as a labelled concept, deep strategic plans more than 3 moves long.',
     '- Use plain English over chess vocabulary when both work. "Trade off the active piece" beats "exchange the protagonist".',
@@ -107,6 +111,11 @@ export function buildLiveSystemPrompt(/* puzzle */) {
   // puzzle metadata if needed, but it intentionally does NOT read any of the
   // forbidden fields. Argument kept parenthesised + commented as a tripwire:
   // if a future edit re-reads `puzzle.<field>` here, it's adding a leak.
+  // The coach's per-user memory (js/coach-memory.js window global): student-
+  // level observations only ("rushes recaptures"), never position facts — so
+  // it cannot leak an answer and is safe on the live-solve surface.
+  let memoryNote = '';
+  try { if (typeof CoachMemory !== 'undefined') memoryNote = CoachMemory.promptBlock(CoachMemory.read()); } catch { /* optional */ }
   return [
     'You are a chess coach helping a student work through an unresolved puzzle.',
     'Your job is to help them think. You do not give the answer.',
@@ -114,7 +123,7 @@ export function buildLiveSystemPrompt(/* puzzle */) {
     'GROUNDING: every factual claim about the position (material counts, what is on what square, who is in check, which castling rights remain) must come from the POSITION SUMMARY below. Never enumerate from the FEN string yourself. If a claim is not supported by the summary, say "I cannot see that from here" rather than guessing.',
     '', 'POSITION SUMMARY:',
     summaryAsText(state.positionSummary),
-  ].join('\n');
+  ].join('\n') + memoryNote;
 }
 export function buildExplanationPrompt({ grade, played, terminal }) {
   // v0.13 (Spec 05 §"Per-puzzle multi-move review — corrected"): the review

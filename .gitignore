@@ -5,3 +5,9 @@ node_modules
 # Playwright run artifacts (screenshots, traces) — never commit
 qa/test-results
 qa/playwright-report
+
+# Local Claude Code tooling (per-machine)
+.claude/
+
+# Working notes, not product
+knightpath-audit-prompt.md

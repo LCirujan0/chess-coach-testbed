@@ -29,8 +29,15 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
   // better move is the deliverable, not a spoiler. FEN lets the coach speak to
   // the actual position, not just the abstract error record.
   const digest = ms.map((m) => ({ move: m.fullmove, fen: m.fen, you: m.userMoveSan, best: m.bestMoveSan, cpLoss: m.cpLoss, severity: m.severity, phase: m.category, motif: m.motif || null }));
+  // Rating calibration + coach memory (2026-06-10 coach audit: this was the
+  // one LLM surface with no Elo pitch, so it could talk over the student's head).
+  let ratingLine = '';
+  try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingLine = `The student is rated approximately ${rc.rating} on Chess.com rapid, targeting ${(typeof KPProfile!=='undefined'?KPProfile.targetElo():1500)}. Calibrate to that band: concrete patterns, plain language, no 2000+ jargon.`; } catch {}
+  let memoryNote = '';
+  try { if (typeof CoachMemory !== 'undefined') memoryNote = CoachMemory.promptBlock(CoachMemory.read()); } catch {}
   const SYS = [
     "You are a warm chess coach reviewing ONE of the student's games, given the list of their mistakes (JSON, each with the position FEN).",
+    ratingLine,
     'The game is OVER — there is no answer to hide. Ground every claim ONLY in the supplied data (positions, moves, cp losses); do not invent moves.',
     '',
     'Return ONLY this JSON (no markdown, no fences, no prose outside the object):',
@@ -43,7 +50,7 @@ async function reviewGameWithCoach(gameUrl, outEl, btn) {
   ].join('\n');
   try {
     const r = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, system: SYS, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, system: SYS + memoryNote, messages: [{ role: 'user', content: 'MISTAKES:\n' + JSON.stringify(digest, null, 2) }] }) });
     const data = await r.json();
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const txt = (data.content && data.content[0] && data.content[0].text) || '';
@@ -151,7 +158,7 @@ async function handleCoachNarrative() {
   // question) so Surface 8 renders the same structured card as everywhere else.
   const r = digest.rating || 950;
   const PROMPT_A_SYSTEM = [
-    `You are a chess coach reviewing a student's recent games. They are rated approximately ${r} on Chess.com rapid, targeting 1500.`,
+    `You are a chess coach reviewing a student's recent games. They are rated approximately ${r} on Chess.com rapid, targeting ${(typeof KPProfile!=='undefined'?KPProfile.targetElo():1500)}.`,
     '',
     'You are given a DIGEST (JSON) of structured scorecard data. Ground EVERY claim ONLY in these numbers.',
     '',
@@ -180,7 +187,7 @@ async function handleCoachNarrative() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 400,
-        system: PROMPT_A_SYSTEM,
+        system: PROMPT_A_SYSTEM + ((typeof CoachMemory !== 'undefined') ? CoachMemory.promptBlock(CoachMemory.read()) : ''),
         messages: [{ role: 'user', content: 'DIGEST:\n' + JSON.stringify(digest, null, 2) }],
       }),
     });

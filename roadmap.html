@@ -28,10 +28,16 @@
 
   /* Shipped strip */
   .shipped-strip {
-    background:#F1F8F4; border:1px solid #D4E9DC;
+    background:var(--pos-soft); border:1px solid var(--accent-line);
     border-radius:var(--r-card); padding:14px 18px;
     margin-bottom:18px; font-size:13px;
   }
+  .step-new {
+    display:inline-block; margin-left:6px; padding:1px 7px;
+    font-size:9px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+    background:var(--accent); color:#fff; border-radius:var(--r-pill); vertical-align:middle;
+  }
+  .roadmap-stamp { font-size:11px; color:var(--muted); margin:4px 0 24px; font-family:"Spline Sans Mono",monospace; }
   .shipped-strip .key {
     display:inline-block; font-family:"Plus Jakarta Sans",sans-serif;
     font-size:10px; font-weight:800; letter-spacing:.1em;
@@ -114,80 +120,85 @@
 
   @media (min-width: 880px) { h1 { font-size:34px; } }
 </style>
+<script src="/js/profile.js"></script>
+<script type="module" src="/js/sync.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="header-bar"><img class="brand-mark" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true"><span class="brand-word">KnightPath</span><span class="screen-chip">Roadmap</span></div>
   <div class="eyebrow">Where KnightPath is headed</div>
   <h1>Roadmap</h1>
-  <p class="lede">KnightPath turns your own games into a daily training habit: it finds your real mistakes, sets them as puzzles, and coaches you through them without giving the answer away. Here is what works today, what we are building, and what is coming.</p>
+  <p class="lede">KnightPath is built around three loops: a <b>daily loop</b> that keeps you training, a <b>review loop</b> that turns every game you play into lessons, and a <b>mastery loop</b> that makes sure what you learn actually sticks. Here is where each loop stands, and what is coming next.</p>
+  <div class="roadmap-stamp">Updated 10 June 2026</div>
 
   <div class="shipped-strip">
-    <span class="key">Working today</span>
+    <span class="key">Just shipped</span>
     <ul>
-      <li>Bring in your Chess.com games and turn your real mistakes into puzzles to solve</li>
-      <li>A coach that guides you toward the move without spoiling the answer</li>
-      <li>One consistent training screen for every kind of exercise</li>
-      <li>Progress insights: your strengths and weak spots, an estimated rating, and a practice heatmap</li>
-      <li>A daily session to work through</li>
+      <li>A real welcome: tell us your Chess.com username and your goal, and the coach analyses your last 20 games while you wait — then shows you three things Chess.com won’t</li>
+      <li>Your progress follows you to any device — and the whole app aims at <i>your</i> goal, not a generic 1500</li>
+      <li>Game-by-game performance: see the level you actually played at in each game, and what the trend means</li>
+      <li>A coach that remembers you, debriefs your sessions, and walks you through each game’s key moments</li>
+      <li>New here? Every trainer now explains itself the first time you open it</li>
     </ul>
   </div>
 
   <div class="loop">
     <div class="loop-head">
-      <span class="loop-num">Live now</span>
-      <span class="loop-title">Train on your own games, with a coach by your side</span>
-      <span class="loop-pill">Available</span>
+      <span class="loop-num">Loop 1</span>
+      <span class="loop-title">The daily loop — a session a day, built from your own games</span>
+      <span class="loop-pill">Live</span>
     </div>
-    <div class="loop-why">Everything you need to practise is already here. KnightPath learns from the games you actually play and turns them into focused practice.</div>
+    <div class="loop-why">Open the app, and a session is waiting: <strong>your real mistakes as puzzles</strong>, the patterns due for review, and the areas where you leak the most points. Finish it, keep your streak.</div>
     <ul class="loop-steps">
-      <li class="done"><span class="step-mark">✓</span><div>Bring in your Chess.com games and turn your real mistakes into puzzles, so you practise the positions you actually got wrong.</div></li>
-      <li class="done"><span class="step-mark">✓</span><div>A coach that nudges you toward the right idea with questions and hints, and never just hands you the move.</div></li>
-      <li class="done"><span class="step-mark">✓</span><div>One consistent training screen for every exercise type — mistake puzzles, playing an endgame out against the computer, and judging whether a position is winning, drawn or losing.</div></li>
-      <li class="done"><span class="step-mark">✓</span><div>Progress insights that show where you are strong and where you leak points by phase of the game, plus an estimated rating and a heatmap of your practice.</div></li>
-      <li class="done"><span class="step-mark">✓</span><div>A daily session, so there is always something to work through.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>A daily session assembled from your recent mistakes, with a goal you choose (casual, regular, serious) and a streak with freezes — life happens, your streak survives it.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Spaced review: puzzles you missed come back quickly, ones you have mastered return just before you would forget them.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>A coach beside every board that guides you with questions, pitched to your rating — and never hands you the answer.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>When you finish, the coach debriefs your session: what you were sharp on, what slipped, and what tomorrow should look like.<span class="step-new">New</span></div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Your streak, puzzles and progress sync across all your devices.<span class="step-new">New</span></div></li>
     </ul>
   </div>
 
-  <div class="loop now">
+  <div class="loop">
     <div class="loop-head">
-      <span class="loop-num">Building now</span>
-      <span class="loop-title">A daily session that flows from one exercise to the next</span>
-      <span class="loop-pill">In progress</span>
+      <span class="loop-num">Loop 2</span>
+      <span class="loop-title">The review loop — every game you play becomes a lesson</span>
+      <span class="loop-pill">Live</span>
     </div>
-    <div class="loop-why">Right now your daily practice can feel like separate stops. We are stitching it into a single, smooth session that carries you from one exercise to the next.</div>
+    <div class="loop-why">Sync after you play and KnightPath re-analyses every move. The moments that decided the game become things you can <strong>understand, then drill</strong>.</div>
     <ul class="loop-steps">
-      <li class="now"><span class="step-mark">→</span><div>One session that moves you through every kind of exercise in the same place, so you never have to jump between screens.</div></li>
-      <li class="now"><span class="step-mark">→</span><div>A progress bar that stays with you, with your results tracked as you go.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Game Review replays your game and jumps you straight to the key moments — the coach explains each one in plain language.<span class="step-new">New</span></div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Every mistake is tagged with its tactical theme (fork, pin, back rank…), with a one-tap "drill this theme" to practise it on the spot.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Insights shows where you actually lose rating: by game phase, by move number, and your rating trajectory over time.</div></li>
+    </ul>
+  </div>
+
+  <div class="loop">
+    <div class="loop-head">
+      <span class="loop-num">Loop 3</span>
+      <span class="loop-title">The mastery loop — skills that build on each other</span>
+      <span class="loop-pill">Live</span>
+    </div>
+    <div class="loop-why">Beyond fixing mistakes: a set of trainers that build lasting chess skill, with <strong>visible proof you are improving</strong>.</div>
+    <ul class="loop-steps">
+      <li class="done"><span class="step-mark">✓</span><div>Tactics drills by theme and difficulty, topped up from a 10,000-puzzle library matched to your rating.<span class="step-new">New</span></div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Endgames: play 20 essential positions out against the computer, and learn to judge at a glance whether a position is winning, drawn or lost.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>An openings trainer with move-by-move explanations of <em>why</em>, on a spaced-repetition schedule — plus a daily board-vision warm-up.</div></li>
+      <li class="done"><span class="step-mark">✓</span><div>Mastery you can see: milestones when you conquer a pattern, and week-by-week progress charts for every training type.<span class="step-new">New</span></div></li>
     </ul>
   </div>
 
   <div class="loop next">
     <div class="loop-head">
       <span class="loop-num">Coming next</span>
-      <span class="loop-title">Practice that targets your weak spots, guided by your coach</span>
+      <span class="loop-title">What we are building now</span>
       <span class="loop-pill">Next</span>
     </div>
-    <div class="loop-why">Once the daily session flows, we want it to be smarter about what it gives you — and the coach to play a bigger role in steering your practice.</div>
+    <div class="loop-why">The loops are live — next we make them deeper and smarter.</div>
     <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>A daily plan that aims at your specific weak spots first, while still keeping the rest of your game sharp.</div></li>
-      <li><span class="step-mark">·</span><div>The coach reviews a game and tells you how you played, with a one-tap "drill this" to practise any mistake it points out.</div></li>
-      <li><span class="step-mark">·</span><div>Your "winning, drawn or losing" results feed into your insights, so they shape what you practise next.</div></li>
-    </ul>
-  </div>
-
-  <div class="loop parked">
-    <div class="loop-head">
-      <span class="loop-num">Later</span>
-      <span class="loop-title">Exploring</span>
-      <span class="loop-pill">Exploring</span>
-    </div>
-    <div class="loop-why">Ideas we are interested in for further down the road. These are not scheduled yet.</div>
-    <ul class="loop-steps">
-      <li><span class="step-mark">·</span><div>Board-vision and visualisation training, to sharpen how far ahead you can calculate.</div></li>
-      <li><span class="step-mark">·</span><div>An openings trainer to build and rehearse a repertoire.</div></li>
-      <li><span class="step-mark">·</span><div>A bigger puzzle library for when your own games run thin.</div></li>
-      <li><span class="step-mark">·</span><div>Smoother, more natural piece movement on the board.</div></li>
+      <li class="now"><span class="step-mark">→</span><div>Openings join your daily session — your repertoire lines come up for review alongside your puzzles, and a second opening joins the Vienna.</div></li>
+      <li class="now"><span class="step-mark">→</span><div>A coach that knows you even better: its memory of your style and habits keeps deepening, so guidance gets more personal every week.</div></li>
+      <li><span class="step-mark">·</span><div>Sign in with Chess.com — proper accounts, so your synced progress is protected, not just keyed to a name.</div></li>
+      <li><span class="step-mark">·</span><div>Polish for a wider audience: smoother performance, fuller keyboard support, and accessibility across the app.</div></li>
     </ul>
   </div>
 </div>
@@ -206,14 +217,14 @@
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
-  <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
     <div class="nav-more-label">More</div>
     <a href="/games.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync games</a>
-    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
-    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
+    <a href="/roadmap.html" class="nav-drawer-link nav-more-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
+    <a href="/completed.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
   </div>
   <div class="version-stamp" id="version-stamp"></div>
 </aside>
@@ -222,7 +233,7 @@
 <nav class="tab-bar" aria-label="Primary">
   <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
   <a href="/practice.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
-  <a href="/review.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>

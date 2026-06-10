@@ -60,8 +60,12 @@ export function mountCoachWidget({ logEl, formEl, inputEl, sendEl, context = '',
   // train.css .rv-* block (idempotent; no-op once injected).
   ensureCoachCardStyles();
   let ratingNote = '';
-  try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingNote = ' The student is rated about ' + rc.rating + ' on Chess.com rapid (target 1500); pitch hints to that level.'; } catch {}
-  const system = (context ? (BASE_SYSTEM + '\n\nContext: ' + context) : BASE_SYSTEM) + ratingNote;
+  try { const rc = JSON.parse(localStorage.getItem('chess-coach-user-rating-v1') || 'null'); if (rc && typeof rc.rating === 'number') ratingNote = ' The student is rated about ' + rc.rating + ' on Chess.com rapid (target ' + ((typeof KPProfile !== 'undefined') ? KPProfile.targetElo() : 1500) + '); pitch hints to that level.' + ((typeof KPProfile !== 'undefined') ? KPProfile.promptLine() : ''); } catch {}
+  // The coach's per-user memory (js/coach-memory.js, window global) — what the
+  // teacher already knows about this student. Empty string when none.
+  let memoryNote = '';
+  try { if (typeof CoachMemory !== 'undefined') memoryNote = CoachMemory.promptBlock(CoachMemory.read()); } catch {}
+  const system = (context ? (BASE_SYSTEM + '\n\nContext: ' + context) : BASE_SYSTEM) + ratingNote + memoryNote;
   const history = [];
   let sending = false;
 

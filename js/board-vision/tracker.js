@@ -8,7 +8,7 @@
 // board renders through the canonical js/board-static.js with a pieces-hidden
 // state during the question.
 // ============================================================================
-import { Chess } from 'https://esm.sh/chess.js@1.4.0';
+import { Chess } from '/js/vendor/chess-1.4.0.js';
 import { algToRC, rcToAlg, shuffle } from './generators.js';
 
 export const TRACKER_LEVELS = 6;

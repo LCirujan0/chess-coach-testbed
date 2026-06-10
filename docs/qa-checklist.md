@@ -2,7 +2,7 @@
 
 Human source checklist. The Playwright suite in `qa/` is its executable subset — wherever a row says "Automated", there is a test that guards it. Wherever it says "Manual" or "Parked", it doesn't.
 
-Current reconciliation: **v0.58**. Update this document whenever the app adds a new page, changes a behaviour, or when a parked test activates.
+Current reconciliation: **v0.80**. Update this document whenever the app adds a new page, changes a behaviour, or when a parked test activates.
 
 ---
 
@@ -104,6 +104,43 @@ Keep the tolerated list short and intentional. Do not add suppressions for real 
 | No NUL bytes in any JS or HTML file | Yes (`npm run integrity`) |
 | All JS files pass `node --check` (catches syntax errors including smart quotes) | Yes |
 | Deployed build pages match source (checked implicitly by running the suite against the Vercel preview) | Partial |
+
+---
+
+## §G — Sync, identity & coach (v0.78/79)
+
+| Check | Automated |
+|---|---|
+| First load with no username shows the sync banner; "Not now" defers for the tab session | Manual (banner is non-blocking; smoke guards console-clean) |
+| Username entered on device B restores device A's streak/attempts/session after one reload | Manual (verified 2026-06-10 against live Supabase) |
+| Sync merge rules (streak max, attempts union, session today-beats-stale, …) | Yes — `qa/scripts/sync-merge-check.cjs` (12 checks, run-on-demand with the static server up) |
+| Supabase unreachable → app runs local-only, no crash, one console warn | Manual (simulated 2026-06-10) |
+| Nav user chip shows the synced username; "Change" wipes local state and re-prompts | Manual |
+| Session summary shows the coach debrief card (or the static read if the API is down); never re-bills the same day | Manual — needs ANTHROPIC_API_KEY |
+| Coach memory: debrief writes ≤12 notes; other surfaces include them read-only | Manual — inspect `chess-coach-coach-memory-v1` |
+| Game Review lists games from ALL per-game stores; no-move-list games show "Re-sync to replay" | Manual |
+| Key-moment chips jump the board and auto-ask the coach (cached per mistake) | Manual |
+| Difficulty pills filter the themed drill by solver-move count; non-'any' tier is library-only | Manual |
+| Mastery-over-time panel renders weekly bars when attemptLog data exists | Manual |
+| Board squares expose aria-labels ("e4, white knight") | Manual (inspect DOM) |
+
+---
+
+## §H — Onboarding & help (v0.80)
+
+| Check | Automated |
+|---|---|
+| Anonymous visit to any shell page redirects to /onboarding.html | Manual (the page suite seeds a username via `tests/fixtures.js` — the gate itself was verified live 2026-06-10) |
+| Unknown Chess.com username shows a friendly error, never proceeds | Manual (verified live) |
+| Valid username + existing cloud data → "Welcome back" fast path, NO re-ingest | Manual |
+| Auto-ingest of 20 games shows animation + real progress; questions answerable during; Continue appears only when both finish | Manual (verified live with a real account) |
+| Profile saved (goal/deadline/time control/seriousness) → synced; daily-goal seeded; targets app-wide use the goal | Yes — `qa/scripts/today-render-check.cjs` (goal-hint target) + manual |
+| 3 insights render from real data; coach welcome card falls back gracefully without the API | Manual (verified live) |
+| Tour: 8 steps, skippable at any point, ends on today.html | Manual (verified live) |
+| "Wipe this device" (games/review) clears local only; signing back in restores without re-ingest | Manual |
+| Help (?) on all 5 training pages; auto-opens once per type; Got it / backdrop / Esc dismiss | Manual (verified live on puzzle.html) |
+| today.html renders no literal "undefined"; goal hint shows the profile target | Yes — `qa/scripts/today-render-check.cjs` |
+| Tab-bar labels never wrap (incl. "Game Review") at 375px | Manual (computed heights verified 2026-06-10) |
 
 ---
 

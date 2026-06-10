@@ -45,7 +45,7 @@ import { renderBoard, onSquareTap, toggleAnnotation, renderAnnotations } from '.
 import {
   rebuildQueue, pickInitialCategory, mixPuzzlesAcrossGames, nextPuzzle,
   loadPuzzleAt, puzzlesByCategory, severityCounts, categoryCounts,
-  triedCounts, startThemeDrill, endThemeDrill,
+  triedCounts, startThemeDrill, endThemeDrill, renderThemePills,
 } from './queue.js';
 import { resetPuzzleStateAndRender } from './result.js';
 import { replayContinuation, beginSolveFromIntro } from './intro.js';
@@ -412,6 +412,18 @@ $('theme-pills').addEventListener('click', (e) => {
   saveLastMotif(m);
   rebuildQueue();
   resetPuzzleStateAndRender();
+});
+// Difficulty tier for "Drill this theme" (owner spec 2026-06-10). Selecting a
+// tier re-renders the pills; if a drill is already running it restarts with
+// the new tier so the choice applies immediately.
+$('difficulty-pills').addEventListener('click', (e) => {
+  const pill = e.target.closest('.theme-pill');
+  if (!pill) return;
+  const d = pill.dataset.difficulty;
+  if (!d || d === state.drillDifficulty) return;
+  state.drillDifficulty = d;
+  renderThemePills();
+  if (state.drillMotif) startThemeDrill();
 });
 $('drill-cta').addEventListener('click', () => {
   if ($('drill-cta').disabled) return;

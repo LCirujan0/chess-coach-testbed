@@ -217,8 +217,8 @@
 
 .msg.error {
     align-self: flex-start;
-    background: #FBF0ED; color: var(--bad);
-    border: 1px solid #EDD2CB;
+    background: var(--bad-soft); color: var(--bad);
+    border: 1px solid var(--bad-line);
     font-size: 12px;
   }
 

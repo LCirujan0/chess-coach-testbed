@@ -4,7 +4,6 @@ import { loadIngestedGameUrls } from './storage.js';
 import { fetchRecentRapidGames } from './chesscom.js';
 import { analyzePositionMultiPV, normalizeEval } from './analysis.js';
 import { categorize, severityFor, thinMistakesByWindow } from './categorize.js';
-import { classifyMotifsBatch } from './classify.js';
 import { setProgress } from './dom.js';
 // ============================================================================
 // SECTION 8 — INGESTION PIPELINE
@@ -199,14 +198,11 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
     }
     // Thin: 5-move window, blunders always kept.
     const thinned = thinMistakesByWindow(gameCandidates, THINNING_WINDOW);
-    // Spec 02 — motif classifier. One Claude call per surviving mistake,
-    // tags stored on the record + powers Drill this theme on the Puzzles page.
-    if (thinned.length) {
-      setProgress(`Tagging motifs for ${thinned.length} mistake${thinned.length === 1 ? '' : 's'}…`, null, '');
-      await classifyMotifsBatch(thinned, (done, total) => {
-        setProgress(`Tagging motifs… ${done}/${total}`, null, '');
-      });
-    }
+    // Motif tagging consolidated (2026-06-10, the CLAUDE.md-flagged cleanup):
+    // the per-mistake Sonnet call that ran HERE was redundant with the batched
+    // Haiku path — boot.js fires tagAndSaveMistakes() after ingest, which tags
+    // everything still untagged in batches of 20 at a fraction of the cost.
+    // One classifier, one prompt, faster ingest; tags land seconds later.
     freshMistakes.push(...thinned);
     // Spec 06 — finalize this game's scorecard now that we know the result
     // and have walked all the user's moves. eval_swing derives from the

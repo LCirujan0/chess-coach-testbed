@@ -1,5 +1,5 @@
 // qa-checklist §B — Today renders + Start session routes into the session (not a bounce).
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 test('today.html renders content, not a blank page', async ({ page }) => {
   const errors = [];

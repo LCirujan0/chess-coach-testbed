@@ -14,6 +14,7 @@
 const FILES_STD = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const RANKS_STD = ['8', '7', '6', '5', '4', '3', '2', '1'];
 const PIECE_GLYPH = { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' };
+const PIECE_NAME = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 // Canonical Celtic SVG path — identical to js/puzzle/config.js PIECE_IMG.
 export const PIECE_IMG = (color, type) => `/piece/celtic/${color}${type.toUpperCase()}.svg`;
@@ -66,6 +67,10 @@ export function renderStaticBoard(boardEl, fen, opts = {}) {
       sq.className = 'square ' + (((stdRank + stdFile) % 2 === 0) ? 'light' : 'dark');
       sq.dataset.square = square;
       if (piece) sq.dataset.c = piece.color;
+      // A11y (2026-06-10 audit): name every square for screen readers —
+      // "e4, white knight" / "e5, empty". Display is unchanged.
+      sq.setAttribute('role', 'img');
+      sq.setAttribute('aria-label', square + (piece ? `, ${piece.color === 'w' ? 'white' : 'black'} ${PIECE_NAME[piece.type] || piece.type}` : ', empty'));
       if (lastMove && (lastMove.from === square || lastMove.to === square)) sq.classList.add('last-move');
 
       // In-square coordinates: files on the bottom rank, ranks on the left file.

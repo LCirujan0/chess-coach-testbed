@@ -6,7 +6,7 @@ import {
   STORAGE_KEY_LAST_CAT, STORAGE_KEY_LAST_SEV,
   STORAGE_KEY_LAST_TRIED, STORAGE_KEY_LAST_MOTIF,
   STORAGE_KEY_MODE, STORAGE_KEY_RATING,
-  CHESS_COM_USERNAME,
+  getActiveChessComUsername,
 } from './config.js';
 import { state } from './state.js';
 
@@ -57,11 +57,21 @@ export function saveCachedRating(rating) {
 }
 export async function refreshRatingFromChessCom() {
   try {
-    const r = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(CHESS_COM_USERNAME.toLowerCase())}/stats`);
+    const r = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(getActiveChessComUsername())}/stats`);
     if (!r.ok) return;
     const data = await r.json();
-    // Prefer rapid since that's what Jorge plays. Fall back to blitz, then bullet.
-    const rating = data?.chess_rapid?.last?.rating
+    // Prefer the user's own time control (onboarding profile, v0.80), then the
+    // historical default order rapid → blitz → bullet. Chess.com has no live
+    // "classical" pool — that preference maps to rapid (the closest).
+    const pref = (typeof KPProfile !== 'undefined') ? KPProfile.timeControl() : 'rapid';
+    const byControl = {
+      rapid: data?.chess_rapid?.last?.rating,
+      blitz: data?.chess_blitz?.last?.rating,
+      bullet: data?.chess_bullet?.last?.rating,
+      classical: data?.chess_rapid?.last?.rating,
+    };
+    const rating = byControl[pref]
+                || data?.chess_rapid?.last?.rating
                 || data?.chess_blitz?.last?.rating
                 || data?.chess_bullet?.last?.rating;
     if (typeof rating === 'number') {

@@ -15,7 +15,7 @@
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   html, body {
-    background: radial-gradient(120% 60% at 50% -10%, #FFFFFF, #EDF0F3 80%);
+    background: radial-gradient(120% 60% at 50% -10%, var(--app-bg-start), var(--app-bg-end) 80%);
     background-attachment: fixed; min-height:100vh;
   }
   body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased; }
@@ -57,7 +57,7 @@
 
   /* transition beat */
   .trans { text-align:center; padding:38px 18px; }
-  .trans .ic { width:46px; height:46px; border-radius:14px; background:#E8F5EE; color:var(--pos); display:flex; align-items:center; justify-content:center; margin:0 auto 13px; }
+  .trans .ic { width:46px; height:46px; border-radius:14px; background:var(--pos-soft); color:var(--pos); display:flex; align-items:center; justify-content:center; margin:0 auto 13px; }
   .trans h2 { font-size:18px; font-weight:800; }
   .trans .nx { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:340px; }
   .trans .nxt { display:inline-flex; align-items:center; gap:11px; border:1px solid var(--line); border-radius:13px; padding:12px 16px; background:var(--surface); text-align:left; }
@@ -74,17 +74,20 @@
   .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:13px; }
   .stat .v { font-size:22px; font-weight:800; } .stat .v small { font-size:12px; color:var(--pos); font-weight:700; }
   .stat .k { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-top:2px; }
-  .moved { background:var(--accent-soft); border:1px solid #CDE9DC; border-radius:12px; padding:12px 14px; text-align:left; display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+  .moved { background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:12px; padding:12px 14px; text-align:left; display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
   .ava { width:24px; height:24px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); flex-shrink:0; }
   .moved .txt { font-size:13px; }
   .cta { display:flex; gap:10px; max-width:400px; margin:0 auto; } .cta .btn { flex:1; }
 
   /* error / empty */
-  .ebanner { background:#FBF0ED; border:1px solid #EDD2CB; border-radius:12px; padding:13px 15px; }
+  .ebanner { background:var(--bad-soft); border:1px solid var(--bad-line); border-radius:12px; padding:13px 15px; }
   .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
-  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:#9a4334; margin-top:6px; white-space:pre-wrap; word-break:break-word; }
+  .ebanner .raw { font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
   .empty { text-align:center; padding:36px 18px; } .empty h2 { font-size:20px; font-weight:800; } .empty p { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:320px; } .empty .btn { max-width:280px; margin:0 auto; }
 </style>
+<script src="/js/coach-memory.js"></script>
+<script src="/js/profile.js"></script>
+<script type="module" src="/js/sync.js"></script>
 </head>
 <body>
 <div id="focus-head"></div>
@@ -269,31 +272,127 @@
   function renderSummary() {
     head.innerHTML = headHtml(nLive, 'Session complete', '', null);
     var st = sessionStats();
-    var pctToTarget = (rating != null) ? Math.max(0, Math.min(100, Math.round((rating - 950) / (1500 - 950) * 100))) : null;
-    var thirdStat = (pctToTarget != null)
-      ? '<div class="stat"><div class="v">' + pctToTarget + '<small>%</small></div><div class="k">To 1500</div></div>'
-      : '<div class="stat"><div class="v">🔥</div><div class="k">Streak</div></div>';
-    var read = 'Cleared your recent mistakes and the cards due today. Tomorrow leans the same way until your endgame trainer unlocks.';
+    var pctToTarget = (rating != null) ? Math.max(0, Math.min(100, Math.round((rating - 950) / ((typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) - 950) * 100))) : null;
+    var read = 'Cleared your recent mistakes and the cards due today.';
     save(KEY_COMPLETE, { date: todayKey(), reps: st.reps, correct: st.correct, accuracy: st.accuracy, ratingDelta: null, tomorrow: 'the same areas', at: new Date().toISOString() });
     // Mark today's session streak here — this is where the session actually
     // completes (the "Streak secured" copy is shown below). markSessionDone is
     // idempotent for the day, so today.html re-marking on return is harmless.
+    var streakNow = null;
     if (typeof Streak !== 'undefined') {
-      try { Streak.writeStreak(Streak.markSessionDone(Streak.readStreak(), Streak.todayStr()).state); } catch (e) { /* non-fatal */ }
+      try {
+        var marked = Streak.markSessionDone(Streak.readStreak(), Streak.todayStr());
+        Streak.writeStreak(marked.state);
+        streakNow = marked.state.current;
+      } catch (e) { /* non-fatal */ }
     }
+    var thirdStat = (streakNow != null && streakNow > 0)
+      ? '<div class="stat"><div class="v">🔥' + streakNow + '</div><div class="k">Day streak</div></div>'
+      : (pctToTarget != null)
+        ? '<div class="stat"><div class="v">' + pctToTarget + '<small>%</small></div><div class="k">To ' + (typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) + '</div></div>'
+        : '<div class="stat"><div class="v">🔥</div><div class="k">Streak</div></div>';
     root.innerHTML =
       '<div class="sum"><div class="crown">🔥</div><h1>Session complete</h1>' +
-      '<div class="ssub">Streak secured · ' + st.correct + ' of ' + st.reps + ' correct</div>' +
+      '<div class="ssub">' + (streakNow ? streakNow + '-day streak secured' : 'Streak secured') + ' · ' + st.correct + ' of ' + st.reps + ' correct</div>' +
       '<div class="stats">' +
         '<div class="stat"><div class="v">' + st.correct + '<small>/' + st.reps + '</small></div><div class="k">Correct</div></div>' +
         '<div class="stat"><div class="v">' + (st.accuracy != null ? st.accuracy + '<small>%</small>' : '—') + '</div><div class="k">Accuracy</div></div>' +
         thirdStat +
       '</div>' +
-      '<div class="moved"><span class="ava"></span><div class="txt">' + read + '</div></div>' +
+      '<div class="moved" id="debrief-slot"><span class="ava"></span><div class="txt">' + read + '</div></div>' +
       '<div class="cta"><a class="btn ghost" href="/today.html">Done</a><button class="btn primary" id="one-more">One more set</button></div></div>';
     wireExit();
     var om = $('one-more');
     if (om) om.addEventListener('click', function () { try { localStorage.removeItem(KEY_SESSION); } catch (e) {} window.location.href = '/today.html'; });
+    fireSessionDebrief(st);
+  }
+
+  // =====================================================================
+  // SESSION DEBRIEF (v0.79) — the ONE proactive coach moment. Rule 5 (coach
+  // panel discipline) forbids auto-injected coach messages MID-SOLVE; the
+  // session boundary is the deliberate exception (logged in learnings v0.79):
+  // a teacher debriefs you when the lesson ends. Aggregate-only no-spoiler
+  // carve-out: motif COUNTS across the finished session may be named, but
+  // never a specific puzzle's answer or move (failed items resurface via SRS).
+  // Cached per-day so re-opening the summary never re-bills.
+  // =====================================================================
+  var KEY_DEBRIEF = 'chess-coach-debrief-v1';
+  function debriefDigest(st) {
+    var motifsSolved = {}, motifsMissed = {};
+    var mistakesAll = loadJson('chess-coach-mistakes-v1', []) || [];
+    var byId = {};
+    (Array.isArray(mistakesAll) ? mistakesAll : []).forEach(function (m) { if (m && m.id) byId[m.id] = m; });
+    plan.blocks.forEach(function (b) {
+      if (blockType(b) !== 'mistake') return;
+      (b.ids || []).forEach(function (id) {
+        var m = byId[id]; if (!m || !m.motif) return;
+        if (!resolvedInSession('mistake', id)) return;
+        var bucket = correctInSession('mistake', id) ? motifsSolved : motifsMissed;
+        bucket[m.motif] = (bucket[m.motif] || 0) + 1;
+      });
+    });
+    return {
+      blocks: plan.blocks.map(function (b) { return { title: b.title, done: b.done || 0, correct: b.correct || 0, count: b.count || 0 }; }),
+      reps: st.reps, correct: st.correct, accuracy: st.accuracy,
+      motifsSolved: motifsSolved, motifsMissed: motifsMissed,
+      rating: rating
+    };
+  }
+  function renderDebriefCard(card) {
+    var slot = $('debrief-slot');
+    if (!slot || !card) return;
+    import('/js/coach-card.js').then(function (mod) {
+      mod.ensureCoachCardStyles();
+      slot.innerHTML = '';
+      mod.renderCoachCard(slot, card, { append: true, scroll: false });
+    }).catch(function () { /* keep the static read */ });
+  }
+  function fireSessionDebrief(st) {
+    var cached = loadJson(KEY_DEBRIEF, null);
+    if (cached && cached.date === todayKey() && cached.card) { renderDebriefCard(cached.card); return; }
+    if (!st || !st.reps) return; // nothing to debrief
+    var digest = debriefDigest(st);
+    var memBlock = '';
+    try { if (typeof CoachMemory !== 'undefined') memBlock = CoachMemory.writerBlock(CoachMemory.read()); } catch (e) {}
+    var SYS = [
+      'You are the student\'s chess teacher debriefing them right after they finished today\'s training session.',
+      'They are rated approximately ' + (rating || 950) + ' on Chess.com rapid, targeting ' + (typeof KPProfile!=='undefined'?KPProfile.targetElo():1500) + '. Plain language for that level, no 2000+ jargon.',
+      '',
+      'You are given a DIGEST (JSON) of the session: per-block results, accuracy, and aggregate tactical-motif counts (solved vs missed). Ground EVERY claim only in it.',
+      'HARD RULES:',
+      '- Aggregate feedback only: name motifs and counts, NEVER a specific puzzle\'s move or answer (missed puzzles come back for retry).',
+      '- Warm, specific, honest. No empty praise; tie every point to a number from the digest.',
+      '- No markdown, no bullet lists, no em-dashes, no UCI notation.',
+      '',
+      'Return ONLY this JSON (no fences, no prose outside the object):',
+      '{ "lead": "...", "points": [{ "label": "...", "text": "...", "tone": "bad|warn|pos|muted" }], "question": "...", "grounded": "...", "memory_notes": ["..."] }',
+      '- lead: one line on how the session went, tied to the numbers.',
+      '- points: 2-3 labelled points (e.g. Strong on / Slipped on / Tomorrow), tones matching.',
+      '- question: one reflective question.',
+      '- grounded: the source, e.g. "Today: N of M correct."',
+      '- memory_notes: your consolidated long-term notes about this student.',
+      memBlock,
+    ].join('\n');
+    fetch('/api/coach', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, system: SYS, messages: [{ role: 'user', content: 'SESSION DIGEST:\n' + JSON.stringify(digest) }] })
+    }).then(function (r) { return r.json().then(function (data) { if (!r.ok) throw new Error('HTTP ' + r.status); return data; }); })
+      .then(function (data) {
+        var txt = (data.content && data.content[0] && data.content[0].text) || '';
+        var parsed = null;
+        try { parsed = JSON.parse(txt.replace(/^```(?:json)?\s*|\s*```$/g, '')); } catch (e) { return; }
+        if (!parsed || !parsed.lead) return;
+        var card = { lead: parsed.lead, points: parsed.points, question: parsed.question, grounded: parsed.grounded };
+        save(KEY_DEBRIEF, { date: todayKey(), card: card, at: new Date().toISOString() });
+        renderDebriefCard(card);
+        // Memory consolidation — the debrief is the ONE writer (coach-memory.js).
+        try {
+          if (typeof CoachMemory !== 'undefined' && Array.isArray(parsed.memory_notes)) {
+            CoachMemory.write(CoachMemory.applyUpdate(CoachMemory.read(), parsed.memory_notes));
+          }
+        } catch (e) { /* memory is enrichment, never a blocker */ }
+      })
+      .catch(function () { /* offline / API down: the static read stays */ });
   }
 
   function renderTransition(finishedIdx) {

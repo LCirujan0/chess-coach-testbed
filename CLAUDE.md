@@ -8,7 +8,7 @@ KnightPath is a chess coaching PWA. It fetches a player's Chess.com games, analy
 **Repo folder:** `chess-coach-testbed` (legacy name — ignore it, this is the full production app)  
 **Current version:** v0.77 LIVE on prod (2026-06-09, commit `8004727`). The full **v0.67→v0.77** batch shipped: richer Chess.com ingestion (Spec 24), the **Openings trainer** (22 Stockfish-verified Vienna lines, every move explained), coach unification (one shared §17 card), the **retention** layer (session streak + freeze, daily goal, goal-gradient, data-grounded "coach's read", mastery milestones, SRS spaced-review queue), themed-drilling Lichess supply (Spec 17), the **mistake-intro replay**, **piece-slide animation** (Spec 19), the visual-consistency pass (eyebrow/`.panel`/nav-icons/brand-mark 843KB→13KB), and QA bug fixes. Per-version detail in `docs/learnings.md` (v0.67–v0.77); strategy in `../docs/super-app-roadmap.md` "Roadmap v4".  
 **Deploy:** ship via `combined-deploy-v2` → `master` → Vercel (auto-deploys prod, `chess-coach-coral.vercel.app`). See `docs/learnings.md` for the per-version build log.  
-**Chess.com account:** LCirujano (hardcoded in `config.js` → `CHESS_COM_USERNAME`)
+**User identity:** the synced Chess.com username (`chess-coach-username-v1`, prompted on first load / adopted from the first ingest). `CHESS_COM_USERNAME` in `config.js` is only the legacy fallback — always read identity via `getActiveChessComUsername()` (project rule 10).
 
 ---
 
@@ -17,7 +17,7 @@ KnightPath is a chess coaching PWA. It fetches a player's Chess.com games, analy
 - **Frontend:** Vanilla HTML, CSS, JavaScript. No framework, no bundler, no build step.
 - **Deployment:** Vercel — static site + two serverless functions in `api/`.
 - **Chess engine:** Stockfish 17.1 WASM, bundled locally in `engine/`.
-- **Chess logic:** chess.js, loaded at runtime from `esm.sh` (CDN — no local install).
+- **Chess logic:** chess.js 1.4.0, **vendored locally** at `js/vendor/chess-1.4.0.js` (v0.79 — was esm.sh CDN; vendoring killed the CDN single-point-of-failure and made the PWA offline-complete).
 - **AI coaching:** Anthropic API, proxied through `api/coach.js` so the key never reaches the browser.
 - **PWA:** `manifest.json` + offline-capable via local Stockfish bundle.
 
@@ -53,10 +53,11 @@ GitHub secret (not Vercel):
 
 ## App pages
 
-`/` redirects to `/puzzle.html` via `vercel.json`. The actual user home is `today.html`.
+`/` redirects to `/today.html` via `vercel.json` (fixed v0.79 — it previously pointed at puzzle.html, stranding new users on a context-free training screen).
 
 | Page | Purpose |
 |---|---|
+| `onboarding.html` | **First-run flow (v0.80)** — username gate target (focused chrome, no nav): validate username → auto-ingest 20 games + profile questions → 3 personal insights + coach welcome → 8-step tour → Today. Anonymous visits to ANY page route here (`js/sync.js enforceOnboardingGate`). |
 | `today.html` | Daily session home — the user's entry point |
 | `practice.html` | Practice hub — fans out to Puzzles / Endgames / Recognition / Board Vision |
 | `puzzle.html` | Mistake puzzle training (primary training screen) |
@@ -64,14 +65,14 @@ GitHub secret (not Vercel):
 | `endgame-recognition.html` | Win/draw/loss recognition training |
 | `board-vision.html` | Board Vision warm-up — 3 procedural drills + a 6-level hide-the-board tracker (Spec 14, v0.62) |
 | `openings.html` | **Openings trainer** (v0.61→enriched v0.77) — repertoire-recall drill with spaced repetition; each move shown with a coach "why". Vienna first (22 Stockfish-verified lines); extensible via `data/openings/`. |
-| `review.html` | **Game review** (primary "Review" tab, v0.64) — replay a game, per-mistake coach, "drill this motif" |
+| `review.html` | **Game Review** (primary tab, renamed from "Review" v0.79) — replay a game with a **key-moments walkthrough** (jumpable mistake chips + "Next key moment"), per-mistake coach, "drill this motif" |
 | `games.html` | **Sync games** — Chess.com ingestion only (v0.64: review moved to review.html; demoted to nav "More") |
 | `insights.html` | Progress stats, estimated rating, practice heatmap |
 | `coach.html` | AI coach interface |
 | `session.html` | In-session wrapper (no nav chrome, used mid-session) |
 | `completed.html` | Post-puzzle summary and review |
 | `roadmap.html` | In-app roadmap (user-facing) |
-| `index.html` | **Legacy testbed page** — 6 dependency tests from the prototype phase. Not the app home. |
+| `index.html` | Meta-refresh redirect to `/today.html` (18 lines; vercel.json's `/` redirect normally fires first). Not a testbed page — that description was stale (fixed in the 2026-06-10 audit). |
 
 ---
 
@@ -86,7 +87,7 @@ GitHub secret (not Vercel):
 
 ### Puzzle module (`js/puzzle/`)
 
-19 ES modules. All pages that host a board load `boot.js` as `<script type="module">`, which imports the rest.
+20 ES modules. All pages that host a board load `boot.js` as `<script type="module">`, which imports the rest.
 
 | Module | Responsibility |
 |---|---|
@@ -124,6 +125,14 @@ GitHub secret (not Vercel):
 | `mastery.js` | **Mastery milestones** (`window.Mastery`, v0.76) — capability markers (motif mastered, rating band, streak, endgame converted) + a seen-diff for the "new" highlight. |
 | `material.js` | Renders the material balance display (captured pieces + net advantage, v0.59). |
 | `session-wrap.js` | Logic for the in-session wrapper (`session.html`). |
+| `sync.js` | **Cross-device persistence (v0.78/79)** — mirrors the `SYNC_KEYS` subset of localStorage to Supabase (`knightpath_state`, plain fetch/PostgREST), keyed by Chess.com username (`chess-coach-username-v1`, prompted on first load). Pull→merge→push on load (one guarded reload if remote changed local), debounced push on writes via a `Storage.prototype.setItem` hook (also surfaces QuotaExceeded). Owns the **nav user chip** ("♞ user · Change" — switching wipes local `chess-coach-*` state, by design). Offline-safe. On all shell pages + session.html. See learnings v0.78/v0.79. |
+| `coach-memory.js` | **The coach's per-user memory (v0.79)** — ≤12 capped notes about the student, injected into every coach prompt (`promptBlock`); ONE writer: the session debrief (`writerBlock` + `applyUpdate`). Key `chess-coach-coach-memory-v1`, synced. Window-global (like CoachStats). |
+| `today/boot.js` | today.html's page logic (the 553-line inline IIFE, extracted verbatim v0.79 — classic script, window globals). |
+| `vendor/chess-1.4.0.js` | The vendored chess.js ESM bundle (exact esm.sh es2022 build). Treat as immutable; updating it is a release decision. |
+| `profile.js` | **The user's training profile (v0.80)** — `KPProfile` window-global: eloGoal/goalBy/timeControl/seriousness from onboarding, synced (`chess-coach-profile-v1`). `targetElo()` replaces every hardcoded 1500; `promptLine()` rides in coach prompts; timeControl steers the rating fetch + ingest archive filter. |
+| `chesscom-insights.js` | **Chess.com-derived insights (v0.80)** — `ChesscomInsights` window-global, pure: per-game performance estimate (`perfOf`, ±400 fair-pairing guard), `perfSeries`, `summarize` (record, colour split, accuracy, loss terminations, openings), `perfMeaning`. Feeds onboarding wow-insights, the Insights performance panel, Game Review rows. |
+| `help.js` | **Per-type training help (v0.80)** — `KPHelp`: (?) in the branded header of the 5 training pages + auto-open first-visit card per type (`chess-coach-help-seen-v1`, local). |
+| `onboarding/boot.js` | The onboarding state machine (ES module). Reuses the real ingest pipeline (`games/ingest.js` + `analysis.js` + `persistGameIncrementally`); hosts compat nodes `#progress*`/`#ingest-btn`. |
 | `tagger.js` | Client-side caller for `api/tag.js` — batches puzzles and applies returned motifs. |
 
 ### Games module (`js/games/`)
@@ -134,7 +143,7 @@ GitHub secret (not Vercel):
 |---|---|
 | `boot.js` | `games.html` entry — wires the ingest form, clear, backfill, narration. |
 | `ingest.js` | The Chess.com → Stockfish → mistakes pipeline. Captures the SAN move list (`chess-coach-game-moves-v1`) for replay. |
-| `chesscom.js` / `analysis.js` / `categorize.js` / `classify.js` | Chess.com fetch · Stockfish wrapper · phase categorization · motif classifier (prompt-bearing). |
+| `chesscom.js` / `analysis.js` / `categorize.js` | Chess.com fetch · Stockfish wrapper · phase categorization. (`classify.js` — the per-mistake Sonnet motif classifier — was **deleted v0.79**; tagging is solely the batched Haiku path via `js/tagger.js` → `/api/tag`.) |
 | `storage.js` / `state.js` / `dom.js` / `config.js` / `lib.js` | Plumbing: localStorage · shared state · DOM helpers · consts · the chess.js pin. |
 | `list.js` / `narrate.js` | Mistake-list render · per-game "how you played" narration (prompt-bearing). |
 | `review.js` | **Spec 11 interactive game review** (`review.html`): replay, severity badges, per-mistake grounded coach card, "drill this motif" deep-link. |
@@ -204,14 +213,22 @@ Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening i
 5. **Coach panel discipline.** The coach log must only contain messages from the AI or responses Jorge wrote. No auto-injected messages mid-solve (see `docs/learnings.md` v0.7).
 6. **No-spoiler rule.** Coach system prompts must never include engine lines, PV moves, eval scores, or best-move identifiers. Position summary only (see `docs/learnings.md` v0.7).
 7. **Piece set is Celtic** (`/piece/celtic/`, MIT licence). Do not swap back to Staunty — its CC BY-NC-SA licence blocks commercial use (see `docs/learnings.md` v0.6).
-8. **Stockfish files in `engine/` are immutable.** Do not edit or regenerate `stockfish-17.1-lite-single-*.js` or `*.wasm`. Updating them is a deliberate release decision, not a routine change.
+8. **Stockfish files in `engine/` are immutable.** Do not edit or regenerate `stockfish-17.1-lite-single-*.js` or `*.wasm`. Updating them is a deliberate release decision, not a routine change. (Same rule for `js/vendor/chess-1.4.0.js`.)
+9. **Coach proactivity is bounded to session boundaries.** The ONE automatic coach call is the session debrief on session.html's summary (v0.79 amendment to rule 5). Never auto-fire the coach mid-solve, on app-open, or on navigation. Aggregate-only feedback at the boundary: motif counts may be named, a specific puzzle's answer may not (missed puzzles resurface via SRS).
+10. **Identity goes through `getActiveChessComUsername()`** (`js/puzzle/config.js`). Never hardcode a username, a greeting name, or read `CHESS_COM_USERNAME` directly in a surface. The synced username (`chess-coach-username-v1`) IS the user; switching users must clear local `chess-coach-*` state first (see `js/sync.js switchUser` — prevents cross-account merges).
+11. **Coach memory has ONE writer.** Only the session debrief consolidates `chess-coach-coach-memory-v1` (via `CoachMemory.applyUpdate`). Every other surface is read-only (`promptBlock`). The caps (12 notes × 140 chars) are the efficiency contract — never raise them casually.
+12. **Every new `chess-coach-*` key must decide its sync story.** Add it to `SYNC_KEYS` (with a merge rule in `js/sync.js mergeKey`) or document why it stays local-only. Either way it is swept by the user-switch wipe. The key constant lives in `js/puzzle/config.js`.
 
 ---
 
 ## Current status
 
-**Version:** v0.77 LIVE on prod (2026-06-09). Recent shipped work (newest first — full per-version log in `docs/learnings.md`):
+**Version:** v0.77 LIVE on prod (2026-06-09); **v0.78–v0.80 staged** (2026-06-10). Recent shipped work (newest first — full per-version log in `docs/learnings.md`):
 
+- **v0.80 — onboarding + chess.com insights + help (staged):** the gated first-run flow (username → auto-ingest 20 + profile questions → personal wow-insights + coach welcome → tour); `KPProfile` tailoring (every target/prompt uses the user's own goal); the Insights "Game-by-game performance" panel + enriched Game Review rows (`js/chesscom-insights.js`); per-type (?) help with first-visit auto-open; wipe-this-device (local wipe, Supabase survives — scorecards/meta now synced so no re-ingest); QA fixtures for the gate; audit fixes (tab-bar wrap, today "undefined" icon, reload-race toast, eviction order).
+
+- **v0.79 — audit implementation batch (staged):** per-user **coach memory** + the **session debrief** (the one proactive coach surface, rule 9); Game Review "pulls no games" fix + **key-moments walkthrough**; **difficulty drills** (easy/medium/hard by solver-move count); **mastery-over-time** on Insights; identity de-hardwired (rule 10) + nav user chip; `/` → today.html; API guard rails (model allowlist, body cap, rate limit); motif classifier consolidated on `/api/tag` (games/classify.js deleted); chess.js vendored; quota banner + game-moves cap; board ARIA labels; soft-hex → token sweep + `--muted` AA nudge; today.html inline script → `js/today/boot.js`.
+- **v0.78 — cross-device persistence (staged):** streak, attempts, mistakes, session plan + the rest of the gamification keys mirror to Supabase keyed by Chess.com username (`js/sync.js`; schema `knightpath_state`; first-load username banner; offline-safe; one logged deviation — the write hook wraps `Storage.prototype.setItem`, not `js/puzzle/storage.js`, because inline page scripts + streak.js/playout.js write localStorage directly).
 - **v0.77 — Openings enriched + SRS due-count:** 22 Stockfish-verified Vienna lines, every move explained (a "Why this move" coach panel); SRS due-count surfaced as the top-priority coach's read on Today.
 - **v0.76 — animation everywhere + SRS spaced-review + mastery milestones:** the piece-slide now runs on review/openings too; the Today "Review" block is SRS-driven (`js/review-srs.js`); mastery milestone chips on Today (`js/mastery.js`).
 - **v0.74 — coach's read:** a variable, data-grounded retention line on Today (`CoachStats.coachRead`).
@@ -222,8 +239,8 @@ Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening i
 The strategic spine is now **daily-habit / retention** (see `../docs/super-app-roadmap.md` "Roadmap v4" + `../docs/retention-and-gamification.md`). Public launch is on the roadmap, **not now** (keep schemas/prompts portable). Next candidates: a 2nd opening, wiring openings into the daily session, and the E-moat already shipped.
 
 ### Known follow-ups
-- `qa/scripts/` holds dev harnesses (`verify-openings`, `srs-mastery-check`, `coachread-check`, `lichess-grade-harness`) — run-on-demand, not part of the Playwright suite.
-- The two motif-classification paths at ingest (`js/games/classify.js` via `/api/coach` + `js/tagger.js` via `/api/tag`) are redundant — flagged in the 2026-06-09 bug audit for consolidation.
+- `qa/scripts/` holds dev harnesses (`verify-openings`, `srs-mastery-check`, `coachread-check`, `lichess-grade-harness`, `sync-merge-check`) — run-on-demand, not part of the Playwright suite.
+- Deferred from the 2026-06-10 batch (reasons in learnings v0.79): games.html → train.css button migration (visual-QA gate), board arrow-key navigation, CSP header, `--accent` small-text contrast (brand decision), **chess.com SSO/login** (owner: before public launch — replaces the username-trust model; the no-auth posture and the permissive Supabase RLS are acceptable only while the URL is unshared).
 
 ---
 

@@ -13,7 +13,24 @@ import { commitAndEvaluate } from './grade.js';
 export function sideToMoveLabel() { return state.chess.turn() === 'w' ? 'White' : 'Black'; }
 export function renderTitleAndMeta() {
   const puzzle = getCurrentPuzzle();
-  if (!puzzle) { $('side-to-move-title').textContent = 'No puzzles in this filter.'; $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden'); const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden'); return; }
+  if (!puzzle) {
+    $('side-to-move-title').textContent = 'No puzzles in this filter.';
+    $('puzzle-meta').classList.add('hidden'); $('repeat-badge').classList.add('hidden');
+    const tpe = $('task-prompt'); if (tpe) tpe.classList.add('hidden');
+    // New-user funnel (2026-06-10 audit): a zero-puzzle state must offer the
+    // way out — sync games — not a dead end. Injected once, removed on refill.
+    if (!document.getElementById('empty-sync-cta')) {
+      const cta = document.createElement('a');
+      cta.id = 'empty-sync-cta';
+      cta.href = '/games.html';
+      cta.className = 'btn primary';
+      cta.style.cssText = 'display:inline-block;margin-top:10px;width:auto;padding:10px 18px;text-decoration:none;';
+      cta.textContent = 'Sync your games to get puzzles';
+      $('side-to-move-title').insertAdjacentElement('afterend', cta);
+    }
+    return;
+  }
+  const oldCta = document.getElementById('empty-sync-cta'); if (oldCta) oldCta.remove();
   $('side-to-move-title').textContent = sideToMoveLabel() + ' to move.';
   // §29.4 task prompt ("Find the best move.") removed in v0.51 — it stated the
   // obvious and added a redundant line above the board. Keep the element hidden.
@@ -116,6 +133,10 @@ export function renderBoard() {
       if (locked) sq.classList.add('locked');
       sq.dataset.square = square;
       if (piece) sq.dataset.c = piece.color;
+      // A11y (2026-06-10 audit): name the square + occupant for screen readers.
+      // The solve board is tap-driven, so the square is the interactive unit.
+      sq.setAttribute('role', 'button');
+      sq.setAttribute('aria-label', square + (piece ? `, ${piece.color === 'w' ? 'white' : 'black'} ${({ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' })[piece.type] || piece.type}` : ', empty'));
       if (r === 7) { const lbl = document.createElement('span'); lbl.className = 'coord file'; lbl.textContent = files[f]; sq.appendChild(lbl); }
       if (f === 0) { const lbl = document.createElement('span'); lbl.className = 'coord rank'; lbl.textContent = ranks[r]; sq.appendChild(lbl); }
       if (piece) {

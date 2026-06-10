@@ -16,7 +16,7 @@
 // .btn/.btn.primary/.btn.ghost (train.css), tokens. Page layout in openings.css.
 // Persists SRS state under 'chess-coach-openings-v1'.
 // ============================================================================
-import { Chess } from 'https://esm.sh/chess.js@1.4.0';
+import { Chess } from '/js/vendor/chess-1.4.0.js';
 import { renderStaticBoard } from '/js/board-static.js';
 import { listOpenings, getOpening } from './data.js';
 import { freshCard, normalizeCard, review, pickNext, countDue, masterySummary } from './srs.js';

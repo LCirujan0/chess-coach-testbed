@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KnightPath — Review</title>
+<title>KnightPath — Game Review</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/css/tokens.css">
@@ -22,17 +22,30 @@
   .panel > h2 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
   .panel .sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
   .review-empty { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  /* Key-moments strip: the game's mistakes as jumpable chips (walkthrough). */
+  #review-moments .rm-head { font-family: "Plus Jakarta Sans","Inter",sans-serif; font-weight: 800; font-size: 12.5px; margin-bottom: 6px; }
+  #review-moments .rm-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  #review-moments .rm-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  #review-moments .rm-chip.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  #review-moments .rm-dot { width: 7px; height: 7px; border-radius: 50%; }
+  #review-moments .rm-dot.inaccuracy { background: var(--warn); }
+  #review-moments .rm-dot.mistake { background: var(--bad); }
+  #review-moments .rm-dot.blunder { background: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
   /* review-mode rail (board screen uses the canonical .layout-grid) */
   #review-ply { font-size: 13px; color: var(--muted); font-family: "Spline Sans Mono", ui-monospace, monospace; }
   .review-mode-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 </style>
+<script src="/js/coach-memory.js"></script>
+<script src="/js/profile.js"></script>
+<script src="/js/chesscom-insights.js"></script>
+<script type="module" src="/js/sync.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="header-bar">
     <img class="brand-mark" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
     <span class="brand-word">KnightPath</span>
-    <span class="screen-chip">Review</span>
+    <span class="screen-chip">Game Review</span>
   </div>
 
   <!-- REVIEW LIST (hero) -->
@@ -46,6 +59,7 @@
       <div class="review-list" id="review-list"></div>
     </div>
     <a class="btn ghost" href="/games.html" style="text-decoration:none; text-align:center;">＋ Sync more games from Chess.com</a>
+    <button class="btn ghost" id="wipe-device-btn" type="button" style="margin-top:8px;" title="Clears this device only — your training stays synced to your username and comes back when you sign in again.">Wipe this device</button>
   </section>
 
   <!-- REVIEW MODE — canonical training-screen shell (css/screen.css) -->
@@ -62,9 +76,11 @@
         <div class="controls">
           <button class="btn" id="review-prev" type="button">← Prev</button>
           <button class="btn" id="review-next" type="button">Next →</button>
+          <button class="btn primary" id="review-next-moment" type="button" title="Jump to the next mistake and ask the coach about it">Next key moment ⚡</button>
         </div>
       </div>
       <div class="lg-right">
+        <div id="review-moments"></div>
         <div id="review-badge" style="min-height:26px;"></div>
         <div id="review-coach"></div>
       </div>
@@ -86,14 +102,14 @@
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
-  <a href="/review.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html" class="nav-drawer-link active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
   <div class="nav-more">
     <div class="nav-more-label">More</div>
     <a href="/games.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync games</a>
-    <a href="/roadmap.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
-    <a href="/completed.html" class="nav-drawer-link nav-more-link coming"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
+    <a href="/roadmap.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>Roadmap</a>
+    <a href="/completed.html" class="nav-drawer-link nav-more-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>Completed</a>
   </div>
   <div class="version-stamp" id="version-stamp"></div>
 </aside>
@@ -102,7 +118,7 @@
 <nav class="tab-bar" aria-label="Primary">
   <a href="/today.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle class="filldot" cx="12" cy="14.5" r="1.6"/></svg>Today</a>
   <a href="/practice.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zm-10 10h6v6H4zm10 0h6v6h-6z"/></svg>Practice</a>
-  <a href="/review.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Review</a>
+  <a href="/review.html" class="active"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>

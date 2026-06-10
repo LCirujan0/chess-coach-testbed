@@ -4,9 +4,12 @@
 // Bump APP_VERSION every meaningful change. The stamp renders in the nav
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source.
-export const APP_VERSION = 'v0.77 · Vienna enriched: 22 Stockfish-verified lines, every move explained · SRS due-count in coach read (staged) · 2026-06-09';
-// Inject the stamp lazily once the DOM is parsed.
-queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
+export const APP_VERSION = 'v0.80 · Onboarding (username gate · auto-ingest · profile · wow insights · tour) · chess.com performance insights · per-type help · profile-tailored targets (staged) · 2026-06-10';
+// Inject the stamp lazily once the DOM is parsed. (Guarded so the module is
+// importable under node for the qa/scripts harnesses.)
+if (typeof document !== 'undefined') {
+  queueMicrotask(() => { const el = document.getElementById('version-stamp'); if (el) el.textContent = APP_VERSION; });
+}
 
 // Piece rendering — Lichess Celtic set by Maurizio Monge (MIT licence).
 // Swapped from Staunty in v0.6 for commercial headroom (CC BY-NC-SA → MIT, no
@@ -100,6 +103,18 @@ export const LICHESS_RATING_WINDOW = 150;
 // puzzles the player has already cleared. Swept by the chess-coach-* clear.
 export const STORAGE_KEY_LICHESS_SOLVED = 'chess-coach-lichess-solved-v1';
 
+// Tactic-drill difficulty tiers (owner spec 2026-06-10): tier = number of
+// SOLVER moves in the solution line — easy 1-move, medium 2-3, hard more than
+// 3. Applies to the Lichess themed supply; own-game mistake puzzles have no
+// fixed solution length, so a non-'any' tier draws library-only (every puzzle
+// in the drill then genuinely matches the tier).
+export const DIFFICULTY_TIERS = [
+  { id: 'any',    label: 'Any difficulty', min: 1, max: 99 },
+  { id: 'easy',   label: 'Easy',   min: 1, max: 1,  hint: '1-move tactics' },
+  { id: 'medium', label: 'Medium', min: 2, max: 3,  hint: '2-3 move combinations' },
+  { id: 'hard',   label: 'Hard',   min: 4, max: 99, hint: 'more than 3 moves deep' },
+];
+
 // Position exclusion thresholds. Puzzles where the starting position is
 // already a forced mate (either side) or where the side to move is more than
 // this many centipawns down are dropped — they don't make useful training
@@ -119,9 +134,21 @@ export const STORAGE_KEY_RATING = 'chess-coach-user-rating-v1';
 // Shape: { date, idx, blocks: [{id, title, sub, count, mode, done, ids:[puzzleId...]}] }
 export const STORAGE_KEY_SESSION = 'chess-coach-session-v1';
 
-// Chess.com username for rating lookup. Fetched once a day, cached. The coach
-// calibrates its feedback to the user's current rapid rating.
+// Chess.com username fallback for rating lookup — used ONLY when no synced
+// username (chess-coach-username-v1) has been entered yet. Every user-facing
+// surface must call getActiveChessComUsername(), never this constant directly
+// (de-hardwiring, 2026-06-10 audit task 1.2).
 export const CHESS_COM_USERNAME = 'LCirujano';
+
+// The active user identity: the synced username when set, else the fallback.
+// Reads lazily so a user switch applies on the next call.
+export function getActiveChessComUsername() {
+  try {
+    const u = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEY_USERNAME) : null;
+    if (u && /^[a-z0-9_-]{1,64}$/i.test(u.trim())) return u.trim().toLowerCase();
+  } catch { /* storage unavailable */ }
+  return CHESS_COM_USERNAME.toLowerCase();
+}
 export const DEFAULT_RATING = 1100;
 export const RATING_TARGET = 1500;
 export const RATING_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -164,3 +191,47 @@ export const PLAYOUT_DECISIVE_CP = 9999;   // only early-pass on forced-mate (no
 export const PLAYOUT_FAIL_CONSECUTIVE = 2;  // consecutive bad evals → fail
 export const PLAYOUT_DRAW_PASS_CP  = -150;  // for draw lessons at cap: still holding = pass
 export const STORAGE_KEY_TAGS      = 'chess-coach-tags-v1';
+
+// ============================================================================
+// Cross-device sync (v0.78) — js/sync.js mirrors a subset of localStorage to
+// Supabase, keyed by the user's Chess.com username. localStorage stays the
+// working store; Supabase is the cross-device mirror (pull+merge on load,
+// debounced push on meaningful writes). The publishable key is designed to
+// ship client-side (Supabase); writes are gated by RLS on knightpath_state
+// (anon: select/insert/update only — no delete). See docs/learnings.md v0.78.
+// ============================================================================
+export const SUPABASE_URL = 'https://gyrbbapxjqcuvcoronnt.supabase.co';
+export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_llUEQtnxK0MMVkrZMdLBDQ_ROnT1T-A';
+export const SUPABASE_STATE_TABLE = 'knightpath_state';
+// The user's Chess.com username (lowercased) — the cross-device identity key.
+// Written once from the sync prompt (or a games.html ingest), then reused.
+export const STORAGE_KEY_USERNAME = 'chess-coach-username-v1';
+// The synced subset of chess-coach-* keys: gamification + training history.
+// Deliberately EXCLUDED (local-only): filter prefs (last-category/-severity/
+// -tried/-motif, mode), cached rating + rating profile/history (re-fetched
+// from Chess.com on any device), game move lists + scorecards + meta (large
+// blobs, re-creatable by a re-sync), ingested-games (device-local dedup),
+// lichess-solved (nice-to-have, follow-up).
+export const SYNC_KEYS = [
+  'chess-coach-streak-v1',           // daily streak + freezes — non-negotiable
+  'chess-coach-attempts-v1',         // cumulative puzzle attempt ledger (drives SRS)
+  'chess-coach-mistakes-v1',         // ingested puzzles from Chess.com games
+  'chess-coach-session-v1',          // today's session plan
+  'chess-coach-session-complete-v1', // done-today flag (streak/done UI on device B)
+  'chess-coach-daily-goal-v1',       // user-set goal tier
+  'chess-coach-board-vision-v1',     // board vision ladder progress
+  'chess-coach-openings-v1',         // openings SRS state
+  'chess-coach-recognition-v1',      // endgame recognition results
+  'chess-coach-eg-results-v1',       // endgame play-out results
+  'chess-coach-tags-v1',             // puzzle motif tags
+  'chess-coach-mastery-seen-v1',     // mastery "new"-chip seen markers
+  'chess-coach-plan-today-v2',       // cached AI "plan today" (owner call 2026-06-10: sync it)
+  'chess-coach-coach-memory-v1',     // the coach's compact per-user memory (v0.79)
+  'chess-coach-profile-v1',          // onboarding profile: elo goal, time control, seriousness (v0.80)
+  'chess-coach-game-scorecards-v1',  // per-game phase scores — synced so a device wipe never forces a re-ingest (v0.80)
+  'chess-coach-game-meta-v1',        // per-game Chess.com enrichment — same rationale (small; move LISTS stay local)
+];
+// Push debounce: meaningful events (puzzle resolved, streak marked, session
+// written) arrive in bursts; coalesce them into one upsert.
+export const SYNC_DEBOUNCE_MS = 2500;
+export const SYNC_FETCH_TIMEOUT_MS = 8000;

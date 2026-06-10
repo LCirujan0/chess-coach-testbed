@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KnightPath — Welcome</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="KnightPath">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/type.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Focused first-run chrome (like session.html — no nav, one column). */
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { background: radial-gradient(120% 60% at 50% -10%, var(--app-bg-start), var(--app-bg-end) 80%); background-attachment:fixed; min-height:100vh; }
+  body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3 { font-family:"Plus Jakarta Sans","Inter",sans-serif; letter-spacing:-.01em; }
+  .wrap { max-width:560px; margin:0 auto; padding:26px 18px 48px; }
+  .brandrow { display:flex; align-items:center; gap:9px; margin-bottom:26px; }
+  .brandrow img { width:26px; height:26px; }
+  .brandrow .w { font-family:"Plus Jakarta Sans",sans-serif; font-weight:800; font-size:17px; color:var(--accent); }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:24px 22px; box-shadow:0 16px 36px -26px rgba(20,30,55,.3); }
+  .card h1 { font-size:24px; font-weight:800; margin-bottom:6px; }
+  .card .sub { color:var(--muted); font-size:13.5px; margin-bottom:16px; line-height:1.55; }
+  .btn { font-family:"Plus Jakarta Sans",sans-serif; font-weight:700; font-size:14px; padding:13px 16px; border-radius:var(--r-btn); border:1px solid transparent; cursor:pointer; width:100%; display:block; text-align:center; text-decoration:none; }
+  .btn.primary { background:var(--accent); color:#fff; box-shadow:0 10px 22px -10px var(--accent); transition:filter .15s ease; }
+  .btn.primary:hover { filter:brightness(1.06); }
+  .btn.primary:disabled { opacity:.5; cursor:not-allowed; }
+  .btn.ghost { background:var(--surface); border:1px solid var(--line); color:var(--ink); }
+  .skiplink { background:none; border:none; color:var(--muted); font-size:12.5px; text-decoration:underline; cursor:pointer; margin:12px auto 0; display:block; font-family:inherit; }
+
+  input.name { width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:var(--r-btn); font:inherit; font-size:15px; margin-bottom:10px; }
+  input.name:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(47,158,118,.16); }
+  .err { display:none; font-size:12.5px; color:var(--bad); margin:-2px 0 10px; }
+
+  /* Ingest progress + knight animation */
+  .knightpulse { width:64px; height:64px; margin:6px auto 14px; animation:kp-bob 1.6s ease-in-out infinite; }
+  @keyframes kp-bob { 0%,100% { transform:translateY(0) rotate(-3deg); } 50% { transform:translateY(-7px) rotate(3deg); } }
+  @media (prefers-reduced-motion: reduce) { .knightpulse { animation:none; } }
+  .progress { margin-top:4px; font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .progress .bar { height:7px; background:var(--surface3); border-radius:4px; overflow:hidden; margin-top:7px; }
+  .progress .bar-fill { height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); width:0%; transition:width 250ms ease; }
+  .progress.error { color:var(--bad); }
+  .progress.ok { color:var(--pos); }
+  .hidden { display:none !important; }
+
+  /* Profile questions (asked while the engine works) */
+  .q { margin-top:18px; }
+  .q .qh { font-family:"Plus Jakarta Sans",sans-serif; font-weight:800; font-size:15px; margin-bottom:9px; }
+  .q .opts { display:flex; flex-wrap:wrap; gap:8px; }
+  .q .opt { padding:10px 15px; border:1px solid var(--line); border-radius:var(--r-pill); background:var(--surface); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+  .q .opt small { display:block; font-weight:500; color:var(--muted); font-size:11px; }
+  .q .opt.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); box-shadow:0 0 0 2px rgba(47,158,118,.14); }
+  .q-done { margin-top:16px; font-size:12.5px; color:var(--pos); font-weight:600; }
+
+  /* Insight cards */
+  .insight { border:1px solid var(--line); border-radius:var(--r-panel); background:var(--surface2); padding:14px 15px; margin-bottom:10px; }
+  .insight .il { font-family:"Plus Jakarta Sans",sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .insight .it { font-size:13.5px; line-height:1.5; }
+  .insight .it b { font-family:"Plus Jakarta Sans",sans-serif; }
+  #ob-coach-card { margin-top:14px; }
+
+  /* Tour */
+  .tour-step { text-align:center; padding:8px 4px 0; }
+  .tour-step .tic { width:52px; height:52px; border-radius:15px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+  .tour-step .tic svg { width:26px; height:26px; stroke:var(--accent); fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  .tour-step h2 { font-size:18px; margin-bottom:6px; }
+  .tour-step p { color:var(--muted); font-size:13.5px; max-width:380px; margin:0 auto; }
+  .tour-dots { display:flex; gap:6px; justify-content:center; margin:18px 0 14px; }
+  .tour-dots i { width:7px; height:7px; border-radius:50%; background:var(--surface3); }
+  .tour-dots i.on { background:var(--accent); }
+
+  .stepfoot { margin-top:18px; }
+</style>
+<script src="/js/coach-stats.js"></script>
+<script src="/js/profile.js"></script>
+<script src="/js/chesscom-insights.js"></script>
+<script type="module" src="/js/sync.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandrow">
+    <img src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
+    <span class="w">KnightPath</span>
+  </div>
+  <div class="card" id="ob-card"><!-- rendered by js/onboarding/boot.js --></div>
+  <!-- Compat nodes for the shared ingest pipeline (js/games/analysis.js enables
+       #ingest-btn on engine-ready; setProgress writes the three progress nodes,
+       which double as this page's real progress UI inside the card). -->
+  <button id="ingest-btn" class="hidden" type="button" aria-hidden="true"></button>
+</div>
+<script type="module" src="/js/onboarding/boot.js"></script>
+</body>
+</html>

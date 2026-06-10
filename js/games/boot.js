@@ -1,9 +1,8 @@
 import { $, setProgress } from './dom.js';
 import { state } from './state.js';
-import { loadMistakes, saveMistakes, mergeMistakes, loadIngestedGameUrls, saveIngestedGameUrls, renderSavedStats } from './storage.js';
+import { loadMistakes, saveMistakes, mergeMistakes, loadIngestedGameUrls, saveIngestedGameUrls, renderSavedStats, persistGameIncrementally } from './storage.js';
 import { initStockfish } from './analysis.js';
 import { ingest } from './ingest.js';
-import { classifyMotifsBatch } from './classify.js';
 import { renderMistakeList, renderSavedGames } from './list.js';
 import { handleCoachNarrative } from './narrate.js';
 import { initReview, renderReviewList } from './review.js';
@@ -18,35 +17,8 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   setProgress('Unhandled rejection: ' + (e.reason?.message || String(e.reason)), 100, 'error');
 });
-// Persist ONE game's results as it finishes (called per-game from ingest) so a
-// mid-sync navigation keeps finished games and a re-sync resumes. Best-effort —
-// every step is guarded so a storage hiccup never breaks the run.
-function persistGameIncrementally(g) {
-  if (!g) return;
-  try { if (Array.isArray(g.mistakes) && g.mistakes.length) saveMistakes(mergeMistakes(loadMistakes(), g.mistakes)); } catch (e) {}
-  const mergeOne = (key, val) => {
-    if (!val || !g.key) return;
-    try { const o = JSON.parse(localStorage.getItem(key) || '{}') || {}; o[g.key] = val; localStorage.setItem(key, JSON.stringify(o)); } catch (e) {}
-  };
-  mergeOne('chess-coach-game-scorecards-v1', g.scorecard);
-  mergeOne('chess-coach-game-moves-v1', g.moves);
-  mergeOne('chess-coach-game-meta-v1', g.meta);
-  if (typeof g.rating === 'number' && g.endTime) {
-    try {
-      const KEY = 'chess-coach-rating-history-v1';
-      let h = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.isArray(h)) h = [];
-      const at = new Date(g.endTime * 1000).toISOString();
-      if (!h.some((p) => p && p.at === at)) {
-        h.push({ rating: g.rating, at });
-        h.sort((a, b) => new Date(a.at) - new Date(b.at));
-        localStorage.setItem(KEY, JSON.stringify(h));
-        const latest = h[h.length - 1];
-        if (latest) localStorage.setItem('chess-coach-user-rating-v1', JSON.stringify({ rating: latest.rating, fetchedAt: new Date().toISOString() }));
-      }
-    } catch (e) {}
-  }
-  if (g.gameUrl) { try { const set = loadIngestedGameUrls(); set.add(g.gameUrl); saveIngestedGameUrls(set); } catch (e) {} }
-}
+// persistGameIncrementally moved to ./storage.js (v0.80) so onboarding.html can
+// reuse the per-game persistence without this page's DOM wiring.
 
 async function handleIngestSubmit(e) {
   e.preventDefault();
@@ -55,6 +27,15 @@ async function handleIngestSubmit(e) {
   if (!username) { alert('Enter a username.'); return; }
   const numGames = parseInt($('num-games').value, 10);
   const depth = parseInt($('depth').value, 10);
+
+  // Capture identity: an ingest IS a statement of who you are. If no synced
+  // username exists yet, adopt this one (same key + validation as js/sync.js).
+  try {
+    const norm = username.toLowerCase();
+    if (/^[a-z0-9_-]{1,64}$/.test(norm) && !localStorage.getItem('chess-coach-username-v1')) {
+      localStorage.setItem('chess-coach-username-v1', norm);
+    }
+  } catch (e) { /* anonymous */ }
 
   state.busy = true;
   $('ingest-btn').disabled = true;
@@ -165,40 +146,29 @@ async function handleIngestSubmit(e) {
     $('ingest-btn').textContent = 'Load and analyse';
   }
 }
-function handleClear() {
-  if (!confirm('Wipe all saved puzzles, ingested-games tracking, AND your puzzle attempts? This cannot be undone.')) return;
-  // Sweep every chess-coach-* key. Previously this only removed three keys,
-  // which left the puzzle and completed pages still showing old data after
-  // a "clear all". Now anything namespaced to the app is gone.
-  const toRemove = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith('chess-coach-')) toRemove.push(k);
-  }
-  for (const k of toRemove) localStorage.removeItem(k);
-  renderSavedStats();
-  $('list-panel').classList.add('hidden');
-  alert('All puzzle data cleared. Reload the Puzzles and Completed tabs to see them empty.');
-}
+// "Clear all saved" removed 2026-06-10 (owner call): with cross-device sync a
+// local wipe just re-pulls on the next load, so the reset affordance moved to
+// the nav user chip's "Change" action (js/sync.js switchUser), which clears
+// local state as part of switching identity.
 // Spec 02 — backfill motifs for any already-ingested mistakes that don't have
 // a `motif` tag (the existing deck pre-dates the classifier). Idempotent.
 async function handleBackfillMotifs() {
+  // Consolidated (2026-06-10): backfill now rides the SAME batched Haiku path
+  // as post-ingest tagging (js/tagger.js → /api/tag) — one classifier, one
+  // prompt, ~10x cheaper than the retired per-mistake Sonnet calls.
   const all = loadMistakes();
   const untagged = all.filter((m) => !m.motif);
   if (!untagged.length) {
     alert('All ingested mistakes already have a motif tag — nothing to backfill.');
     return;
   }
-  const estCost = (untagged.length * 0.0026).toFixed(2);
-  if (!confirm(`Backfill ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} with motif tags?\n\nEstimated Anthropic cost: ~$${estCost}.\nThis runs one Claude classifier call per mistake.`)) return;
+  if (!confirm(`Backfill ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} with motif tags?\n\nRuns batched Claude Haiku classification (fractions of a cent).`)) return;
   $('backfill-btn').disabled = true;
-  setProgress(`Backfilling motifs… 0/${untagged.length}`, 0, '');
+  setProgress(`Backfilling motifs for ${untagged.length} mistake${untagged.length === 1 ? '' : 's'}…`, 30, '');
   try {
-    await classifyMotifsBatch(untagged, (done, total) => {
-      setProgress(`Backfilling motifs… ${done}/${total}`, Math.round(100 * done / total), '');
-    });
-    saveMistakes(all);
-    setProgress(`Done. ${untagged.length} mistake${untagged.length === 1 ? '' : 's'} tagged.`, 100, 'ok');
+    await tagAndSaveMistakes();
+    setProgress('Done. Motifs backfilled.', 100, 'ok');
+    renderSavedStats();
   } catch (err) {
     setProgress('Backfill error: ' + err.message, 100, 'error');
   } finally {
@@ -207,9 +177,17 @@ async function handleBackfillMotifs() {
 }
 // ----- event wiring + boot -----
 $('ingest-form').addEventListener('submit', handleIngestSubmit);
-$('clear-btn').addEventListener('click', handleClear);
 $('coach-narrative-btn').addEventListener('click', handleCoachNarrative);
 $('backfill-btn').addEventListener('click', handleBackfillMotifs);
+// Wipe this device (v0.80, owner ask): local-only wipe — the Supabase copy
+// survives, so signing back in restores everything without re-ingesting.
+const wipeBtn = $('wipe-btn');
+if (wipeBtn) wipeBtn.addEventListener('click', () => { if (window.KPSync) window.KPSync.wipeDevice(); });
+// Prefill the form with the synced identity (chess-coach-username-v1).
+try {
+  const u = localStorage.getItem('chess-coach-username-v1');
+  if (u && !$('username').value) $('username').value = u;
+} catch (e) { /* anonymous */ }
 initStockfish().catch((err) => {
   setProgress('Engine init failed: ' + err.message, 100, 'error');
 });

@@ -17,8 +17,8 @@
 
 /* Verdict reveal */
 .verdict-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 800; font-family: "Plus Jakarta Sans", sans-serif; padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 10px; }
-.verdict-badge.correct { background: #E8F5EE; color: var(--pos); }
-.verdict-badge.wrong { background: #FBF0ED; color: var(--bad); }
+.verdict-badge.correct { background: var(--pos-soft); color: var(--pos); }
+.verdict-badge.wrong { background: var(--bad-soft); color: var(--bad); }
 .keyfactor { font-size: 13px; color: var(--ink); margin-bottom: 8px; line-height: 1.5; }
 .keyfactor strong { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
 

@@ -1,5 +1,5 @@
 // qa-checklist §D — endgame trainer + recognition load and are reachable.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 for (const path of ['/endgames.html', '/endgame-recognition.html']) {
   test(`endgame page loads clean: ${path}`, async ({ page }) => {
