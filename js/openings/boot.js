@@ -21,9 +21,45 @@ import { renderStaticBoard } from '/js/board-static.js';
 import { listOpenings, getOpening } from './data.js';
 import { freshCard, normalizeCard, review, pickNext, countDue, masterySummary } from './srs.js';
 import { personalForOpenings, hasGameData } from './personal.js';
+import { renderSessionWrap, refreshSessionWrap } from '/js/session-wrap.js';
 
 const KEY = 'chess-coach-openings-v1';
 const $ = (id) => document.getElementById(id);
+
+// ---- Today-session mode (v0.82): /openings.html?session=today&block=openings
+// drills the plan's due lines in order, under the persistent session bar, then
+// hands back to /session.html. Outside a session everything works as before.
+const PARAMS = new URLSearchParams(location.search);
+const SESSION = PARAMS.get('session') === 'today' && PARAMS.get('block') === 'openings';
+function sessionPlanIds() {
+  try {
+    const plan = JSON.parse(localStorage.getItem('chess-coach-session-v1') || 'null');
+    const b = plan && Array.isArray(plan.blocks) ? plan.blocks.find((x) => x && x.id === 'openings') : null;
+    return { ids: (b && b.ids) || [], sinceMs: (plan && plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0 };
+  } catch { return { ids: [], sinceMs: 0 }; }
+}
+function sessionNextLineId() {
+  const { ids, sinceMs } = sessionPlanIds();
+  const store = load();
+  return ids.find((id) => { const c = store.cards[id]; return !(c && typeof c.lastSeen === 'number' && c.lastSeen >= sinceMs); }) || null;
+}
+// Find which registry opening holds a line id, loading per-opening files on
+// demand (the registry is tiny; v1 ships one opening).
+async function startSessionLine(lineId) {
+  if (!OPENINGS.length) { try { OPENINGS = await listOpenings(); } catch { OPENINGS = []; } }
+  for (const o of OPENINGS) {
+    let data; try { data = await getOpening(o.id); } catch { continue; }
+    const line = (data.lines || []).find((l) => l.id === lineId);
+    if (line) { beginLine(data, line); return true; }
+  }
+  return false;
+}
+async function runSessionFlow() {
+  const next = sessionNextLineId();
+  if (next && await startSessionLine(next)) return;
+  // nothing left that we can serve: hand back to the session host
+  location.href = '/session.html';
+}
 
 // ----- storage (the persisted blob: { version, cards: { [lineId]: card } }) ---
 function load() {
@@ -287,8 +323,21 @@ function renderComplete(card) {
   $('op-complete-line').textContent = `${D.opening.name}, ${D.line.name}`;
   $('op-complete-idea').textContent = D.line.idea || '';
   $('op-complete-coach').textContent = coachLine(D.perfect, card);
-  const next = pickNextSummary(D.opening, D.line);
   const actions = $('op-complete-actions');
+  if (SESSION) {
+    refreshSessionWrap();
+    const nextDue = sessionNextLineId();
+    if (nextDue) {
+      actions.innerHTML = '<button class="btn primary" id="op-next" type="button">Next line →</button>' +
+        '<a class="btn ghost" href="/session.html">Back to session</a>';
+      $('op-next').addEventListener('click', () => runSessionFlow());
+    } else {
+      actions.innerHTML = '<a class="btn primary" href="/session.html">Continue session →</a>' +
+        '<a class="btn ghost" href="/today.html">Back to Today</a>';
+    }
+    return;
+  }
+  const next = pickNextSummary(D.opening, D.line);
   actions.innerHTML =
     `<button class="btn primary" id="op-next" type="button">${next ? 'Next line →' : 'Drill again →'}</button>` +
     `<button class="btn ghost" id="op-back" type="button">Back to openings</button>`;
@@ -322,5 +371,10 @@ function wireBoard() {
 }
 
 wireBoard();
-$('op-quit').addEventListener('click', () => renderHub());
-renderHub();
+$('op-quit').addEventListener('click', () => { if (SESSION) location.href = '/session.html'; else renderHub(); });
+if (SESSION) {
+  renderSessionWrap(document.getElementById('session-wrap'));
+  runSessionFlow();
+} else {
+  renderHub();
+}

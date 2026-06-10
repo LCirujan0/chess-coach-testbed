@@ -32,8 +32,20 @@
       goalBy: (typeof v.goalBy === 'string' && /^\d{4}-\d{2}$/.test(v.goalBy)) ? v.goalBy : null,
       timeControl: TIME_CONTROLS.indexOf(v.timeControl) !== -1 ? v.timeControl : null,
       seriousness: SERIOUSNESS.indexOf(v.seriousness) !== -1 ? v.seriousness : null,
+      // The username AS TYPED (owner 2026-06-10: keep my capitalisation). The
+      // identity key stays lowercase; this is display-only.
+      displayName: (typeof v.displayName === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(v.displayName.trim())) ? v.displayName.trim() : null,
       updatedAt: (typeof v.updatedAt === 'string') ? v.updatedAt : null
     };
+  }
+
+  // Display name: typed capitalisation when it matches the active identity,
+  // else a capitalised fallback of whatever name is passed.
+  function displayNameFor(lowercaseUsername) {
+    var p = read();
+    if (p.displayName && p.displayName.toLowerCase() === String(lowercaseUsername || '').toLowerCase()) return p.displayName;
+    var u = String(lowercaseUsername || '');
+    return u ? u.charAt(0).toUpperCase() + u.slice(1) : '';
   }
 
   function read() {
@@ -67,7 +79,8 @@
   var API = {
     KEY: KEY, TIME_CONTROLS: TIME_CONTROLS, SERIOUSNESS: SERIOUSNESS, DEFAULT_TARGET: DEFAULT_TARGET,
     normalize: normalize, read: read, write: write,
-    targetElo: targetElo, timeControl: timeControl, promptLine: promptLine
+    targetElo: targetElo, timeControl: timeControl, promptLine: promptLine,
+    displayNameFor: displayNameFor
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.KPProfile = API;

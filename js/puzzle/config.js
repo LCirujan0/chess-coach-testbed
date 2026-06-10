@@ -5,7 +5,7 @@
 // drawer so the live Vercel deploy can be visually confirmed against the
 // source. NUMBER ONLY (owner rule 2026-06-10): the what/why of each version
 // lives in docs/learnings.md, never in the stamp.
-export const APP_VERSION = 'v0.81';
+export const APP_VERSION = 'v0.82';
 // Inject the stamp lazily once the DOM is parsed. (Guarded so the module is
 // importable under node for the qa/scripts harnesses.)
 if (typeof document !== 'undefined') {
@@ -231,6 +231,7 @@ export const SYNC_KEYS = [
   'chess-coach-profile-v1',          // onboarding profile: elo goal, time control, seriousness (v0.80)
   'chess-coach-game-scorecards-v1',  // per-game phase scores, synced so a device wipe never forces a re-ingest (v0.80)
   'chess-coach-game-meta-v1',        // per-game Chess.com enrichment, same rationale (small; move LISTS stay local)
+  'chess-coach-calculation-v1',      // calculation drill levels + blitz bests + history (v0.82, spec 25)
 ];
 // Push debounce: meaningful events (puzzle resolved, streak marked, session
 // written) arrive in bursts; coalesce them into one upsert.

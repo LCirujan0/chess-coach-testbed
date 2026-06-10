@@ -35,7 +35,26 @@ Never hardcode a colour/radius that has a token. Never redefine these in a page'
 
 - **Display / headings** (`h1–h4`): Plus Jakarta Sans 700–800 (`--font-display`).
 - **Body / UI / data:** Inter (`--font-body`). The mono data face was **retired 2026-06-10 (owner rule: off-brand)**; figures use Inter with `font-variant-numeric: tabular-nums` (`.t-mono` still works, now resolving to Inter). Never reintroduce a monospace face.
-- Page intro pattern: `.eyebrow` (10.5px uppercase accent) → `<h1>` (26px/800) → `.lede` (13px muted).
+- Page intro pattern: `.eyebrow` (10.5px uppercase accent) → `<h1>` (24px/800, 28-34px desktop) → `.lede` (13px muted).
+
+### Type scale — STRICT (owner rule, 2026-06-11)
+
+Every `font-size` in the app must be a step on this scale. No in-between values, ever. The named steps are tokens in `css/tokens.css` (`--fs-*`); raw px is allowed only if it equals a step.
+
+| Step | px | Use |
+|---|---|---|
+| `--fs-hero` | 28 (34 desktop) | page h1, big stat numbers (24/30 also legal for stats) |
+| `--fs-h2` | 21 | section headings |
+| `--fs-h3` | 18 | sub-headings, large UI |
+| `--fs-title` | 15 (16 legal) | card/panel titles |
+| `--fs-body` | 14 (13.5 legal) | buttons, primary copy |
+| `--fs-ui` | 13 (12.5 legal) | secondary copy, list rows |
+| `--fs-small` | 12 | metadata |
+| `--fs-caption` | 11 | annotations |
+| `--fs-micro` | 10 | uppercase labels, chips (9 only for dense chart labels + tab-bar) |
+| `--fs-eyebrow` | 10.5 | the page eyebrow, nothing else |
+
+Full legal set: 9, 10, 10.5, 11, 12, 12.5, 13, 13.5, 14, 15, 16, 18, 21, 24, 28, 30, 34, 36. **Enforced by `node qa/scripts/type-scale-check.cjs`** (sweeps all CSS, page styles, and JS-injected styles; run it before every release). The 2026-06-11 sweep normalised 38 off-scale declarations.
 
 ## Buttons (`css/train.css`)
 

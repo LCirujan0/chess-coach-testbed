@@ -361,3 +361,17 @@
   .msg { font-size: 14px; }
   .coach-input { font-size: 14px; }
 }
+
+/* v0.82 mobile: stack card labels on narrow screens (owner fix) */
+@media (max-width:520px){.msg.review .rv-point{grid-template-columns:1fr;gap:3px;}.msg.review{max-width:100%;}.msg{max-width:100%;}.coach-card{margin-left:0;margin-right:0;}}
+
+/* ---- Coach dock (v0.82, owner: 'coach chat has to be a bubble') ----------
+   Mobile: the rail coach card becomes a floating knight bubble + slide-up
+   sheet so the exercise fits on screen without scrolling. Desktop unchanged. */
+.kp-coach-fab { display: none; }
+@media (max-width: 879px) {
+  body.kp-coach-dock .coach-card { position: fixed; left: 10px; right: 10px; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 350; max-height: 62vh; display: none; box-shadow: 0 -18px 50px -18px rgba(20,30,55,.55); margin: 0; }
+  body.kp-coach-dock.kp-coach-open .coach-card { display: flex; }
+  body.kp-coach-dock .kp-coach-fab { position: fixed; right: 14px; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 351; width: 52px; height: 52px; border-radius: 50%; border: none; background: linear-gradient(140deg, var(--accent), var(--accent-2)); color: #fff; font-size: 24px; line-height: 1; box-shadow: 0 12px 26px -8px var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  body.kp-coach-dock.kp-coach-open .kp-coach-fab { background: var(--ink); box-shadow: 0 12px 26px -10px rgba(20,30,55,.6); }
+}

@@ -50,6 +50,19 @@
   --hl-sel:   rgba(47,158,118,.36);
   --hl-origin: rgba(201,138,46,.28); /* Board Vision origin square (amber) */
 
+  /* TYPE SCALE (v0.82, owner rule: strict, app-wide). Every font-size must be
+     one of these steps; qa/scripts/type-scale-check.cjs enforces it. */
+  --fs-hero:    28px;  /* page h1 (34px desktop via media) */
+  --fs-h2:      21px;
+  --fs-h3:      18px;
+  --fs-title:   15px;  /* card/panel titles */
+  --fs-body:    14px;  /* buttons, primary copy */
+  --fs-ui:      13px;  /* secondary copy, list rows */
+  --fs-small:   12px;  /* metadata */
+  --fs-caption: 11px;  /* annotations */
+  --fs-micro:   10px;  /* uppercase labels, chips */
+  --fs-eyebrow: 10.5px;/* the one historical exception, the page eyebrow */
+
   /* Shape scale */
   --r-card:  16px;
   --r-panel: 14px;

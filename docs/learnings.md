@@ -4,6 +4,34 @@ Key architectural and product decisions, newest first. The point of this file is
 
 ---
 
+## v0.82 — Mobile QA batch + Calculation drills (Spec 25) + all-type Today blocks (STAGED) (2026-06-11)
+
+The owner's second hands-on pass (17 items, mobile) plus the two structural asks: "today's blocks can cover any kind of puzzle or exercise we have available" and "a score/progression tracker for all types of puzzles. If there is no measure of progress there won't be a habit being built."
+
+**New project rule (CLAUDE.md 15): strict type scale.** Every `font-size` must be a step on the `--fs-*` scale in `css/tokens.css` (9, 10, 10.5, 11, 12, 12.5, 13, 13.5, 14, 15, 16, 18, 21, 24, 28, 30, 34, 36 px; 10.5 is the eyebrow only). `qa/scripts/type-scale-check.cjs` enforces it; the initial sweep normalised 38 off-scale declarations across 11 files. Table in `docs/design-system.md`.
+
+**Calculation drills v1 (Spec 25, new training type):**
+- `calculation.html` + `js/calculation/{generators,boot}.js`. The page deliberately reuses the Board Vision section ids + `bv-*` visual grammar (styled by `css/board-vision.css`), so zero new CSS.
+- **Follow the line:** a Lichess-pack position frozen at the start; the forced sequence is told in PLAIN WORDS (decision on spec Q1: verbal, not arrows; arrows would let the eye follow the board and skip the visualisation work). Question: tap where the last mover ends up, or "is the king in check?". 3 levels (2/3/4 plies), 80% bump rule.
+- **Count the forcers:** how many checks/captures right now, 20s per question (spec Q2 decision: the user's OWN mistake FENs first, pack fallback, so it stays personal with infinite supply). Plus a 60s blitz with kept best + bands, cloned from Board Vision.
+- Generators are pure with the chess.js constructor injected (`makeGenerators(Chess)`), so `qa/scripts/calculation-check.cjs` runs 120 randomized reps headless and re-derives every answer independently. It caught a real bug pre-ship: a promotion leaves a queen on the answer square, not the pawn the question named.
+- One synced key `chess-coach-calculation-v1` (levels + bests max-merge, history union by day; rule 14). Help entry, practice card, nav child on all pages, mastery markers ("Calculated 3/4 moves deep").
+- **Stale-loop race fixed via run tokens:** quitting during the feedback beat and starting another drill left the old async loop alive (`quit` reset by the new flow). Every flow takes `++runToken`; loops break when their token goes stale. (Board Vision has a milder version of this; tokens are the pattern to copy if it ever bites.)
+
+**Today blocks now cover every exercise type (spec Q3 decision: alternate, not replace):**
+- A daily **warm-up block** alternates Board Vision / Calculation by calendar-day parity, resolved when that trainer's `completedDate` flips to today (both pages' `?session=1` flows end in "Continue session →").
+- An **Opening lines block** appears when started lines are SRS-due, read straight off the synced store (no registry fetch on Today). `openings.html?session=today&block=openings` now runs a session mode: drills the plan's due lines under the persistent session bar, then hands back to `/session.html`. The session wrapper + session.html resolve all 7 block types (`mistakes/review/recognition/endgames/openings/vision/calculation`).
+- The "coming soon" Board Vision row on Today is gone; nothing is locked anymore.
+- Universal progression (the owner's habit point): the Insights "Mastery over time" panel adds a **Calculation** weekly-accuracy trend and snapshot chips for every type, including blitz bests. Found + fixed a silent bug there: the openings chip read the store's top level instead of `.cards`, so it NEVER rendered.
+
+**Mobile QA batch highlights (rest of the 17):**
+- **Phase "est. ELO" conflict** (owner: "1400 average vs my 950"): ACPL anchors measure phase quality, not Chess.com rating. Onboarding strip and Insights phase cards now show scores/100 + relative gaps ("your strongest phase", "~N pts behind your best"), never absolute ELO.
+- **Insights restructured to lead with insights:** clickable phase cards (tap → top motifs in that phase + drill CTAs), "What to drill this week" (5 specific, drillable rows incl. defensive slips + worst piece), an honest v1 per-piece panel (deeper engine analysis is specced, not faked).
+- **Coach dock on mobile:** on the three board pages the rail coach card becomes a floating knight bubble + slide-up sheet (`js/coach-dock.js` + `body.kp-coach-dock` rules in train.css), so the exercise fits on screen. Desktop unchanged.
+- **ECO codes → names everywhere** (`ChesscomInsights.openingDisplayName`: ECO_FAMILIES map + ECOUrl slug parsing; ingest captures ECOUrl), username shown in the case the user typed it (`KPProfile.displayName`), zoom disabled on all 16 pages, onboarding ingests 10 games (was 20) with rotating wait tips + a found-so-far ticker + an early "analyse more games" nudge on Today (hidden once ~15 games in).
+- **Puzzle verdicts carry the cost:** fails say why + the pawns lost ("Not solved: gave the advantage back, costing about 1.4 pawns"); near-misses say "Good enough, but Qxd5 leaked 0.8 pawns". Review badges lead with "You played <move>".
+- **"Game review not loading" (mobile)**: NOT reproduced with seeded data; shipped a visible error banner + try/catch around initReview on review.html so the next report carries the actual cause.
+
 ## v0.81 — Owner QA feedback batch: brand polish, session-flow fixes, Board Vision overhaul (STAGED) (2026-06-10)
 
 Everything from the owner's first hands-on pass over v0.78-v0.80, plus two new hard rules.

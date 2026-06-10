@@ -59,11 +59,12 @@ GitHub secret (not Vercel):
 |---|---|
 | `onboarding.html` | **First-run flow (v0.80)** — username gate target (focused chrome, no nav): validate username → auto-ingest 20 games + profile questions → 3 personal insights + coach welcome → 8-step tour → Today. Anonymous visits to ANY page route here (`js/sync.js enforceOnboardingGate`). |
 | `today.html` | Daily session home — the user's entry point |
-| `practice.html` | Practice hub — fans out to Puzzles / Endgames / Recognition / Board Vision |
+| `practice.html` | Practice hub — fans out to Puzzles / Endgames / Recognition / Board Vision / Calculation / Openings |
 | `puzzle.html` | Mistake puzzle training (primary training screen) |
 | `endgames.html` | Endgame play-out training |
 | `endgame-recognition.html` | Win/draw/loss recognition training |
 | `board-vision.html` | Board Vision warm-up — 3 procedural drills + a 6-level hide-the-board tracker (Spec 14, v0.62) |
+| `calculation.html` | **Calculation drills** (Spec 25, v0.82) — follow a verbal forced line on a frozen board (3 levels) + count the checks/captures at speed (20s reps + 60s blitz w/ bests). Reuses the bv-* visual grammar from board-vision.css deliberately. |
 | `openings.html` | **Openings trainer** (v0.61→enriched v0.77) — repertoire-recall drill with spaced repetition; each move shown with a coach "why". Vienna first (22 Stockfish-verified lines); extensible via `data/openings/`. |
 | `review.html` | **Game Review** (primary tab, renamed from "Review" v0.79) — replay a game with a **key-moments walkthrough** (jumpable mistake chips + "Next key moment"), per-mistake coach, "drill this motif" |
 | `games.html` | **Sync games** — Chess.com ingestion only (v0.64: review moved to review.html; demoted to nav "More") |
@@ -148,6 +149,15 @@ GitHub secret (not Vercel):
 | `list.js` / `narrate.js` | Mistake-list render · per-game "how you played" narration (prompt-bearing). |
 | `review.js` | **Spec 11 interactive game review** (`review.html`): replay, severity badges, per-mistake grounded coach card, "drill this motif" deep-link. |
 
+### Calculation module (`js/calculation/`)
+
+Spec 25 (v0.82). `calculation.html` loads `boot.js`. No engine; positions come from the bundled Lichess pack + the user's own mistake FENs.
+
+| Module | Responsibility |
+|---|---|
+| `generators.js` | Pure generators with chess.js INJECTED (`makeGenerators(Chess)`) so `qa/scripts/calculation-check.cjs` verifies 120 randomized reps headless. Follow-the-line (plain-words narration + tap/check questions) and count-the-forcers (checks/captures count). |
+| `boot.js` | UI runner cloned from Board Vision (hub → runner → complete; same section ids + `bv-*` classes, styled by board-vision.css). Run-token guards prevent stale async drill loops. Storage `chess-coach-calculation-v1` (synced: levels/bests max-merge, history union). |
+
 ### Board Vision module (`js/board-vision/`)
 
 Spec 14 (v0.62). `board-vision.html` loads `boot.js`. No engine/network for the drills.
@@ -220,13 +230,16 @@ Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening i
 12. **No em or en dashes in user-facing copy or coach output. HARD RULE (owner, 2026-06-10).** Use a period, comma, or colon instead. `sanitiseCoachText` strips them from model output as the last line of defence; `qa/scripts/purge-emdash.cjs` sweeps the codebase (run it if any creep back in).
 13. **The version stamp shows the number only** (`APP_VERSION = 'vN.NN'`). The what/why of each version lives in `docs/learnings.md`, never in the stamp (owner, 2026-06-10).
 14. **Every new `chess-coach-*` key must decide its sync story.** Add it to `SYNC_KEYS` (with a merge rule in `js/sync.js mergeKey`) or document why it stays local-only. Either way it is swept by the user-switch wipe. The key constant lives in `js/puzzle/config.js`.
+15. **Strict type scale (owner, 2026-06-11).** Every `font-size` must be a step on the `--fs-*` scale in `css/tokens.css` (9, 10, 10.5, 11, 12, 12.5, 13, 13.5, 14, 15, 16, 18, 21, 24, 28, 30, 34, 36 px; 10.5 is the page eyebrow ONLY). Run `node qa/scripts/type-scale-check.cjs` before every release; it fails on any off-scale declaration. Reference table in `docs/design-system.md`.
 
 ---
 
 ## Current status
 
-**Version:** v0.77 LIVE on prod (2026-06-09); **v0.78–v0.80 staged** (2026-06-10). Recent shipped work (newest first — full per-version log in `docs/learnings.md`):
+**Version:** v0.77 LIVE on prod (2026-06-09); **v0.78–v0.82 staged** on `preview/v0.78-0.80` (2026-06-11), awaiting the owner's preview re-check before the prod push. Recent shipped work (newest first — full per-version log in `docs/learnings.md`):
 
+- **v0.82 — mobile QA batch + Calculation drills + all-type Today blocks (staged):** the strict type scale (rule 15); `calculation.html` (Spec 25: follow-the-line + count-the-forcers, levels/blitz bests, synced); Today's session covers EVERY exercise type (alternating BV/Calculation warm-up block, SRS-due openings block + openings session mode, all 7 block types resolved by session.html and the wrapper); universal progression on Insights (calculation trend + per-type chips, fixed the never-rendering openings chip); phase scores made relative (no absolute est-ELO); clickable phase drill-downs + "what to drill this week" + per-piece v1; mobile coach dock (floating knight bubble); ECO names, typed-case usernames, no-zoom viewports, 10-game onboarding with wait tips, enriched puzzle verdict copy, review.html error surfacing.
+- **v0.81 — owner QA batch (staged):** em-dash hard rule (12), number-only version stamp (13), mono font retired, user-chip redesign, session-flow fixes (skip-completed, endgame block completion), recognition W/D/L + side indicator, icons pass, piece-animation feel, Board Vision overhaul (60s blitz + bests + bands, walk levels, no-coords), spec 25 written.
 - **v0.80 — onboarding + chess.com insights + help (staged):** the gated first-run flow (username → auto-ingest 20 + profile questions → personal wow-insights + coach welcome → tour); `KPProfile` tailoring (every target/prompt uses the user's own goal); the Insights "Game-by-game performance" panel + enriched Game Review rows (`js/chesscom-insights.js`); per-type (?) help with first-visit auto-open; wipe-this-device (local wipe, Supabase survives — scorecards/meta now synced so no re-ingest); QA fixtures for the gate; audit fixes (tab-bar wrap, today "undefined" icon, reload-race toast, eviction order).
 
 - **v0.79 — audit implementation batch (staged):** per-user **coach memory** + the **session debrief** (the one proactive coach surface, rule 9); Game Review "pulls no games" fix + **key-moments walkthrough**; **difficulty drills** (easy/medium/hard by solver-move count); **mastery-over-time** on Insights; identity de-hardwired (rule 10) + nav user chip; `/` → today.html; API guard rails (model allowlist, body cap, rate limit); motif classifier consolidated on `/api/tag` (games/classify.js deleted); chess.js vendored; quota banner + game-moves cap; board ARIA labels; soft-hex → token sweep + `--muted` AA nudge; today.html inline script → `js/today/boot.js`.
@@ -241,7 +254,7 @@ Spec 22 (v0.61, enriched v0.77). `openings.html` loads `boot.js`. Each opening i
 The strategic spine is now **daily-habit / retention** (see `../docs/super-app-roadmap.md` "Roadmap v4" + `../docs/retention-and-gamification.md`). Public launch is on the roadmap, **not now** (keep schemas/prompts portable). Next candidates: a 2nd opening, wiring openings into the daily session, and the E-moat already shipped.
 
 ### Known follow-ups
-- `qa/scripts/` holds dev harnesses (`verify-openings`, `srs-mastery-check`, `coachread-check`, `lichess-grade-harness`, `sync-merge-check`) — run-on-demand, not part of the Playwright suite.
+- `qa/scripts/` holds dev harnesses (`verify-openings`, `srs-mastery-check`, `coachread-check`, `lichess-grade-harness`, `sync-merge-check`, `pure-modules-check`, `today-render-check`, `calculation-check`, `type-scale-check`, `purge-emdash`) — run-on-demand, not part of the Playwright suite. Release gate: sync-merge + pure-modules + today-render + calculation + type-scale.
 - Deferred from the 2026-06-10 batch (reasons in learnings v0.79): games.html → train.css button migration (visual-QA gate), board arrow-key navigation, CSP header, `--accent` small-text contrast (brand decision), **chess.com SSO/login** (owner: before public launch — replaces the username-trust model; the no-auth posture and the permissive Supabase RLS are acceptable only while the URL is unshared).
 
 ---

@@ -196,6 +196,7 @@ export function ensureCoachCardStyles() {
   .msg.review .rv-cta button:hover, .msg.review .rv-cta a:hover { background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%); }
   .msg.review .rv-cta button.primary, .msg.review .rv-cta a.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   .msg.review .rv-grounded { margin-top: 10px; font-size: 11px; color: var(--muted); font-style: italic; }
+  @media (max-width:520px){ .msg.review .rv-point{grid-template-columns:1fr;gap:3px;} .msg.review{max-width:100%;} }
   `;
   const styleEl = document.createElement('style');
   styleEl.id = 'coach-card-styles';

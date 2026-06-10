@@ -543,7 +543,7 @@
   .result.fail .verdict-icon { background: var(--bad); }
   .verdict-word {
     font-family: "Plus Jakarta Sans", "Inter", sans-serif;
-    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+    font-size: 21px; font-weight: 800; letter-spacing: -0.01em;
   }
   .result.pass .verdict-word, .result.warn .verdict-word { color: var(--pos); }
   .result.fail .verdict-word { color: var(--bad); }
@@ -1038,7 +1038,7 @@
   }
   .result.pending .verdict-icon {
     background: var(--accent-soft); color: var(--accent);
-    font-size: 20px; font-weight: 700;
+    font-size: 21px; font-weight: 700;
   }
   .result.pending .verdict-word { color: var(--ink); font-size: 18px; }
   .result.pending .result-subline { color: var(--ink); font-weight: 600; }
@@ -1120,4 +1120,7 @@
 .intro-analysis { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0 0 14px; }
 .intro-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .intro-actions .btn { flex: 1 1 auto; }
-.intro-foot { margin-top: 10px; font-size: 11.5px; color: var(--muted); font-style: italic; }
+.intro-foot { margin-top: 10px; font-size: 11px; color: var(--muted); font-style: italic; }
+
+/* v0.82 mobile: stack card labels on narrow screens (owner fix) */
+@media (max-width:520px){.msg.review .rv-point{grid-template-columns:1fr;gap:3px;}.msg.review{max-width:100%;}.msg{max-width:100%;}.coach-card{margin-left:0;margin-right:0;}}

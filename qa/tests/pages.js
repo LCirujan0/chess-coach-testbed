@@ -13,6 +13,7 @@ export const SHELL_PAGES = [
   { path: '/endgames.html',             title: 'Endgames' },
   { path: '/endgame-recognition.html',  title: 'Recognition' },
   { path: '/board-vision.html',         title: 'Board Vision' },
+  { path: '/calculation.html',          title: 'Calculation' },
   { path: '/openings.html',             title: 'Openings' },
   { path: '/roadmap.html',              title: 'Roadmap' },
 ];

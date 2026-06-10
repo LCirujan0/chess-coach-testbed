@@ -56,6 +56,13 @@
     });
     if (converted) out.push({ id: 'endgame:first', kind: 'endgame', label: 'Endgame converted', detail: 'held the technique' });
 
+    // 6) Calculation depth (spec 25, v0.82): passing a Follow-the-line level
+    // means holding that many moves in your head (level 2 = 3-move lines).
+    var calc = input.calculation || {};
+    var ls = (calc.line && calc.line.levelScores) || {};
+    if (ls[3] != null) out.push({ id: 'calc:4', kind: 'calc', label: 'Calculated 4 moves deep', detail: 'follow the line, level 3' });
+    else if (ls[2] != null) out.push({ id: 'calc:3', kind: 'calc', label: 'Calculated 3 moves deep', detail: 'follow the line, level 2' });
+
     return out;
   }
 

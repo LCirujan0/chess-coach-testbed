@@ -79,7 +79,8 @@ async function ingest(username, numGames, depth, onProgress, onGamePersist) {
     // signals feed the attribute scores; opening + ECO support the Vienna
     // pillar later.
     const eco = headers.ECO || headers.Eco || null;
-    const openingName = headers.Opening || null;
+    const ecoUrl = headers.ECOUrl || headers.EcoUrl || null;
+    const openingName = headers.Opening || (ecoUrl ? String(ecoUrl).split('/openings/')[1] : null) || null;
     const scorecard = (typeof CoachStats !== 'undefined')
       ? CoachStats.newScorecard({ opp: opponent, colour: userColorName, eco, openingName })
       : null;

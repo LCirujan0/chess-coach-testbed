@@ -84,6 +84,17 @@
       ],
       data: 'The hub shows each line’s memory box (1, 5). "Your openings" highlights repertoire lines you already reach in real games.',
     },
+    calculation: {
+      chip: 'Calculation',
+      title: 'See the line before you move',
+      intro: 'Two drills that train holding a forced sequence in your head, the biggest skill gap between 1000 and 1500.',
+      steps: [
+        { icon: 'eye', t: 'Follow the line', p: 'The board freezes at the start and the moves are told in words. Picture them, then answer: where does the piece end up?' },
+        { icon: 'target', t: 'Count the forcers', p: 'A position from your own games, 20 seconds: how many checks or captures are available right now? The scan you should run before every move.' },
+        { icon: 'check', t: 'Level up', p: 'Score 80%+ and the lines get one move longer. The 60s blitz keeps your best mark.' },
+      ],
+      data: 'Levels, blitz bests, and your trend feed Insights under Mastery, and sync across devices.',
+    },
   };
 
   var PAGE_TYPE = {
@@ -91,6 +102,7 @@
     '/endgames.html': 'endgames',
     '/endgame-recognition.html': 'recognition',
     '/board-vision.html': 'board-vision',
+    '/calculation.html': 'calculation',
     '/openings.html': 'openings',
   };
 
@@ -107,7 +119,7 @@
       '#kp-help-backdrop{position:fixed;inset:0;background:rgba(20,25,35,.45);z-index:480;}',
       '#kp-help-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:490;width:min(480px,calc(100vw - 28px));max-height:min(86vh,640px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:0 24px 60px -20px rgba(20,30,55,.5);padding:22px;}',
       '#kp-help-modal .kh-chip{display:inline-block;font-family:"Plus Jakarta Sans","Inter",sans-serif;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:var(--r-pill);padding:3px 10px;margin-bottom:9px;}',
-      '#kp-help-modal h2{font-family:"Plus Jakarta Sans","Inter",sans-serif;font-size:19px;font-weight:800;letter-spacing:-.01em;margin:0 0 5px;}',
+      '#kp-help-modal h2{font-family:"Plus Jakarta Sans","Inter",sans-serif;font-size:18px;font-weight:800;letter-spacing:-.01em;margin:0 0 5px;}',
       '#kp-help-modal .kh-intro{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:15px;}',
       '#kp-help-modal .kh-step{display:flex;gap:12px;align-items:flex-start;padding:9px 0;}',
       '#kp-help-modal .kh-step + .kh-step{border-top:1px solid var(--surface2);}',

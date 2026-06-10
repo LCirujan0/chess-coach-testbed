@@ -133,7 +133,46 @@
     return 'Your recent performance matches your rating, improvement now comes from removing your recurring mistakes.';
   }
 
-  var API = { normResult: normResult, perfOf: perfOf, perfSeries: perfSeries, summarize: summarize, perfMeaning: perfMeaning };
+  // ---- Opening display names (owner 2026-06-10: "I get codes, not names") ----
+  // Coarse ECO -> family-name map (range-based; precise names come from the
+  // PGN's Opening/ECOUrl headers when chess.com provides them, this is the
+  // fallback for records that only carried the code).
+  var ECO_FAMILIES = [
+    ['A0', 'Irregular Opening'], ['A1', 'English Opening'], ['A2', 'English Opening'], ['A3', 'English Opening'],
+    ['A4', 'Queen Pawn Opening'], ['A5', 'Indian Defense'], ['A6', 'Benoni Defense'], ['A7', 'Benoni Defense'],
+    ['A8', 'Dutch Defense'], ['A9', 'Dutch Defense'],
+    ['B0', 'King Pawn Opening'], ['B1', 'Caro-Kann Defense'], ['B2', 'Sicilian Defense'], ['B3', 'Sicilian Defense'],
+    ['B4', 'Sicilian Defense'], ['B5', 'Sicilian Defense'], ['B6', 'Sicilian Defense'], ['B7', 'Sicilian Dragon'],
+    ['B8', 'Sicilian Scheveningen'], ['B9', 'Sicilian Najdorf'],
+    ['C0', 'French Defense'], ['C1', 'French Defense'], ['C2', 'Open Game'], ['C3', "King's Gambit"],
+    ['C4', 'Italian/Scotch Game'], ['C5', 'Italian Game'], ['C6', 'Ruy Lopez'], ['C7', 'Ruy Lopez'],
+    ['C8', 'Ruy Lopez'], ['C9', 'Ruy Lopez'],
+    ['D0', 'Queen Pawn Game'], ['D1', 'Slav Defense'], ['D2', "Queen's Gambit Accepted"], ['D3', "Queen's Gambit Declined"],
+    ['D4', 'Semi-Slav Defense'], ['D5', "Queen's Gambit Declined"], ['D6', "Queen's Gambit Declined"],
+    ['D7', 'Grünfeld Defense'], ['D8', 'Grünfeld Defense'], ['D9', 'Grünfeld Defense'],
+    ['E0', 'Catalan Opening'], ['E1', "Queen's Indian Defense"], ['E2', 'Nimzo-Indian Defense'], ['E3', 'Nimzo-Indian Defense'],
+    ['E4', 'Nimzo-Indian Defense'], ['E5', 'Nimzo-Indian Defense'], ['E6', "King's Indian Defense"],
+    ['E7', "King's Indian Defense"], ['E8', "King's Indian Defense"], ['E9', "King's Indian Defense"],
+  ];
+  // Turn whatever the meta carries into a human name. Accepts a meta record,
+  // an openings-summary row, or a raw string. Bare ECO codes map to families;
+  // chess.com ECOUrl slugs ("...openings/Sicilian-Defense-2.Nf3") parse to text.
+  function openingDisplayName(x) {
+    var raw = (x && typeof x === 'object') ? (x.openingName || x.name || x.eco) : x;
+    if (!raw) return null;
+    var s = String(raw);
+    var slug = s.match(/openings\/([A-Za-z0-9-]+)/);
+    if (slug) s = slug[1];
+    if (/^[A-E]\d\d?$/.test(s.trim())) {
+      var code = s.trim().slice(0, 2).toUpperCase();
+      for (var i = 0; i < ECO_FAMILIES.length; i++) if (ECO_FAMILIES[i][0] === code) return ECO_FAMILIES[i][1];
+      return s;
+    }
+    // Slug or already-a-name: hyphens to spaces, strip trailing move-list noise.
+    return s.replace(/-/g, ' ').replace(/\s+\d.*$/, '').trim() || s;
+  }
+
+  var API = { normResult: normResult, perfOf: perfOf, perfSeries: perfSeries, summarize: summarize, perfMeaning: perfMeaning, openingDisplayName: openingDisplayName };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.ChesscomInsights = API;
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this));

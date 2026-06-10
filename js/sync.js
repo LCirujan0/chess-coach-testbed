@@ -154,6 +154,23 @@ function mergeBoardVision(l, r) {
   const tracker = { ...(base.tracker || {}), level: Math.max((l.tracker || {}).level || 1, (r.tracker || {}).level || 1) };
   return { ...base, scores, tracker, coordPerfectStreak: Math.max(l.coordPerfectStreak || 0, r.coordPerfectStreak || 0) };
 }
+// Calculation drills (v0.82): levels and bests are monotonic, take the max;
+// histories union by day+type+score so both devices' practice survives.
+function mergeCalculation(l, r) {
+  if (!isObj(l)) return r; if (!isObj(r)) return l;
+  const levelScores = { ...((l.line || {}).levelScores || {}), ...((r.line || {}).levelScores || {}) };
+  for (const k of Object.keys(levelScores)) levelScores[k] = Math.max(((l.line || {}).levelScores || {})[k] || 0, ((r.line || {}).levelScores || {})[k] || 0);
+  const seen = new Set();
+  const history = [...(Array.isArray(l.history) ? l.history : []), ...(Array.isArray(r.history) ? r.history : [])]
+    .filter((h) => { const k = h && (h.d + '|' + h.type + '|' + h.score); if (!k || seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-90);
+  return {
+    completedDate: String(l.completedDate || '') > String(r.completedDate || '') ? (l.completedDate || null) : (r.completedDate || null),
+    line: { level: Math.max(((l.line || {}).level) || 1, ((r.line || {}).level) || 1), levelScores },
+    bests: { forcers60: Math.max(((l.bests || {}).forcers60) || 0, ((r.bests || {}).forcers60) || 0) },
+    history,
+  };
+}
 function mergeKey(key, local, remote) {
   if (remote == null) return local;
   if (local == null) return remote;
@@ -176,6 +193,7 @@ function mergeKey(key, local, remote) {
     case 'chess-coach-recognition-v1': return mergeRecognition(local, remote);
     case 'chess-coach-tags-v1': return mergeByEntryTime(local, remote, (t) => msOf(t && t.aiTaggedAt));
     case 'chess-coach-board-vision-v1': return mergeBoardVision(local, remote);
+    case 'chess-coach-calculation-v1': return mergeCalculation(local, remote);
     case 'chess-coach-mastery-seen-v1':
       return (Array.isArray(local) && Array.isArray(remote)) ? [...new Set([...remote, ...local])] : remote;
     default: return remote; // gamification default: remote wins on pull
@@ -411,13 +429,14 @@ function renderUserChip() {
   // Redesign (owner feedback 2026-06-10): gradient avatar with the user's
   // initial, name + a quiet "Synced" status line, and a subtle swap icon
   // instead of a bare text link. Same visual family as the coach avatar.
-  const initial = username.charAt(0).toUpperCase();
+  const displayU = (typeof KPProfile !== 'undefined' && KPProfile.displayNameFor) ? KPProfile.displayNameFor(username) : username;
+  const initial = displayU.charAt(0).toUpperCase();
   const el = document.createElement('div');
   el.id = 'kp-user-chip';
   el.title = 'Progress syncs to this Chess.com username';
   el.innerHTML = `
     <span class="kp-u-ava" aria-hidden="true">${initial}</span>
-    <span class="kp-u-id"><span class="kp-u-name">${username}</span><span class="kp-u-sub"><i></i>Synced</span></span>
+    <span class="kp-u-id"><span class="kp-u-name">${displayU}</span><span class="kp-u-sub"><i></i>Synced</span></span>
     <button type="button" class="kp-u-change" aria-label="Switch user" title="Switch user (clears this device; your data stays in the cloud)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
     </button>`;

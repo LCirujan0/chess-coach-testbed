@@ -115,6 +115,12 @@ if (stored.length) {
   const validMotif = lastMotif === 'all' || lastMotif === 'untagged' || MOTIFS.includes(lastMotif);
   state.motifFilter = validMotif ? lastMotif : 'all';
   state.currentCategory = pickInitialCategory();
+  // URL presets from the Insights drill CTAs (v0.82): ?cat=opening|middlegame|
+  // endgame and ?sev=inaccuracy|mistake|blunder pre-focus the queue.
+  const urlCat = urlParams.get('cat');
+  if (['opening', 'middlegame', 'endgame'].includes(urlCat)) state.currentCategory = urlCat;
+  const urlSev = urlParams.get('sev');
+  if (['inaccuracy', 'mistake', 'blunder'].includes(urlSev)) state.severityFilter = urlSev;
 } else {
   state.puzzles = [DEFAULT_PUZZLE];
   state.hasIngestedPuzzles = false;

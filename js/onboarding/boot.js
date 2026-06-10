@@ -22,8 +22,24 @@ import { renderCoachCard, parseCoachJson, ensureCoachCardStyles } from '/js/coac
 import { STORAGE_KEY_USERNAME } from '/js/puzzle/config.js';
 
 const card = document.getElementById('ob-card');
-const ONBOARD_GAMES = 20;
+// 10 games (was 20, owner 2026-06-10: a friend waited too long): half the
+// wait, still enough signal for the wow-insights; Today nudges an early
+// "analyse more games" follow-up so depth arrives on day one anyway.
+const ONBOARD_GAMES = 10;
 const ONBOARD_DEPTH = 12;
+
+// While the engine works: a live "found so far" line + rotating micro-tips so
+// the wait entertains instead of testing patience (owner ask).
+const WAIT_TIPS = [
+  'Most rating points under 1500 are lost to one-move blunders, not deep strategy.',
+  'A knight on the rim is dim: it controls half the squares it would in the centre.',
+  'Before every move, scan checks, captures and threats. Both directions.',
+  'The player who castles first usually attacks first.',
+  'Passed pawns must be pushed. Rooks belong behind them.',
+  'Two weaknesses beat one: stretch the defence across the board.',
+  'An attack on the wing is best met by a strike in the centre.',
+  'Trade pieces when ahead in material; trade pawns when behind.',
+];
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
 function loadJson(key, fb) { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fb : v; } catch { return fb; } }
@@ -53,6 +69,8 @@ function stepUsername() {
       if (r.status === 404) { err.textContent = 'No Chess.com account with that username, check the spelling.'; err.style.display = 'block'; go.disabled = false; go.textContent = 'Let’s look at your games'; return; }
     } catch { /* offline: accept and let sync/ingest surface it later */ }
     try { localStorage.setItem(STORAGE_KEY_USERNAME, v); } catch { }
+    // Keep the capitalisation the user actually typed for display (owner ask).
+    try { if (typeof KPProfile !== 'undefined') KPProfile.write({ ...KPProfile.read(), displayName: input.value.trim() }); } catch { }
     // Returning user? Pull their cloud state first, if their puzzles come
     // back, there is nothing to re-ingest (the whole point of keeping wiped
     // data in Supabase).
@@ -109,9 +127,11 @@ const QUESTIONS = [
 function stepIngestRun(username) {
   card.innerHTML = `
     <img class="knightpulse" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
-    <h1 style="text-align:center;font-size:20px;">Analysing your games…</h1>
-    <div class="sub" style="text-align:center;">Every move you played, checked by Stockfish. Keep this page open, it takes a couple of minutes.</div>
+    <h1 style="text-align:center;font-size:21px;">Analysing your games…</h1>
+    <div class="sub" style="text-align:center;">Every move you played, checked by Stockfish. Keep this page open, about a minute.</div>
     <div class="progress" id="progress"><div id="progress-text">Warming the engine up…</div><div class="bar"><div class="bar-fill" id="progress-bar"></div></div></div>
+    <div class="q-done hidden" id="ob-found"></div>
+    <div class="sub" id="ob-tip" style="margin:10px 0 0;font-style:italic;"></div>
     <div id="ob-questions"></div>
     <div class="stepfoot"><button class="btn primary hidden" id="ob-continue" type="button">See what I found →</button></div>`;
 
@@ -150,6 +170,27 @@ function stepIngestRun(username) {
   }
   renderQuestion();
 
+  // Entertainment while waiting (owner ask): a rotating micro-tip + a live
+  // "found so far" tally fed by the per-game persist callback.
+  let foundMistakes = 0;
+  const tipEl = document.getElementById('ob-tip');
+  let tipIdx = Math.floor(Math.random() * WAIT_TIPS.length);
+  if (tipEl) tipEl.textContent = '♟ ' + WAIT_TIPS[tipIdx];
+  const tipTimer = setInterval(() => {
+    tipIdx = (tipIdx + 1) % WAIT_TIPS.length;
+    if (tipEl && document.body.contains(tipEl)) tipEl.textContent = '♟ ' + WAIT_TIPS[tipIdx];
+    else clearInterval(tipTimer);
+  }, 7000);
+  const persistAndTally = (g) => {
+    persistGameIncrementally(g);
+    if (g && Array.isArray(g.mistakes)) foundMistakes += g.mistakes.length;
+    const f = document.getElementById('ob-found');
+    if (f && foundMistakes) {
+      f.classList.remove('hidden');
+      f.textContent = `✓ ${foundMistakes} training moment${foundMistakes === 1 ? '' : 's'} found so far${g && g.meta && (g.meta.openingName || g.meta.eco) ? ' · latest game: ' + (g.meta.openingName || g.meta.eco) : ''}`;
+    }
+  };
+
   (async () => {
     try {
       // One upload at the end instead of a growing push per persisted game.
@@ -159,9 +200,10 @@ function stepIngestRun(username) {
         const pct = total > 0 ? (done / total) * 100 : 0;
         const pt = document.getElementById('progress-text');
         const pb = document.getElementById('progress-bar');
-        if (pt) pt.textContent = `${label || 'Analysing your moves'}, ${done}/${total}`;
+        if (pt) pt.textContent = `${label || 'Analysing your moves'} (${done}/${total})`;
         if (pb) pb.style.width = Math.max(2, Math.min(100, pct)) + '%';
-      }, persistGameIncrementally);
+      }, persistAndTally);
+      clearInterval(tipTimer);
       // Motif tagging rides the consolidated batched path; fire-and-forget so
       // the user is never stuck waiting on it.
       tagAndSaveMistakes().catch(() => { });
@@ -296,35 +338,39 @@ async function coachWelcome(host) {
   } catch { /* fallback card already rendered */ }
 }
 
-// Phase strip: how each phase of YOUR game plays, as an estimated ELO
-// (CoachStats acplToElo over the per-phase ACPL from the just-built
-// scorecards). With only ~20 games this is an early estimate; labelled so.
+// Phase strip: the SAME numbers Insights shows (CoachStats.phaseScores score
+// /100 + perPhaseRatingImpact gap vs your best phase). v0.81 showed an
+// absolute "est ELO" per phase from the raw ACPL anchors, which read ~1400
+// while the player's real rating was ~950 (owner bug report): the anchors
+// estimate phase QUALITY, not a Chess.com rating, so absolute ELOs conflicted
+// with the rating shown everywhere else. Scores + relative gaps cannot.
 function phaseStripHtml() {
   try {
     if (typeof CoachStats === 'undefined') return '';
     const scorecards = loadJson('chess-coach-game-scorecards-v1', {}) || {};
     if (!Object.keys(scorecards).length) return '';
     const phases = CoachStats.phaseScores(scorecards);
+    const impact = CoachStats.perPhaseRatingImpact ? CoachStats.perPhaseRatingImpact(phases) : {};
+    const label = { opening: 'Opening', middlegame: 'Middlegame', endgame: 'Endgame' };
     const cells = [];
-    let bestElo = -1, bestPh = null;
+    let any = false;
     for (const ph of ['opening', 'middlegame', 'endgame']) {
       const p = phases && phases[ph];
-      if (p && typeof p.acpl === 'number') {
-        const elo = CoachStats.acplToElo(p.acpl);
-        if (elo > bestElo) { bestElo = elo; bestPh = ph; }
-        cells.push({ ph, elo, score: (typeof p.score === 'number') ? p.score : null });
-      } else {
-        cells.push({ ph, elo: null, score: null });
-      }
+      const score = (p && typeof p.score === 'number') ? Math.round(p.score) : null;
+      if (score != null) any = true;
+      const im = impact && impact[ph];
+      const sub = (im && im.isBest) ? 'your strongest'
+        : (im && im.ratingImpact > 0) ? `~${im.ratingImpact} pts behind your best`
+        : (score != null) ? 'early read' : 'not enough data';
+      cells.push({ ph, score, best: !!(im && im.isBest), sub });
     }
-    if (bestPh == null) return '';
-    const label = { opening: 'Opening', middlegame: 'Middlegame', endgame: 'Endgame' };
+    if (!any) return '';
     return '<div class="ph-strip">' + cells.map((c) =>
-      `<div class="ph-cell${c.ph === bestPh ? ' best' : ''}">
+      `<div class="ph-cell${c.best ? ' best' : ''}">
         <div class="pn">${label[c.ph]}</div>
-        <div class="pe">${c.elo != null ? '~' + c.elo : '?'}</div>
-        <div class="ps">${c.elo != null ? (c.ph === bestPh ? 'your strongest' : 'est. level') : 'not enough data'}</div>
-        ${c.score != null ? `<div class="bar"><i style="width:${Math.max(4, Math.min(100, Math.round(c.score)))}%"></i></div>` : ''}
+        <div class="pe">${c.score != null ? c.score : '?'}<small style="font-size:11px;color:var(--muted);font-weight:600;">/100</small></div>
+        <div class="ps">${c.sub}</div>
+        ${c.score != null ? `<div class="bar"><i style="width:${Math.max(4, Math.min(100, c.score))}%"></i></div>` : ''}
       </div>`).join('') + '</div>';
   } catch { return ''; }
 }
@@ -337,7 +383,7 @@ function openingsHtml() {
     const top = (sum.openings || []).slice(0, 3);
     if (!top.length) return '';
     return '<div class="insight" style="background:var(--surface);"><div class="il">Openings you play most</div><div class="op-list">' +
-      top.map((o) => `<div class="op-row"><span class="on2">${esc(o.name)}</span><span class="om">${o.n} game${o.n === 1 ? '' : 's'} · ${o.scorePct}% score</span></div>`).join('') +
+      top.map((o) => `<div class="op-row"><span class="on2">${esc(ChesscomInsights.openingDisplayName(o) || o.name)}</span><span class="om">${o.n} game${o.n === 1 ? '' : 's'} · ${o.scorePct}% score</span></div>`).join('') +
       '</div></div>';
   } catch { return ''; }
 }

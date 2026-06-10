@@ -56,7 +56,9 @@
     endgame:  '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
     endgames: '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
     vision:   '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
-    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>'
+    recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>',
+    calculation: '<svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>',
+    openings: '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>'
   };
 
   // ---- load stores ----
@@ -215,18 +217,48 @@
     b4ids = egRank.slice(0, ENDGAME_BLOCK_CAP);
   }
 
+  // Block 5. Opening lines due for recall (v0.82): lines the user has STARTED
+  // in the openings trainer whose SRS card is due. Read straight off the
+  // synced openings store (no registry fetch needed on Today). Capped small.
+  var OPENINGS_BLOCK_CAP = 3;
+  var b5ids = [];
+  try {
+    var opStore = JSON.parse(localStorage.getItem('chess-coach-openings-v1') || '{}') || {};
+    var opCards = opStore.cards || {};
+    b5ids = Object.keys(opCards)
+      .filter(function (id) { var c = opCards[id]; return c && typeof c.dueAt === 'number' && c.dueAt <= Date.now(); })
+      .sort(function (a, b) { return (opCards[a].dueAt || 0) - (opCards[b].dueAt || 0); })
+      .slice(0, OPENINGS_BLOCK_CAP);
+  } catch (e) { b5ids = []; }
+
+  // Block 6. Daily warm-up (v0.82): Board Vision and Calculation alternate by
+  // calendar day so both skills get regular reps without bloating the session
+  // (spec 25 answer to "replace or alternate": alternate). One unit, resolved
+  // when that trainer's completedDate flips to today.
+  var dayOrdinal = Math.floor(Date.now() / 86400000);
+  var warmupId = (dayOrdinal % 2 === 0) ? 'vision' : 'calculation';
+  var warmupDone = false;
+  try {
+    var wuKey = warmupId === 'vision' ? 'chess-coach-board-vision-v1' : 'chess-coach-calculation-v1';
+    var wuStore = JSON.parse(localStorage.getItem(wuKey) || '{}') || {};
+    warmupDone = wuStore.completedDate === TODAY;
+  } catch (e) {}
+
   // LIVE blocks only (built types). Empty ones are dropped (never an empty row).
+  // Order: warm-up first (light, primes calculation), then the core drilling.
   var blocks = [];
+  if (!warmupDone) blocks.push(
+    warmupId === 'vision'
+      ? { id: 'vision', title: 'Board Vision warm-up', sub: 'Coordinates, knights, visualisation', count: 1, mode: 'visit', done: 0, ids: ['warmup'] }
+      : { id: 'calculation', title: 'Calculation warm-up', sub: 'Follow the line + count the forcers', count: 1, mode: 'visit', done: 0, ids: ['warmup'] });
   if (b1ids.length) blocks.push({ id: 'mistakes', title: 'Recent mistakes', sub: 'From your last ' + nGames + ' game' + (nGames === 1 ? '' : 's'), count: b1ids.length, mode: 'drill', done: 0, ids: b1ids });
   if (b2ids.length) blocks.push({ id: 'review', title: 'Spaced review', sub: 'Resurfacing before you forget', count: b2ids.length, mode: 'drill', done: 0, ids: b2ids });
   if (b3ids.length) blocks.push({ id: 'recognition', title: 'Endgame recognition', sub: 'Winning, drawn, or losing?', count: b3ids.length, mode: 'drill', done: 0, ids: b3ids });
   if (b4ids.length) blocks.push({ id: 'endgames', title: 'Endgame play-out', sub: 'Convert the win, hold the draw', count: b4ids.length, mode: 'drill', done: 0, ids: b4ids });
+  if (b5ids.length) blocks.push({ id: 'openings', title: 'Opening lines', sub: 'Your repertoire, due for recall', count: b5ids.length, mode: 'drill', done: 0, ids: b5ids });
 
-  // LOCKED "coming soon" rows, shown on the plan, never sequenced/counted.
-  // Endgame is now live (spec 07 + 08); only Board vision remains locked.
-  var coming = [
-    { id: 'vision', title: 'Board vision', sub: 'Visualisation · calculation' }
-  ];
+  // The warm-up rotation is live (v0.82), so nothing is "coming soon" anymore.
+  var coming = [];
 
   // endgameInFocus is computed above (block assembly) and reused here.
 
@@ -263,7 +295,7 @@
     if (typeof Mastery === 'undefined') return '';
     var egResults = {};
     try { egResults = loadJson(KEY_EG, {}) || {}; } catch (e) {}
-    var earned = Mastery.markers({ attempts: attempts, mistakes: mistakes, rating: rating, streak: streakInfo, egResults: egResults });
+    var earned = Mastery.markers({ attempts: attempts, mistakes: mistakes, rating: rating, streak: streakInfo, egResults: egResults, calculation: loadJson('chess-coach-calculation-v1', null) });
     if (!earned.length) return '';
     var seen = [];
     try { seen = loadJson(KEY_MASTERY, []) || []; } catch (e) {}
@@ -320,7 +352,7 @@
     var name = null;
     try {
       var u = localStorage.getItem('chess-coach-username-v1');
-      if (u && /^[a-z0-9_-]{1,64}$/i.test(u)) name = u.charAt(0).toUpperCase() + u.slice(1);
+      if (u && /^[a-z0-9_-]{1,64}$/i.test(u)) name = (typeof KPProfile !== 'undefined' && KPProfile.displayNameFor) ? KPProfile.displayNameFor(u) : (u.charAt(0).toUpperCase() + u.slice(1));
     } catch (e) { /* anonymous */ }
     return name ? base + ', ' + name : base;
   }
@@ -444,6 +476,18 @@
       comingHtml() + '</div>';
   }
 
+  // ---- "analyse more games" nudge (v0.82): onboarding now ingests only 10
+  // games so the wait stays short; this row invites the user to deepen the
+  // mistake pool early, while motivation is high. Hidden once ~15 games in. ----
+  function moreGamesNudgeHtml() {
+    var n = 0;
+    try { n = Object.keys(scorecards || {}).length; } catch (e) {}
+    if (!n || n >= 15) return '';
+    return '<a href="/games.html" class="coachnote" style="margin-top:10px;">' +
+      '<span class="ava">♞</span><div class="txt">Your plan is built from <b>' + n +
+      ' game' + (n === 1 ? '' : 's') + '</b>. Analyse a few more and the coach gets sharper about your real weaknesses.</div></a>';
+  }
+
   // ---- optional endgame extra section (shown when endgame is NOT the focus) ----
   function endgameExtraHtml() {
     return '<div class="extra-section">' +
@@ -556,6 +600,7 @@
     '<a href="/coach.html" class="coachnote"><span class="ava">♞</span><div class="txt">' + coachReadHtml() + '</div></a>' +
     goalBarHtml() +
     sessionCardHtml() +
+    moreGamesNudgeHtml() +
     bandBarHtml() +
     milestonesHtml() +
     (!endgameInFocus ? endgameExtraHtml() : '') +

@@ -34,6 +34,7 @@ async function handleIngestSubmit(e) {
     const norm = username.toLowerCase();
     if (/^[a-z0-9_-]{1,64}$/.test(norm) && !localStorage.getItem('chess-coach-username-v1')) {
       localStorage.setItem('chess-coach-username-v1', norm);
+      if (typeof KPProfile !== 'undefined') KPProfile.write({ ...KPProfile.read(), displayName: username });
     }
   } catch (e) { /* anonymous */ }
 

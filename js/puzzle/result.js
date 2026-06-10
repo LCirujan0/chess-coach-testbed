@@ -95,7 +95,22 @@ export function showResult(grade, played) {
 
   // --- Verdict banner (binary, §29.1) ---
   $('verdict-icon').textContent = solved ? '\u2713' : '\u2715';
-  $('verdict-word').textContent = solved ? 'Solved' : 'Not solved';
+  // Enriched verdict copy (2026-06-11 owner ask): failures say what it cost
+  // and why, not just "Not solved"; passes that still leaked 50-100cp get an
+  // honest "good enough, but" instead of a silent clean tick.
+  const worstUser = userMovesArr.reduce((w, h) => ((h.grade?.cpLoss || 0) > (w?.grade?.cpLoss || 0) ? h : w), null);
+  const worstCp = worstUser?.grade?.cpLoss || 0;
+  const pawnsOf = (cp) => (cp / 100).toFixed(cp >= 100 ? 1 : 2);
+  if (!solved) {
+    const why = (grade.tier === 'outside')
+      ? `${userSan || 'that move'} was outside the engine's top five`
+      : `${worstUser?.san || userSan || 'a move'} gave the advantage back`;
+    $('verdict-word').textContent = `Not solved: ${why}, costing about ${pawnsOf(Math.max(worstCp, grade.cpLoss || 0))} pawns.`;
+  } else if (worstCp >= 50) {
+    $('verdict-word').textContent = `Good enough, but ${worstUser?.san || 'one move'} leaked ${pawnsOf(worstCp)} pawns.`;
+  } else {
+    $('verdict-word').textContent = 'Solved';
+  }
 
   // --- Attempt pips (§29.2), only on the fail track ---
   const pipsEl = $('result-pips');

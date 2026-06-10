@@ -22,8 +22,8 @@
 
 const STORAGE_KEY_SESSION = 'chess-coach-session-v1';
 // Mirror session.html's noun map so the readout reads identically.
-const BLOCK_NOUN = { mistakes: 'Mistake', review: 'Card', vision: 'Position', recognition: 'Position', endgames: 'Position' };
-const BLOCK_SHORT = { mistakes: 'Mistakes', review: 'Review', vision: 'Vision', recognition: 'Recognition', endgames: 'Endgames' };
+const BLOCK_NOUN = { mistakes: 'Mistake', review: 'Card', vision: 'Position', recognition: 'Position', endgames: 'Position', openings: 'Line' };
+const BLOCK_SHORT = { mistakes: 'Mistakes', review: 'Review', vision: 'Vision', recognition: 'Recognition', endgames: 'Endgames', openings: 'Openings', calculation: 'Calc' };
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
@@ -49,6 +49,7 @@ function loadPlan() {
 function blockType(block) {
   if (block && block.id === 'recognition') return 'recognition';
   if (block && block.id === 'endgames') return 'endgame';
+  if (block && block.id === 'openings') return 'opening';
   return 'mistake';
 }
 
@@ -62,6 +63,10 @@ function itemResolved(type, id, stores, sinceMs) {
     const e = stores.endgames[id];
     return !!(e && typeof e.lastAt === 'number' && e.lastAt >= sinceMs);
   }
+  if (type === 'opening') {
+    const c = stores.openings[id];
+    return !!(c && typeof c.lastSeen === 'number' && c.lastSeen >= sinceMs);
+  }
   const a = stores.attempts[id];
   return !!(a && (Date.parse(a.lastAt) || 0) >= sinceMs);
 }
@@ -73,6 +78,10 @@ function itemCorrect(type, id, stores, sinceMs) {
   if (type === 'endgame') {
     const e = stores.endgames[id];
     return !!(e && e.lastResult === 'pass' && typeof e.lastAt === 'number' && e.lastAt >= sinceMs);
+  }
+  if (type === 'opening') {
+    const c = stores.openings[id];
+    return !!(c && typeof c.lastSeen === 'number' && c.lastSeen >= sinceMs && c.streak > 0);
   }
   const a = stores.attempts[id];
   return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
@@ -132,10 +141,12 @@ export function renderSessionWrap(el, opts = {}) {
     attempts: {},
     recognition: {},
     endgames: {},
+    openings: {},
   };
   try { stores.attempts = JSON.parse(localStorage.getItem('chess-coach-attempts-v1') || '{}') || {}; } catch {}
   try { stores.recognition = JSON.parse(localStorage.getItem('chess-coach-recognition-v1') || '{}') || {}; } catch {}
   try { stores.endgames = JSON.parse(localStorage.getItem('chess-coach-eg-results-v1') || '{}') || {}; } catch {}
+  try { stores.openings = (JSON.parse(localStorage.getItem('chess-coach-openings-v1') || '{}') || {}).cards || {}; } catch {}
   if (!stores.recognition.seen) stores.recognition.seen = {};
   const sinceMs = (plan.createdAt ? Date.parse(plan.createdAt) : 0) || 0;
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>KnightPath. Session</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
@@ -27,7 +27,7 @@
   .exit:hover { background:var(--surface2); }
   .railwrap { flex:1; min-width:0; }
   .railtxt { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:6px; }
-  .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:15.5px; } .railtxt .now small { color:var(--muted); font-weight:600; }
+  .railtxt .now { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:15px; } .railtxt .now small { color:var(--muted); font-weight:600; }
   .railtxt .of { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:13.5px; color:var(--muted); flex-shrink:0; }
   .rail { display:flex; gap:8px; }
   .blockseg { display:flex; flex-direction:column; gap:3px; }
@@ -69,11 +69,11 @@
   /* summary / payoff */
   .sum { text-align:center; padding:28px 18px; }
   .sum .crown { font-size:30px; }
-  .sum h1 { font-size:23px; font-weight:800; margin:6px 0 2px; }
+  .sum h1 { font-size:24px; font-weight:800; margin:6px 0 2px; }
   .sum .ssub { color:var(--muted); font-size:13px; }
   .sum .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin:18px 0; }
   .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:13px; }
-  .stat .v { font-size:22px; font-weight:800; } .stat .v small { font-size:12px; color:var(--pos); font-weight:700; }
+  .stat .v { font-size:21px; font-weight:800; } .stat .v small { font-size:12px; color:var(--pos); font-weight:700; }
   .stat .k { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-top:2px; }
   .moved { background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:12px; padding:12px 14px; text-align:left; display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
   .ava { width:24px; height:24px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent-2)); flex-shrink:0; }
@@ -84,7 +84,7 @@
   .ebanner { background:var(--bad-soft); border:1px solid var(--bad-line); border-radius:12px; padding:13px 15px; }
   .ebanner .t { font-weight:700; font-size:13px; color:var(--bad); font-family:"Plus Jakarta Sans"; }
   .ebanner .raw { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:11px; color:var(--bad-ink); margin-top:6px; white-space:pre-wrap; word-break:break-word; }
-  .empty { text-align:center; padding:36px 18px; } .empty h2 { font-size:20px; font-weight:800; } .empty p { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:320px; } .empty .btn { max-width:280px; margin:0 auto; }
+  .empty { text-align:center; padding:36px 18px; } .empty h2 { font-size:21px; font-weight:800; } .empty p { color:var(--muted); font-size:13px; margin:6px auto 16px; max-width:320px; } .empty .btn { max-width:280px; margin:0 auto; }
 </style>
 <script src="/js/coach-memory.js"></script>
 <script src="/js/profile.js"></script>
@@ -140,11 +140,14 @@
     mistakes: '<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 2v4"/></svg>',
     review:   '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>',
     recognition: '<svg viewBox="0 0 24 24"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>',
-    endgames: '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>'
+    endgames: '<svg viewBox="0 0 24 24"><path d="M5 20V9m4 11V4m4 16v-7m4 7V8"/></svg>',
+    vision: '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+    calculation: '<svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>',
+    openings: '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>'
   };
   // noun per block for the "Mistake 3 of 8" readout + short rail label
-  var NOUN  = { mistakes: 'Mistake', review: 'Card', recognition: 'Position', endgames: 'Position' };
-  var SHORT = { mistakes: 'Mistakes', review: 'Review', recognition: 'Recognition', endgames: 'Endgames' };
+  var NOUN  = { mistakes: 'Mistake', review: 'Card', recognition: 'Position', endgames: 'Position', openings: 'Line', vision: 'Warm-up', calculation: 'Warm-up' };
+  var SHORT = { mistakes: 'Mistakes', review: 'Review', recognition: 'Recognition', endgames: 'Endgames', openings: 'Openings', vision: 'Warm-up', calculation: 'Warm-up' };
 
   // ---- load ----
   var plan, attempts, ratingCache;
@@ -185,19 +188,31 @@
   function blockType(b) {
     if (b && b.id === 'recognition') return 'recognition';
     if (b && b.id === 'endgames') return 'endgame';
+    if (b && b.id === 'openings') return 'opening';
+    if (b && (b.id === 'vision' || b.id === 'calculation')) return b.id;
     return 'mistake';
   }
   // RESOLVED (attempted) this session, pass OR fail. This is the progress
   // count; `correct` is tracked separately (v0.58-c2: the bar/summary used to
   // count only solves, so failed items never advanced).
+  function warmupDone(which) {
+    var key = which === 'vision' ? 'chess-coach-board-vision-v1' : 'chess-coach-calculation-v1';
+    try { var st = JSON.parse(localStorage.getItem(key) || '{}') || {}; return st.completedDate === todayKey(); } catch (e) { return false; }
+  }
+  var openingCards = {};
+  try { openingCards = (JSON.parse(localStorage.getItem('chess-coach-openings-v1') || '{}') || {}).cards || {}; } catch (e) {}
   function resolvedInSession(type, id) {
     if (type === 'recognition') { var r = recognition.seen[id]; if (r && typeof r === 'object') return r.at >= sinceMs; return typeof r === 'number' && r >= sinceMs; }
     if (type === 'endgame') { var e = endgames[id]; return !!(e && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
+    if (type === 'vision' || type === 'calculation') return warmupDone(type);
+    if (type === 'opening') { var c = openingCards[id]; return !!(c && typeof c.lastSeen === 'number' && c.lastSeen >= sinceMs); }
     var a = attempts[id]; return !!(a && (Date.parse(a.lastAt) || 0) >= sinceMs);
   }
   function correctInSession(type, id) {
     if (type === 'recognition') { var r = recognition.seen[id]; return !!(r && typeof r === 'object' && r.correct === true && r.at >= sinceMs); }
     if (type === 'endgame') { var e = endgames[id]; return !!(e && e.lastResult === 'pass' && typeof e.lastAt === 'number' && e.lastAt >= sinceMs); }
+    if (type === 'vision' || type === 'calculation') return warmupDone(type);
+    if (type === 'opening') { var c = openingCards[id]; return !!(c && typeof c.lastSeen === 'number' && c.lastSeen >= sinceMs && c.streak > 0); }
     var a = attempts[id]; return !!(a && a.solved && (Date.parse(a.lastAt) || 0) >= sinceMs);
   }
   function isSolved(id) { var a = attempts[id]; return !!(a && a.solved); }
@@ -214,9 +229,12 @@
   // (persistent bar + the shared onItemResolved counting); other types run on
   // the canonical puzzle shell. Deep-links the right surface for the block.
   function blockHref(b) {
+    if (b && b.id === 'vision') return '/board-vision.html?session=1';
+    if (b && b.id === 'calculation') return '/calculation.html?session=1';
     var base = '/puzzle.html';
     if (b && b.id === 'recognition') base = '/endgame-recognition.html';
     else if (b && b.id === 'endgames') base = '/endgames.html';
+    else if (b && b.id === 'openings') base = '/openings.html';
     return base + '?session=today&block=' + b.id;
   }
   var nLive = plan.blocks.length;

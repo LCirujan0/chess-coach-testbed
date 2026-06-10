@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>KnightPath. Practice</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -24,7 +24,7 @@
 
   /* eyebrow */
   .eyebrow { font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700; color:var(--accent); margin-bottom:4px; }
-  .title { font-weight:800; font-size:26px; letter-spacing:-.02em; margin:4px 0 2px; line-height:1.1; }
+  .title { font-weight:800; font-size:24px; letter-spacing:-.02em; margin:4px 0 2px; line-height:1.1; }
   .sub { color:var(--muted); font-size:13px; margin-bottom:16px; }
 
   /* mode cards */
@@ -36,7 +36,7 @@
   .block .ic svg { width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:1.8; }
   .block .bd { flex:1; min-width:0; }
   .block .bd b { font-size:13.5px; font-family:"Plus Jakarta Sans"; font-weight:700; }
-  .block .bd small { display:block; color:var(--muted); font-size:11.5px; }
+  .block .bd small { display:block; color:var(--muted); font-size:11px; }
   .block .ct { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:12px; color:var(--muted); }
   .block .go { color:var(--muted); font-size:15px; margin-left:4px; }
   .block.locked { opacity:.55; cursor:default; }
@@ -53,7 +53,7 @@
 
 
   @media (min-width: 880px) {
-    .title { font-size:32px; }
+    .title { font-size:30px; }
   }
 </style>
 <script src="/js/profile.js"></script>
@@ -85,6 +85,7 @@
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
+    <a href="/calculation.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>Calculation</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
   <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
@@ -171,6 +172,12 @@
       '<span class="go">›</span>' +
     '</a>' +
 
+    '<a class="block" href="/calculation.html">' +
+      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg></div>' +
+      '<div class="bd"><b>Calculation</b><small>Follow forced lines in your head + count the forcers</small></div>' +
+      '<span class="go">›</span>' +
+    '</a>' +
+
     '<a class="block" href="/openings.html">' +
       '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg></div>' +
       '<div class="bd"><b>Openings</b><small>Repertoire recall · spaced lines + your real games</small></div>' +
@@ -185,12 +192,6 @@
     '<div class="block locked">' +
       '<div class="ic"><svg viewBox="0 0 24 24"><path d="M20.5 7h-17M20.5 12h-17M20.5 17h-17"/></svg></div>' +
       '<div class="bd"><b>Themed tactics</b><small>Drill a specific motif, pins, forks, back-rank</small></div>' +
-      '<span class="ct">🔒 soon</span>' +
-    '</div>' +
-
-    '<div class="block locked">' +
-      '<div class="ic"><svg viewBox="0 0 24 24"><path d="M12 20V8M8 20v-4M16 20v-8M4 20v-2M20 20v-6"/></svg></div>' +
-      '<div class="bd"><b>Calculation</b><small>Deep reasoning · multi-move visualisation drills</small></div>' +
       '<span class="ct">🔒 soon</span>' +
     '</div>' +
 

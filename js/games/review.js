@@ -107,7 +107,7 @@ export function renderReviewList() {
     const bits = [];
     const cci = (typeof ChesscomInsights !== 'undefined') ? ChesscomInsights : null;
     if (g.meta) {
-      if (g.meta.openingName || g.meta.eco) bits.push(escapeHtml(g.meta.openingName || g.meta.eco));
+      if (g.meta.openingName || g.meta.eco) bits.push(escapeHtml((cci && cci.openingDisplayName(g.meta)) || g.meta.openingName || g.meta.eco));
       // Per-game performance only when the pairing was close enough for the
       // estimate to mean anything (within ±400 the formula is informative;
       // beyond that it saturates and just confuses).
@@ -116,7 +116,7 @@ export function renderReviewList() {
       if (perf != null && fair) bits.push(`played like <b>${perf}</b>`);
       if (typeof g.meta.userAccuracy === 'number') bits.push(`${Math.round(g.meta.userAccuracy)}% accuracy${typeof g.meta.oppAccuracy === 'number' ? ` (opp ${Math.round(g.meta.oppAccuracy)}%)` : ''}`);
     }
-    const enrich = bits.length ? `<div class="sub" style="margin:2px 0 0;font-size:11.5px;">${bits.join(' · ')}</div>` : '';
+    const enrich = bits.length ? `<div class="sub" style="margin:2px 0 0;font-size:11px;">${bits.join(' · ')}</div>` : '';
     return `<div class="review-row" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);">
       <div style="flex:1;min-width:0;">
         <div style="font-weight:600;">vs ${escapeHtml(g.opponent || 'opponent')}</div>
@@ -170,7 +170,7 @@ function gameMetaLine() {
   if (!m) return '';
   const cci = (typeof ChesscomInsights !== 'undefined') ? ChesscomInsights : null;
   const bits = [];
-  if (m.openingName || m.eco) bits.push(escapeHtml(m.openingName || m.eco));
+  if (m.openingName || m.eco) bits.push(escapeHtml((cci && cci.openingDisplayName(m)) || m.openingName || m.eco));
   // Same close-pairing guard as the list (lopsided pairings make the single-
   // game estimate meaningless).
   const perf = cci ? cci.perfOf(m) : null;
@@ -270,7 +270,10 @@ function renderPly() {
   const coach = $('review-coach');
   coach.innerHTML = '';
   if (mistake) {
-    badge.innerHTML = `<span class="sev ${escapeHtml(mistake.severity)}">${escapeHtml(mistake.severity)}</span>
+    // Always name the player's own move (owner 2026-06-11: "it doesn't tell
+    // me which was my move") before the severity + coach affordance.
+    badge.innerHTML = `<span style="font-size:13px;font-weight:600;">You played <b>${escapeHtml(mistake.userMoveSan || '?')}</b></span>
+      <span class="sev ${escapeHtml(mistake.severity)}" style="margin-left:8px;">${escapeHtml(mistake.severity)}</span>
       <button class="btn btn-secondary" id="review-why" type="button" style="margin-left:8px;">Why?</button>`;
     $('review-why').addEventListener('click', () => explainMistake(mistake));
   } else {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>KnightPath. Insights</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -28,7 +28,7 @@
 
   .ratestrip { display:flex; align-items:center; gap:18px; flex-wrap:wrap; border:1px solid var(--line); border-radius:var(--r-panel); padding:14px 16px; background:var(--surface); box-shadow:0 10px 24px -20px rgba(20,30,55,.3); margin-bottom:6px; }
   .rating-value { font-family:"Plus Jakarta Sans",sans-serif; font-size:34px; font-weight:800; letter-spacing:-.02em; line-height:1; } .rating-value small { font-size:13px; color:var(--pos); font-weight:700; margin-left:6px; }
-  .rating-meta { font-size:11.5px; color:var(--muted); margin-top:3px; }
+  .rating-meta { font-size:11px; color:var(--muted); margin-top:3px; }
   .rating-meta .delta-up { color:var(--pos); font-weight:600; } .rating-meta .delta-down { color:var(--bad); font-weight:600; }
   .traj-wrap { flex:1; min-width:200px; } .traj-wrap svg { width:100%; height:48px; display:block; }
   .traj-empty { font-size:11px; color:var(--muted); }
@@ -42,9 +42,9 @@
   .phase .top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   .phase .score { font-family:"Plus Jakarta Sans"; font-weight:800; font-size:36px; line-height:1; margin:6px 0 2px; }
   .phase .bar { height:6px; border-radius:4px; background:var(--surface3); overflow:hidden; margin-top:8px; } .phase .bar i { display:block; height:100%; border-radius:4px; }
-  .phase .sub { font-size:11.5px; color:var(--muted); margin-top:8px; }
+  .phase .sub { font-size:11px; color:var(--muted); margin-top:8px; }
   .phase.leak { border-color:var(--endg); background:linear-gradient(180deg,var(--warn-soft),#fff); box-shadow:0 14px 30px -22px rgba(201,138,46,.6); }
-  .phase .flag { position:absolute; top:11px; right:11px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--endg); border-radius:6px; padding:2px 7px; }
+  .phase .flag { position:absolute; top:11px; right:11px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--endg); border-radius:6px; padding:2px 7px; }
   .phase .impact { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:12px; color:var(--endg); font-weight:600; margin-top:6px; }
 
   .panel { margin-top:16px; } /* visual props from shared .panel (shell.css) */
@@ -67,8 +67,8 @@
   .band { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; height:100%; }
   .band .bar { width:100%; border-radius:5px 5px 0 0; min-height:3px; transform-origin: bottom; animation: heat-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .band .bar.nodata { background:repeating-linear-gradient(45deg, var(--surface3), var(--surface3) 4px, #eef1f4 4px, #eef1f4 8px); }
-  .band .pct { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:9.5px; color:var(--ink); } .band .pct.none { color:var(--muted); }
-  .band .lab { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:8.5px; color:var(--muted); }
+  .band .pct { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:9px; color:var(--ink); } .band .pct.none { color:var(--muted); }
+  .band .lab { font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; font-size:9px; color:var(--muted); }
   .phaselegend { display:flex; gap:14px; margin-top:12px; font-size:11px; color:var(--muted); } .phaselegend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
   .heatnote { font-size:12px; color:var(--muted); margin-top:10px; } .heatnote b { color:var(--ink); font-family:"Plus Jakarta Sans"; }
 
@@ -98,7 +98,7 @@
   .rc-settle b { font-family:"Plus Jakarta Sans",sans-serif; }
   .rc-causal { font-size:12.5px; color:var(--muted); margin-top:10px; } .rc-causal b { color:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; }
 
-  @media (min-width: 880px) { h1 { font-size:32px; } }
+  @media (min-width: 880px) { h1 { font-size:30px; } }
 </style>
 <script src="/js/profile.js"></script>
 <script src="/js/chesscom-insights.js"></script>
@@ -128,6 +128,7 @@
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
+    <a href="/calculation.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>Calculation</a>
     <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
   <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
@@ -348,18 +349,125 @@
       var riPhase = ri ? ri[p] : null;
       var impact = '';
       if (riPhase) {
+        // Relative reads only (2026-06-11 owner fix: the absolute "plays like
+        // ≈1400" conflicted with the real ~950 rating shown above; the ACPL
+        // anchors measure phase QUALITY, not a Chess.com rating).
         if (riPhase.isBest) {
-          impact = '<div class="impact">your ' + p + ' plays like a ≈' + riPhase.eloEquivalent + ' player</div>';
+          impact = '<div class="impact">your strongest phase</div>';
         } else if (riPhase.ratingImpact > 0) {
           impact = '<div class="impact">≈ −' + riPhase.ratingImpact + ' rating points behind your best</div>';
         }
       }
       var sub = d.tier + ' · avg ' + d.acpl + ' cp · ' + d.moves + ' moves';
-      return '<div class="phase' + (isLeak ? ' leak' : '') + '">' + flag + '<span class="topdot" style="background:' + m.col + '"></span>' +
+      return '<div class="phase' + (isLeak ? ' leak' : '') + '" data-phase="' + p + '" role="button" tabindex="0" style="cursor:pointer;">' + flag + '<span class="topdot" style="background:' + m.col + '"></span>' +
         '<div class="top">' + m.label + '</div><div class="score anim-score" data-score="' + Math.round(d.score) + '" style="color:' + m.col + '">0</div>' +
         '<div class="bar"><i style="width:' + Math.round(d.score) + '%;background:' + m.col + '"></i></div>' +
-        '<div class="sub">' + sub + '</div>' + impact + '</div>';
-    }).join('') + '</div>';
+        '<div class="sub">' + sub + ' · tap for detail</div>' + impact + '</div>';
+    }).join('') + '</div><div id="phase-detail"></div>';
+  }
+
+  // ---- Per-phase breakdown (owner 2026-06-11: clickable phases) -------------
+  function motifsInPhase(p) {
+    var counts = {};
+    mistakes.forEach(function (m) {
+      if (m && m.category === p && m.motif && m.motif !== 'none-tactical') {
+        counts[m.motif] = counts[m.motif] || { n: 0, cp: 0 };
+        counts[m.motif].n++; counts[m.motif].cp += (m.cpLoss || 0);
+      }
+    });
+    return Object.keys(counts).map(function (k) { return { motif: k, n: counts[k].n, cp: counts[k].cp }; })
+      .sort(function (a, b) { return b.cp - a.cp; });
+  }
+  var MOTIF_NICE = { 'pin':'Pins','fork':'Forks','skewer':'Skewers','discovered-attack':'Discovered attacks','removing-defender':'Removing the defender','back-rank':'Back rank','overload':'Overloads','decoy':'Decoys','deflection':'Deflections','zwischenzug':'In-between moves','mating-net':'Mating nets','pawn-promotion':'Pawn promotion','simplification':'Simplification','prophylaxis':'Prophylaxis','pawn-structure':'Pawn structure','king-attack':'King attacks' };
+  function renderPhaseDetail(p) {
+    var host = document.getElementById('phase-detail');
+    if (!host) return;
+    if (host.dataset.open === p) { host.dataset.open = ''; host.innerHTML = ''; return; }
+    host.dataset.open = p;
+    var d = phases && phases[p];
+    var ms = mistakes.filter(function (m) { return m && m.category === p; });
+    var top = motifsInPhase(p).slice(0, 3);
+    var rows = top.length
+      ? top.map(function (t) {
+          return '<div class="comp"><span class="nm">' + esc(MOTIF_NICE[t.motif] || t.motif) + '</span><span class="ti">' + t.n + ' miss' + (t.n === 1 ? '' : 'es') + ' · ' + (t.cp / 100).toFixed(1) + ' pawns lost</span>' +
+            '<a class="btn" style="width:auto;padding:6px 12px;font-size:11px;text-decoration:none;margin-left:8px;" href="/puzzle.html?motif=' + encodeURIComponent(t.motif) + '">Drill</a></div>';
+        }).join('')
+      : '<div class="sub">No tagged tactical misses recorded in this phase yet.</div>';
+    host.innerHTML = '<div class="panel" style="margin-top:10px;">' +
+      '<div class="heat-h"><span class="t">' + p.charAt(0).toUpperCase() + p.slice(1) + ' breakdown</span>' +
+      '<span class="u">' + ms.length + ' mistake' + (ms.length === 1 ? '' : 's') + (d && d.acpl != null ? ' · avg ' + d.acpl + ' cp' : '') + '</span></div>' +
+      rows +
+      '<a class="btn" style="display:inline-block;width:auto;margin-top:10px;padding:9px 16px;text-decoration:none;" href="/puzzle.html?cat=' + p + '">Drill all your ' + p + ' mistakes →</a></div>';
+    host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ---- "What to drill" 5 insights (owner 2026-06-11: lead with insights,
+  // attacking AND defending, tactics not used, per-piece) --------------------
+  function pieceOfSan(san) {
+    var c = (san || '').charAt(0);
+    return ({ N: 'knight', B: 'bishop', R: 'rook', Q: 'queen', K: 'king', O: 'king' })[c] || 'pawn';
+  }
+  function drillFiveHtml() {
+    if (!mistakes.length) return '';
+    var items = [];
+    var topMotifs = motifsInPhase('opening').concat(motifsInPhase('middlegame'), motifsInPhase('endgame'));
+    var agg = {};
+    topMotifs.forEach(function (t) { agg[t.motif] = agg[t.motif] || { motif: t.motif, n: 0, cp: 0 }; agg[t.motif].n += t.n; agg[t.motif].cp += t.cp; });
+    var motifRank = Object.keys(agg).map(function (k) { return agg[k]; }).sort(function (a, b) { return b.cp - a.cp; });
+    // 1+2: the two tactics you MISS the most (the tag on a mistake = the
+    // tactic the best move used and you did not play).
+    motifRank.slice(0, 2).forEach(function (t) {
+      items.push({ tone: 'bad', label: 'Tactic you are not using', text: '<b>' + esc(MOTIF_NICE[t.motif] || t.motif) + '</b>: missed ' + t.n + ' time' + (t.n === 1 ? '' : 's') + ' for ' + (t.cp / 100).toFixed(1) + ' pawns total.', href: '/puzzle.html?motif=' + encodeURIComponent(t.motif), cta: 'Drill ' + (MOTIF_NICE[t.motif] || t.motif).toLowerCase() });
+    });
+    // 3: attacking. forcing moves you had but did not play.
+    var missedForcing = mistakes.filter(function (m) { return m.bestMoveSan && (/x|\+|#/.test(m.bestMoveSan)) && m.userMoveSan && !(/x|\+|#/.test(m.userMoveSan)); });
+    if (missedForcing.length >= 2) {
+      var mfCp = missedForcing.reduce(function (s, m) { return s + (m.cpLoss || 0); }, 0);
+      items.push({ tone: 'warn', label: 'Attacking', text: 'You had a <b>capture or check</b> and played something quiet ' + missedForcing.length + ' times (' + (mfCp / 100).toFixed(1) + ' pawns). You are not executing your opportunities.', href: '/puzzle.html?sev=blunder', cta: 'Drill forcing moves' });
+    }
+    // 4: defending. you went forward while the position needed defence.
+    var defSlips = mistakes.filter(function (m) { return m.userMoveSan && (/x|\+|#/.test(m.userMoveSan)) && m.bestMoveSan && !(/x|\+|#/.test(m.bestMoveSan)) && (m.cpLoss || 0) >= 100; });
+    if (defSlips.length >= 2) {
+      items.push({ tone: 'warn', label: 'Defending', text: 'You attacked when the position needed <b>defence</b> ' + defSlips.length + ' times: the best move was quiet, yours grabbed material or checked.', href: '/puzzle.html?cat=middlegame', cta: 'Drill those positions' });
+    }
+    // 5: the piece whose moves leak the most.
+    var byPiece = {};
+    mistakes.forEach(function (m) { var pc = pieceOfSan(m.userMoveSan); byPiece[pc] = byPiece[pc] || { n: 0, cp: 0 }; byPiece[pc].n++; byPiece[pc].cp += (m.cpLoss || 0); });
+    var worstPiece = Object.keys(byPiece).sort(function (a, b) { return byPiece[b].cp - byPiece[a].cp; })[0];
+    if (worstPiece) {
+      var wp = byPiece[worstPiece];
+      items.push({ tone: 'muted', label: 'Piece handling', text: 'Your <b>' + worstPiece + '</b> moves cost the most: ' + wp.n + ' mistakes, ' + (wp.cp / 100).toFixed(1) + ' pawns. Watch where it stands before you commit it.', href: '/puzzle.html', cta: 'Open puzzles' });
+    }
+    if (!items.length) return '';
+    var rows = items.slice(0, 5).map(function (it, i) {
+      return '<div style="display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--surface2);">' +
+        '<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:\'Plus Jakarta Sans\',sans-serif;">' + (i + 1) + '</span>' +
+        '<div style="flex:1;min-width:0;"><div style="font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--' + (it.tone === 'bad' ? 'bad' : it.tone === 'warn' ? 'warn' : 'muted') + ');">' + it.label + '</div>' +
+        '<div style="font-size:13px;line-height:1.5;">' + it.text + '</div></div>' +
+        '<a class="btn" style="flex-shrink:0;width:auto;padding:7px 12px;font-size:11px;text-decoration:none;" href="' + it.href + '">' + esc(it.cta) + '</a></div>';
+    }).join('');
+    return '<div class="panel"><div class="heat-h"><span class="t">What to drill this week</span><span class="u">from your analysed games · tap to act</span></div>' + rows + '</div>';
+  }
+
+  // ---- Per-piece read (owner 2026-06-11) ------------------------------------
+  function perPieceHtml() {
+    if (mistakes.length < 8) return '';
+    var byPiece = {};
+    mistakes.forEach(function (m) {
+      var pc = pieceOfSan(m.userMoveSan);
+      byPiece[pc] = byPiece[pc] || { n: 0, cp: 0, atk: 0 };
+      byPiece[pc].n++; byPiece[pc].cp += (m.cpLoss || 0);
+      if (m.bestMoveSan && /x|\+|#/.test(m.bestMoveSan)) byPiece[pc].atk++;
+    });
+    var order = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
+    var rows = order.filter(function (p) { return byPiece[p]; }).map(function (p) {
+      var d = byPiece[p];
+      var flavor = d.atk / d.n >= 0.5 ? 'mostly missed attacks' : 'mostly positional slips';
+      return '<div class="comp"><span class="nm" style="text-transform:capitalize;">' + p + '</span>' +
+        '<span class="ti">' + d.n + ' mistakes · ' + (d.cp / 100).toFixed(1) + ' pawns · ' + flavor + '</span></div>';
+    }).join('');
+    return '<div class="panel"><div class="heat-h"><span class="t">Where each piece goes wrong</span><span class="u">early read, from your analysed mistakes</span></div>' + rows +
+      '<div class="heatnote">A deeper per-piece engine (knights vs bishops, defending against each piece, rook activation timing) needs per-move data we do not capture yet. It is specced as the next analytics step.</div></div>';
   }
 
   var ATTR_LABELS = { tactical_patterns: 'Tactical patterns', king_safety: 'King safety', endgame_technique: 'Endgame technique', opening_principles: 'Opening principles', calculation: 'Calculation', piece_activity: 'Piece activity', pawn_structure: 'Pawn structure' };
@@ -498,7 +606,7 @@
     if (played.length >= 2) {
       var best = played.slice().sort(function (a, b) { return b.scorePct - a.scorePct; })[0];
       var worstO = played.slice().sort(function (a, b) { return a.scorePct - b.scorePct; })[0];
-      if (best !== worstO) facts.push('Best opening: <b>' + esc(best.name) + '</b> (' + best.scorePct + '% over ' + best.n + ') · worst: <b>' + esc(worstO.name) + '</b> (' + worstO.scorePct + '%)');
+      if (best !== worstO) facts.push('Best opening: <b>' + esc(ChesscomInsights.openingDisplayName(best) || best.name) + '</b> (' + best.scorePct + '% over ' + best.n + ') · worst: <b>' + esc(ChesscomInsights.openingDisplayName(worstO) || worstO.name) + '</b> (' + worstO.scorePct + '%)');
     }
     var factHtml = facts.map(function (f) { return '<div style="font-size:12.5px;padding:7px 0;border-top:1px solid var(--surface2);">' + f + '</div>'; }).join('');
     return '<div class="panel"><div class="heat-h"><span class="t">Game-by-game performance</span><span class="u">from your chess.com games · win green, loss red</span></div>' +
@@ -550,8 +658,18 @@
       var wi = weekIdx(t); if (wi == null) return;
       rec[wi].n++; if (r && r.correct === true) rec[wi].ok++;
     });
-    var rows = trendRow('Tactics', tac, 'var(--accent)') + trendRow('Recognition', rec, 'var(--endg)');
-    // Snapshot chips.
+    // Calculation (v0.82): the drill's history entries {d,type,score,reps}.
+    var calc = []; for (var w3 = 0; w3 < WEEKS; w3++) calc.push({ n: 0, ok: 0 });
+    var calcStore = loadJson('chess-coach-calculation-v1', null);
+    ((calcStore && calcStore.history) || []).forEach(function (h) {
+      if (!h || !h.reps) return; // blitz entries (reps null) are best-marks, not accuracy
+      var t = Date.parse(h.d); if (!t) return;
+      var wi = weekIdx(t); if (wi == null) return;
+      calc[wi].n += h.reps; calc[wi].ok += (h.score || 0);
+    });
+    var rows = trendRow('Tactics', tac, 'var(--accent)') + trendRow('Recognition', rec, 'var(--endg)') + trendRow('Calculation', calc, 'var(--open)');
+    // Snapshot chips. EVERY training type reports progress here (owner rule:
+    // "if there is no measure of progress there won't be a habit being built").
     var chips = [];
     try {
       var eg = loadJson('chess-coach-eg-results-v1', {}) || {};
@@ -559,16 +677,30 @@
       if (Object.keys(eg).length) chips.push('Endgames: <b>' + mastered + '/20 mastered</b>');
     } catch (e) {}
     try {
+      // The blob is { version, cards: { [lineId]: card } } (the old read looked
+      // at the top level and never matched, so the chip silently vanished).
       var op = loadJson('chess-coach-openings-v1', {}) || {};
-      var lines = Object.keys(op).filter(function (k) { return op[k] && typeof op[k].box === 'number'; });
+      var opCards = op.cards || {};
+      var lines = Object.keys(opCards).filter(function (k) { return opCards[k] && typeof opCards[k].box === 'number'; });
       if (lines.length) {
-        var solid = lines.filter(function (k) { return op[k].box >= 4; }).length;
+        var solid = lines.filter(function (k) { return opCards[k].box >= 4; }).length;
         chips.push('Openings: <b>' + solid + '/' + lines.length + ' lines solid</b>');
       }
     } catch (e) {}
     try {
       var bv = loadJson('chess-coach-board-vision-v1', null);
-      if (bv && bv.tracker && bv.tracker.level) chips.push('Board vision: <b>level ' + bv.tracker.level + '/6</b>');
+      if (bv && bv.tracker && bv.tracker.level) {
+        var bvBits = ['level ' + bv.tracker.level + '/6'];
+        if (bv.bests && (bv.bests.coord60 || bv.bests.knight60)) bvBits.push('60s bests ' + (bv.bests.coord60 || 0) + '/' + (bv.bests.knight60 || 0));
+        chips.push('Board vision: <b>' + bvBits.join(' · ') + '</b>');
+      }
+    } catch (e) {}
+    try {
+      if (calcStore && (calcStore.history || []).length) {
+        var calcBits = ['line level ' + ((calcStore.line && calcStore.line.level) || 1) + '/3'];
+        if (calcStore.bests && calcStore.bests.forcers60) calcBits.push('60s best ' + calcStore.bests.forcers60);
+        chips.push('Calculation: <b>' + calcBits.join(' · ') + '</b>');
+      }
     } catch (e) {}
     var chipRow = chips.length
       ? '<div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;">' + chips.map(function (c) { return '<span style="font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface2);">' + c + '</span>'; }).join('') + '</div>'
@@ -603,16 +735,24 @@
   var leak = leakOf();
   root.innerHTML =
     ratingStripHtml() +
-    ratingBlockHtml() +
-    chesscomHtml() +
     ahaHtml(leak) +
     phaseCardsHtml(leak) +
+    drillFiveHtml() +
+    ratingBlockHtml() +
+    chesscomHtml() +
+    perPieceHtml() +
     detailHtml() +
     masteryHtml() +
     recognitionHtml() +
     '<div class="panel"><div class="heat-h"><span class="t">Where you go wrong</span><span class="u">mistake rate per 5-move band · phase-coloured</span></div>' + heatmapHtml() + '</div>' +
     '<a href="/coach.html" class="review1"><span class="ava"></span><div class="tx"><b>Your leak, in detail.</b> The full strengths &amp; weaknesses read is in Coach.</div><span class="go">Open →</span></a>';
   renderTrajectory();
+
+  // Clickable phase cards -> per-phase breakdown (owner 2026-06-11).
+  root.addEventListener('click', function (e) {
+    var card = e.target.closest('.phase[data-phase]');
+    if (card) renderPhaseDetail(card.getAttribute('data-phase'));
+  });
 
   // Odometer animation
   var animScores = root.querySelectorAll('.anim-score');

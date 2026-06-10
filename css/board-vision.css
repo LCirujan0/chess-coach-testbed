@@ -18,7 +18,7 @@
 }
 .bv-card:hover { background: var(--surface2); }
 .bv-card:active { transform: scale(.99); }
-.bv-card-ic { font-size: 22px; width: 30px; text-align: center; flex: none; }
+.bv-card-ic { font-size: 21px; width: 30px; text-align: center; flex: none; }
 .bv-card-bd { flex: 1; min-width: 0; }
 .bv-card-bd b { font-weight: 700; display: block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
 .bv-card-bd small { color: var(--muted); font-size: 12px; }
@@ -50,14 +50,14 @@
 .bv-sq { display: inline-block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 800; font-size: .95em; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 1px 7px; margin: 0 1px; }
 /* Coordinate Snap: the target square IS the exercise, so it goes big. */
 .bv-panel.bv-big { text-align: center; }
-.bv-panel.bv-big .bv-prompt { font-size: 17px; }
+.bv-panel.bv-big .bv-prompt { font-size: 16px; }
 .bv-panel.bv-big .bv-sq { font-size: 30px; padding: 4px 16px; border-radius: 10px; display: inline-block; margin-top: 4px; }
 /* Perspective chip in the drill head. */
 .bv-pers { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); background: var(--surface2); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 4px 10px; margin-left: auto; margin-right: 10px; }
 /* Coordinates hidden on the Board Vision board: the labels ARE the answers. */
 .board.bv-nocoords .coord { display: none; }
 /* 60-second blitz affordance on the hub cards. */
-.bv-blitz { margin-left: 10px; flex-shrink: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--r-pill); padding: 6px 12px; font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: border-color .15s, background .15s; }
+.bv-blitz { margin-left: 10px; flex-shrink: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--r-pill); padding: 6px 12px; font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: border-color .15s, background .15s; }
 .bv-blitz:hover { border-color: var(--accent); background: var(--accent-soft); }
 .bv-blitz small { display: block; font-size: 9px; font-weight: 600; color: var(--muted); }
 
@@ -66,7 +66,7 @@
 .bv-move { display: flex; align-items: center; gap: 12px; padding: 8px 10px; background: var(--surface2); border-radius: var(--r-btn); }
 .bv-move-n { flex: none; width: 18px; font-size: 11px; font-weight: 700; color: var(--muted); font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums; }
 .bv-move-pc { flex: none; width: 26px; height: 26px; object-fit: contain; }
-.bv-move-ar { flex: none; font-size: 22px; line-height: 1; color: var(--accent); width: 22px; text-align: center; }
+.bv-move-ar { flex: none; font-size: 21px; line-height: 1; color: var(--accent); width: 22px; text-align: center; }
 .bv-move-lb { font-size: 13px; font-weight: 600; }
 
 /* tracker question */

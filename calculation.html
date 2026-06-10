@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>KnightPath. Openings</title>
+<title>KnightPath. Calculation</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/css/tokens.css">
@@ -13,8 +13,7 @@
 <link rel="stylesheet" href="/css/board.css">
 <link rel="stylesheet" href="/css/screen.css">
 <link rel="stylesheet" href="/css/train.css">
-<link rel="stylesheet" href="/css/session-wrap.css">
-<link rel="stylesheet" href="/css/openings.css">
+<link rel="stylesheet" href="/css/board-vision.css">
 <meta name="apple-mobile-web-app-title" content="KnightPath">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,60 +24,67 @@
 </head>
 <body>
 <div class="container">
-  <div class="session-wrap hidden" id="session-wrap"></div>
   <div class="header-bar">
     <img class="brand-mark" src="/brand-icons/knight-mark-sm.png" alt="" aria-hidden="true">
     <span class="brand-word">KnightPath</span>
-    <span class="screen-chip">Openings</span>
+    <span class="screen-chip">Calculation</span>
+    <div class="bv-streak" id="bv-streak"></div>
   </div>
 
-  <!-- HUB -->
-  <section id="op-hub" class="op-hub">
-    <div class="eyebrow">Repertoire training</div>
-    <h1>Openings</h1>
-    <p class="lede">Drill your opening repertoire from memory, tap out each book move and we'll space the lines so they stick. Below, your synced games show which openings you actually play.</p>
+  <!-- HUB (bv-* grammar reused deliberately, styled by board-vision.css) -->
+  <section id="bv-hub">
+    <div class="eyebrow">Calculation</div>
+    <h1>Calculation drills</h1>
+    <p class="lede">See forced sequences in your head before you move. Follow a spoken line on a frozen board, and count the checks and captures at speed.</p>
 
-    <div class="op-list" id="op-list"></div>
+    <button class="btn primary bv-start" id="bv-start-all" type="button">Start drills →</button>
 
-    <div class="op-personal" id="op-personal"></div>
+    <div class="bv-onramp" id="bv-onramp">
+      <div class="bv-card" data-drill="line">
+        <div class="bv-card-ic">🧠</div>
+        <div class="bv-card-bd"><b>Follow the line</b><small>Picture a forced sequence, board frozen</small></div>
+        <span class="bv-card-m">Level 1/3</span>
+      </div>
+      <div class="bv-card" data-drill="forcers">
+        <div class="bv-card-ic">⚔️</div>
+        <div class="bv-card-bd"><b>Count the forcers</b><small>How many checks and captures, 20s each</small></div>
+        <span class="bv-card-m">~3 min</span>
+      </div>
+    </div>
   </section>
 
   <!-- DRILL RUNNER, canonical training-screen shell (css/screen.css) -->
-  <section id="op-drill" class="hidden">
+  <section id="bv-drill" class="hidden">
     <div class="layout-grid">
       <div class="lg-head">
-        <div class="op-drill-head">
-          <span class="op-line-name" id="op-line-name"></span>
-          <span class="op-progress" id="op-progress"></span>
+        <div class="bv-drill-head">
+          <span class="bv-drill-title" id="bv-drill-title"></span>
+          <span class="bv-drill-rep" id="bv-drill-rep"></span>
         </div>
       </div>
       <div class="lg-left">
-        <div class="board-wrap"><div class="board op-board" id="op-board"></div></div>
-        <div class="controls"><button class="btn ghost" id="op-quit" type="button">Back to openings</button></div>
+        <div class="board-wrap"><div class="board" id="bv-board"></div></div>
+        <div class="controls"><button class="btn ghost" id="bv-quit" type="button">Quit drill</button></div>
       </div>
       <div class="lg-right">
-        <div class="op-panel" id="op-prompt-card"><div class="op-prompt" id="op-prompt"></div></div>
-        <div class="op-panel op-why-card hidden" id="op-why-card">
-          <div class="op-why-h"><span class="op-why-ava">C</span>Why this move</div>
-          <div class="op-why" id="op-why"></div>
+        <div class="bv-panel" id="bv-prompt-card"><div class="bv-prompt" id="bv-prompt"></div></div>
+        <div class="bv-panel hidden" id="bv-moves-card">
+          <div class="bv-panel-h">The line, picture it</div>
+          <div class="bv-moves" id="bv-moves"></div>
         </div>
-        <div class="op-panel op-idea-card" id="op-idea-card">
-          <div class="op-panel-h">The plan</div>
-          <div class="op-idea" id="op-idea"></div>
-        </div>
-        <div class="op-feedback" id="op-feedback"></div>
+        <div class="bv-panel hidden" id="bv-tracker-q"></div>
+        <div class="bv-feedback" id="bv-feedback"></div>
       </div>
     </div>
   </section>
 
   <!-- COMPLETE -->
-  <section id="op-complete" class="op-complete hidden">
-    <div class="eyebrow">Line complete</div>
-    <h1 id="op-complete-h">Nice work</h1>
-    <div class="op-complete-line" id="op-complete-line"></div>
-    <div class="op-complete-idea" id="op-complete-idea"></div>
-    <div class="op-complete-coach" id="op-complete-coach"></div>
-    <div class="op-complete-actions" id="op-complete-actions"></div>
+  <section id="bv-complete" class="hidden">
+    <div class="eyebrow">Drills complete</div>
+    <h1 id="bv-complete-h">Nice work</h1>
+    <div class="bv-scores" id="bv-scores"></div>
+    <div class="bv-coach" id="bv-coach"></div>
+    <div class="bv-complete-actions" id="bv-complete-actions"></div>
   </section>
 </div>
 
@@ -94,8 +100,8 @@
     <a href="/endgames.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v3M10.5 4h3"/><path d="M8.8 10.2a3.2 3.2 0 1 1 6.4 0c0 1.7-.9 2.7-1.5 3.8H10.3c-.6-1.1-1.5-2.1-1.5-3.8z"/><path d="M9.6 14h4.8l1.1 4.5H8.5z"/><path d="M7 21h10"/></svg>Endgames</a>
     <a href="/endgame-recognition.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M3 12h4m10 0h4M12 17v4"/><circle cx="12" cy="12" r="4"/></svg>Recognition</a>
     <a href="/board-vision.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Board Vision</a>
-    <a href="/calculation.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>Calculation</a>
-    <a href="/openings.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
+    <a href="/calculation.html" class="nav-drawer-link nav-child active"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 2.4-1.2 3.9-2.4 5.2-.8.9-1.6 1.8-1.6 2.8h-6c0-1-.8-1.9-1.6-2.8C6.2 13.9 5 12.4 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 21h5"/></svg>Calculation</a>
+    <a href="/openings.html" class="nav-drawer-link nav-child"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Openings</a>
   </div>
   <a href="/review.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h13M3 10h13M3 15h8"/><circle cx="18.5" cy="16" r="3.2"/><path d="M21 18.5l2 2"/></svg>Game Review</a>
   <a href="/insights.html" class="nav-drawer-link"><svg class="nav-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M7 20.5v-6M12 20.5v-10M17 20.5v-13.5"/></svg>Insights</a>
@@ -118,7 +124,7 @@
   <a href="/coach.html"><svg class="tab-icon" viewBox="0 0 24 24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5z"/></svg>Coach</a>
 </nav>
 
-<script type="module" src="/js/openings/boot.js"></script>
+<script type="module" src="/js/calculation/boot.js"></script>
 <script type="module" src="/js/puzzle/config.js"></script>
 </body>
 </html>
